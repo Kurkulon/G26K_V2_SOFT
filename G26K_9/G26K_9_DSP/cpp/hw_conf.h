@@ -123,20 +123,42 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define INIT_PORTF_MUX			0x000F		//  0000 0000 0000 1111
-#define INIT_PORTG_MUX			0xFF00		//  1111 1111 0000 0000
+#define PIO_RTS_SET				*pPORTFIO_SET
+#define PIO_RTS_CLR				*pPORTFIO_CLEAR
+#define PIO_RTS_DIR				*pPORTFIO_DIR
+#define PIO_RTS_MUX				*pPORTF_MUX
 
-#define INIT_PORTF_FER 			0x1E0F		//  0001 1110 0000 1111
-#define INIT_PORTG_FER 			0xFF00		//  1111 1111 0000 0000
+#define PIN_RTS					5
+#define MASK_RTS				(1UL<<PIN_RTS)
 
-#define INIT_PORTFIO_DIR 		0x01A0		//  0000 0001 1010 0000
-#define INIT_PORTGIO_DIR 		0x00FF		//  0000 0000 1111 1111
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define PIN_DSP_CS				8
+#define PIN_DSP_MOSI			13
+#define PIN_DSP_MISO			14
+#define PIN_DSP_SCK				15
+
+#define MASK_DSP_CS					(1UL<<PIN_DSP_CS	)
+#define MASK_DSP_MOSI				(1UL<<PIN_DSP_MOSI	)
+#define MASK_DSP_MISO				(1UL<<PIN_DSP_MISO	)
+#define MASK_DSP_SCK				(1UL<<PIN_DSP_SCK	)
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define INIT_PORTF_MUX			0xFEC3		//  1111 1110 1100 0011
+#define INIT_PORTG_MUX			0x03C3		//  0000 0011 1100 0011
+
+#define INIT_PORTF_FER 			0x0000		//  0000 0000 0000 0000
+#define INIT_PORTG_FER 			0x0000		//  0000 0000 0000 0000
+
+#define INIT_PORTFIO_DIR 		0x0124		//  0000 0001 0010 0100
+#define INIT_PORTGIO_DIR 		0x7C3C		//  0111 1100 0011 1100
 
 #define INIT_PORTFIO_INEN 		0x0000		//  0000 0000 0000 0000
 #define INIT_PORTGIO_INEN 		0x0000		//  0000 0000 0000 0000
 
+#define INIT_PORTFIO 			MASK_RTS|MASK_DSP_CS
 #define INIT_PORTGIO 			0
-#define INIT_PORTFIO 			0
 
 #define INIT_PORTFIO_POLAR		0
 #define INIT_PORTFIO_EDGE 		0
@@ -152,16 +174,6 @@
 
 #define INIT_WDOG_CNT			MS2CLK(10)
 #define INIT_WDOG_CTL			WDEV_RESET|WDEN
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-#define PIO_RTS_SET				*pPORTFIO_SET
-#define PIO_RTS_CLR				*pPORTFIO_CLEAR
-#define PIO_RTS_DIR				*pPORTFIO_DIR
-#define PIO_RTS_MUX				*pPORTF_MUX
-
-#define PIN_RTS					5
-#define MASK_RTS				(1UL<<PIN_RTS)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

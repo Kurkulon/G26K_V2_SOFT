@@ -26,7 +26,7 @@ libsuffix=Win32
 
 !else
 
-debug_compiler_options = -O3 -Ospace --debug
+debug_compiler_options = -O3 -Otime --debug
 debug_linker_options = 
 libsuffix=r
 

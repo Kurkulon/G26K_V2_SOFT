@@ -553,7 +553,7 @@ extern "C" void _MainAppStart(u32 adr);
 
 int main()
 {
-//	__breakpoint(0);
+	__breakpoint(0);
 
 	SEGGER_RTT_Init();
 
@@ -565,13 +565,17 @@ int main()
 
 	InitHardware();
 
-	run = HandShake();
+	//run = HandShake();
 
-	while(run)
+	CTM32	tm;
+
+	while(1)
 	{
-		UpdateCom();
+		//UpdateCom();
 
-		HW::ResetWDT();
+		//HW::ResetWDT();
+
+		if (tm.Check(MS2CTM(50))) HW::GPIO->NOT0 = 1<<12;
 	};
 
 //	__breakpoint(0);

@@ -76,9 +76,9 @@
 
 	// ++++++++++++++	PIO INIT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-																						// 1  8 7  4 3  0 9  6 5  2 1  8 7  4 3  0
-#define GPIO_INIT_DIRSET0	PWM90|ROT|RTS0|ENABLE|LIN1|HIN1|LIN2|HIN2|LIN3|HIN3			// 0000 1101 0111 1110 0101 0000 0000 0000	
-#define GPIO_INIT_PIN0		ENABLE														// 0000 0000 0111 1110 0100 0000 0000 0000
+																							// 1  8 7  4 3  0 9  6 5  2 1  8 7  4 3  0
+#define GPIO_INIT_DIR0		PWM90|ROT|RTS0|ENABLE|LIN1|HIN1|LIN2|HIN2|LIN3|HIN3|(1<<12)		// 0000 1101 0111 1110 0101 0000 0000 0000	
+#define GPIO_INIT_PIN0		ENABLE															// 0000 0000 0111 1110 0100 0000 0000 0000
 
 
 	#define Pin_MainLoop_Set()	HW::GPIO->BSET(12);

@@ -98,10 +98,6 @@
 			RelativePath=".\makeobj"
 			>
 		</File>
-		<File
-			RelativePath=".\cpp\startup_LPC82x.s"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

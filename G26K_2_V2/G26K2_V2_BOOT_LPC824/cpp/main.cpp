@@ -357,7 +357,7 @@ bool HandShake()
 
 	for (byte i = 0; i < 2; i++)
 	{
-		com.Read(&rb, MS2CLK(100), US2CLK(100));
+		com.Read(&rb, MS2COM(100), US2COM(100));
 
 		HW::GPIO->BSET(12);
 
@@ -487,7 +487,7 @@ static void UpdateCom()
 			rb.data = &req.func;
 			rb.maxLen = sizeof(req)-sizeof(req.len);
 			
-			com.Read(&rb, ~0, US2CLK(100));
+			com.Read(&rb, ~0, US2COM(100));
 
 			i++;
 
@@ -553,7 +553,7 @@ extern "C" void _MainAppStart(u32 adr);
 
 int main()
 {
-	__breakpoint(0);
+	//__breakpoint(0);
 
 	SEGGER_RTT_Init();
 
@@ -565,20 +565,28 @@ int main()
 
 	InitHardware();
 
+	com.Connect(ComPort::ASYNC, 1562500, 0, 1);
+
+	//ComPort::WriteBuffer wb;
+
+	//static byte buf[100];
+
 	//run = HandShake();
 
-	CTM32	tm;
+	//CTM32	tm;
 
 	while(1)
 	{
-		//UpdateCom();
+		Pin_MainLoop_Set()
+
+		UpdateCom();
 
 		//HW::ResetWDT();
 
-		if (tm.Check(MS2CTM(50))) HW::GPIO->NOT0 = 1<<12;
+		Pin_MainLoop_Clr();
 	};
 
-//	__breakpoint(0);
+	__breakpoint(0);
 
 	__disable_irq();
 

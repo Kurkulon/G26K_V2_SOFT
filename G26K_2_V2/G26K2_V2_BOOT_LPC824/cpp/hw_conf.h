@@ -27,9 +27,9 @@
 
 	// ++++++++++++++	USART	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define PIN_UTX0			25 
-	#define PIN_URX0			15 
-	#define PIN_RTS0			24
+	#define PIN_UTX0			16 
+	#define PIN_URX0			26 
+	#define PIN_RTS0			27
 
 	#define UTX0				(1UL<<PIN_UTX0)
 	#define URX0				(1UL<<PIN_URX0)

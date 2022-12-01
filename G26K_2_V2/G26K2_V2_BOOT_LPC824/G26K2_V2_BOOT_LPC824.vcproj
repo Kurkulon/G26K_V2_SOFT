@@ -68,10 +68,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\hw_com.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\cpp\main.cpp"
 				>
 			</File>

@@ -89,7 +89,7 @@
         <sRfunc>1</sRfunc>
         <sRbox>1</sRbox>
         <tLdApp>1</tLdApp>
-        <tGomain>1</tGomain>
+        <tGomain>0</tGomain>
         <tRbreak>1</tRbreak>
         <tRwatch>1</tRwatch>
         <tRmem>1</tRmem>
@@ -148,7 +148,24 @@
           <Name></Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint/>
+      <Breakpoint>
+        <Bp>
+          <Number>0</Number>
+          <Type>0</Type>
+          <LineNumber>1064</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>536881758</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>d:\Work\G_LIBS_ARM\cpp\boot_com_emac_imp.h</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\G26K_1_V2_BOOT_SAME53\cpp/main.cpp\1064</Expression>
+        </Bp>
+      </Breakpoint>
       <WatchWindow1>
         <Ww>
           <count>0</count>
@@ -447,7 +464,7 @@
           <WinId>35905</WinId>
         </Entry>
         <Entry>
-          <Name>System Viewer\NVMCTRL</Name>
+          <Name>System Viewer\PORT</Name>
           <WinId>35904</WinId>
         </Entry>
       </SystemViewers>

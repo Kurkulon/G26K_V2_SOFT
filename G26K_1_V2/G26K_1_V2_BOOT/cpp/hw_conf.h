@@ -324,8 +324,8 @@
 
 	#define L1				(1UL<<PIN_L1)
 	#define L2				(1UL<<PIN_L2)
-	#define H1				0
-	#define H2				0
+	#define H1				PC24
+	#define H2				PC26
 
 	#define PIO_RXD			HW::PIOB
 	#define PIN_RXD			13
@@ -468,17 +468,17 @@
 
 	// ++++++++++++++	PIO INIT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define PIOA_INIT_DIR		((1<<0)|(1<<1)|(0xFF<<4)|(0xFF<<14)|(1<<25)|(1<<27))
-	#define PIOA_INIT_SET		((1<<0)|(1<<1)|(1<<27))
-	#define PIOA_INIT_CLR		((0xFF<<4)|(0xFF<<14)|(1<<25))
+	#define PIOA_INIT_DIR		(0xFF|PA16|PA24|PA25|PA27)
+	#define PIOA_INIT_SET		(0)
+	#define PIOA_INIT_CLR		(0xFF|PA16|PA24|PA25|PA27)
 
-	#define PIOB_INIT_DIR		((0xF<<0)|(0x1FF<<4)|(0x3F<<16)|(7<<23)|(3UL<<30))
+	#define PIOB_INIT_DIR		(PB15|PB18)
 	#define PIOB_INIT_SET		(0)
-	#define PIOB_INIT_CLR		((0xF<<0)|(0x1FF<<4)|(0x3F<<16)|(7<<23)|(3UL<<30))
+	#define PIOB_INIT_CLR		(PB15|PB18)
 
-	#define PIOC_INIT_DIR		(~0)
-	#define PIOC_INIT_SET		(0)
-	#define PIOC_INIT_CLR		(~0)
+	#define PIOC_INIT_DIR		(PC00|PC01|PC03|PC12|PC13|ENVCORE|PC15|PC17|PC18|PC19|RTS0|L1|H1|L2|H2)
+	#define PIOC_INIT_SET		(ENVCORE|H1|H2)
+	#define PIOC_INIT_CLR		(PC00|PC01|PC03|PC12|PC13|PC15|PC17|PC18|PC19|RTS0|L1|L2)
 
 	#define Pin_MainLoop_Set()	HW::PIOA->BSET(25)
 	#define Pin_MainLoop_Clr()	HW::PIOA->BCLR(25)

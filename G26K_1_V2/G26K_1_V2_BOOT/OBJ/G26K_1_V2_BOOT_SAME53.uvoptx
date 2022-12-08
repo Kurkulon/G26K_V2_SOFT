@@ -148,24 +148,7 @@
           <Name></Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint>
-        <Bp>
-          <Number>0</Number>
-          <Type>0</Type>
-          <LineNumber>1064</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>536881758</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>d:\Work\G_LIBS_ARM\cpp\boot_com_emac_imp.h</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_BOOT_SAME53\cpp/main.cpp\1064</Expression>
-        </Bp>
-      </Breakpoint>
+      <Breakpoint/>
       <WatchWindow1>
         <Ww>
           <count>0</count>
@@ -404,7 +387,7 @@
         <Mm>
           <WinNumber>1</WinNumber>
           <SubType>0</SubType>
-          <ItemText>0x10000</ItemText>
+          <ItemText>0x4000</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>

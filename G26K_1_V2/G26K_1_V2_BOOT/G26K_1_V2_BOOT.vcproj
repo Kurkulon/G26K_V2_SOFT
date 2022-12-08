@@ -76,10 +76,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cpp\mem.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\cpp\system.cpp"
 				>
 			</File>

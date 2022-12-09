@@ -550,32 +550,95 @@
 	//#define DRL_10				10		
 	//#define DRL_11				11		
 
+	// ++++++++++++++	PINS P0	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define PIN_L1					0 
+	#define PIN_H1					1 
+	#define PIN_L2					9 
+	#define PIN_H2					10
+	#define PIN_RESET				11
+
+	#define L1						(1UL<<PIN_L1)
+	#define H1						(1UL<<PIN_H1)
+	#define L2						(1UL<<PIN_L2)
+	#define H2						(1UL<<PIN_H2)
+	#define RESET					(1UL<<PIN_RESET)
+
+	// ++++++++++++++	PINS P1	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define PIN_RTS0				0 
+	#define PIN_RTS1				8 
+	#define PIN_RTS2				13 
+
+	#define RTS0					(1UL<<PIN_RTS0)
+	#define RTS1					(1UL<<PIN_RTS1)
+	#define RTS2					(1UL<<PIN_RTS2)
+
+	// ++++++++++++++	PINS P2	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define PIN_PHY_RST				10 
+	#define PIN_ENVCORE				11 
+
+	#define PHY_RST					(1UL<<PIN_PHY_RST)
+	#define ENVCORE					(1UL<<PIN_ENVCORE)
+
 	// ++++++++++++++	EMAC	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define EMAC_PHYA 0
 
 	#define PIO_RESET_PHY			HW::P2
-	#define PIN_RESET_PHY			15
+	#define PIN_RESET_PHY			10
 
-	#define PIO_GMD					HW::PIOA
-	#define PIN_GMDC				20
-	#define PIN_GMDIO				21
+	#define PIO_GMDC				HW::P2
+	#define PIO_GMDIO				HW::P2
+	#define PIO_GCRS				HW::P15
+	#define PIO_GRXER				HW::P2
+	#define PIO_GRX0				HW::P2
+	#define PIO_GRX1				HW::P2
+	#define PIO_GTXEN				HW::P2
+	#define PIO_GTX0				HW::P2
+	#define PIO_GTX1				HW::P2
+	#define PIO_GRXCK				HW::P2
 
-	#define GMDC					(1UL<<PIN_GMDC) 
-	#define GMDIO					(1UL<<PIN_GMDIO) 
+	#define PIN_GMDC				7
+	#define PIN_GMDIO				0
+	#define PIN_GCRS				9
+	#define PIN_GRXER				4
+	#define PIN_GRX0				2
+	#define PIN_GRX1				3
+	#define PIN_GTXEN				5
+	#define PIN_GTX0				8
+	#define PIN_GTX1				9
+	#define PIN_GRXCK				1
+
+	#define MUX_GMDC				A1PP
+	#define MUX_GMDIO				HWIO0
+	#define MUX_GCRS				I1DPD
+	#define MUX_GRXER				I1DPD
+	#define MUX_GRX0				I2DPU
+	#define MUX_GRX1				I1DPD
+	#define MUX_GTXEN				A1PP
+	#define MUX_GTX0				A1PP
+	#define MUX_GTX1				A1PP
+	#define MUX_GRXCK				I1DPD
+
+
+	//#define GMDC					(1UL<<PIN_GMDC) 
+	//#define GMDIO					(1UL<<PIN_GMDIO) 
+
 
 	#define EMAC_INIT_ETH0_CON		(CON_INFSEL|CON_RXD0(0)|CON_RXD1(0)|CON_CLK_RMII(0)|CON_CRS_DV(2)|CON_RXER(0)|CON_MDIO(1))
 
 	// ++++++++++++++	PIO INIT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define P0_INIT_DIR		(0)
-	#define P0_INIT_OUT		(0)
+	#define P0_INIT_DIR		(L1|H1|L2|H2|P0_12|P0_13|P0_15)
+	#define P0_INIT_OUT		(H1|H2)
 
-	#define P1_INIT_DIR		(0)
+	#define P1_INIT_DIR		(RTS0|RTS1|RTS2)
 	#define P1_INIT_OUT		(0)
 
-	#define P2_INIT_DIR		(0)
-	#define P2_INIT_OUT		(0)
+	#define P2_INIT_DIR		(PHY_RST|ENVCORE|P2_6|P2_12|P2_13)
+	#define P2_INIT_OUT		(ENVCORE)
 
 	#define P3_INIT_DIR		(0)
 	#define P3_INIT_OUT		(0)

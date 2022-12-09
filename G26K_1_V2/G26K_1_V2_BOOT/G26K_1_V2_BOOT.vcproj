@@ -54,6 +54,46 @@
 				CompileAsManaged=""
 			/>
 		</Configuration>
+		<Configuration
+			Name="XMC48_Debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="wmake -h version=Debug targetcpu=XMC48"
+				ReBuildCommandLine="wmake -h -a version=Debug targetcpu=XMC48"
+				CleanCommandLine="@del /Q $(OutDir)\*.*"
+				Output="$(OutDir)\G26K_1_V2_BOOT_XMC48.axf"
+				PreprocessorDefinitions="_DEBUG,__softfp=,CPU_XMC48"
+				IncludeSearchPath="$(ProjectDir)..\..\..\G_LIBS_ARM\cpp;$(ARMCC50INC);"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="XMC48_Release|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="wmake -h version=Release targetcpu=XMC48"
+				ReBuildCommandLine="wmake -h -a version=Release targetcpu=XMC48"
+				CleanCommandLine="@del /Q $(OutDir)\*.*"
+				Output="$(OutDir)\G26K_1_V2_BOOT_XMC48.axf"
+				PreprocessorDefinitions="__softfp=,CPU_XMC48"
+				IncludeSearchPath="$(ProjectDir)..\..\..\G_LIBS_ARM\cpp;$(ARMCC50INC);"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>

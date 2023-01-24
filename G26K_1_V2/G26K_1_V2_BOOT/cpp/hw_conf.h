@@ -480,6 +480,7 @@
 
 	#define Pin_MainLoop_Set()	HW::PIOA->BSET(25)
 	#define Pin_MainLoop_Clr()	HW::PIOA->BCLR(25)
+	#define Pin_MainLoop_Tgl()	HW::PIOA->BTGL(25)
 
 
 #elif defined(CPU_XMC48) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -655,6 +656,7 @@
 
 	#define Pin_MainLoop_Set()	HW::P2->BSET(13)
 	#define Pin_MainLoop_Clr()	HW::P2->BCLR(13)
+	#define Pin_MainLoop_Tgl()	HW::P2->BTGL(13)
 
 
 	/*******************************************************************************

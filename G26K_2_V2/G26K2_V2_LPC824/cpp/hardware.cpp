@@ -62,9 +62,9 @@ byte motorState = 0;
 #define NN 0xFF
 
 #define NC 0x3F
-#define UU ((~(LIN1>>17))&NC)	// 0x37
-#define VV ((~(LIN2>>17))&NC)	// 0x2F
-#define WW ((~(LIN3>>17))&NC)	// 0x1F
+#define UU (((LIN1>>17))&NC)	// 0x37
+#define VV (((LIN2>>17))&NC)	// 0x2F
+#define WW (((LIN3>>17))&NC)	// 0x1F
 
 //#define UT 0x3E
 //#define VT 0x3D
@@ -131,6 +131,9 @@ static u16 curDuty = 0;
 static u32 impCur = 0; // mA
 
 static u32 tachoPLL = 0;
+
+const u16 periodPWM90	= US2CLK(10);
+const u16 maxDutyPWM90	= US2CLK(9);
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -245,11 +248,11 @@ static void InitPWM()
 	SCT->MATCH_L[3] = 0; 
 	SCT->MATCH_L[4] = 0;
 
-	SCT->OUT[0].SET = (1<<0);
-	SCT->OUT[0].CLR = (1<<1)|(1<<2);
+	SCT->OUT[0].CLR = (1<<0);
+	SCT->OUT[0].SET = (1<<1)|(1<<2);
 
-	SCT->OUT[1].SET = (1<<1)|(1<<2);
-	SCT->OUT[1].CLR = (1<<0);
+	SCT->OUT[1].CLR = (1<<1)|(1<<2);
+	SCT->OUT[1].SET = (1<<0);
 
 	SCT->EVENT[0].STATE = 1;
 	SCT->EVENT[0].CTRL = (1<<5)|(0<<6)|(1<<12)|0;
@@ -260,26 +263,50 @@ static void InitPWM()
 	SCT->EVENT[2].STATE = 1;
 	SCT->EVENT[2].CTRL = (1<<5)|(0<<6)|(1<<12)|2;
 
-	SCT->EVENT[3].STATE = 0;
-	SCT->EVENT[3].CTRL = 0;
-
-	SCT->EVENT[4].STATE = 0;
-	SCT->EVENT[4].CTRL = 0;
-
-	SCT->EVENT[5].STATE = 0;
-	SCT->EVENT[5].CTRL = 0;
-
 	SCT->START_L = 0;
 	SCT->STOP_L = 0;
 	SCT->HALT_L = 0;
 	SCT->LIMIT_L = (1<<2);
 
+
+	SCT->STATE_H = 0;
+	SCT->REGMODE_H = 0;
+
+	SCT->MATCHREL_H[0] = US2CLK(1)-1; 
+	SCT->MATCHREL_H[1] = periodPWM90-1;
+	SCT->MATCH_H[2] = 0;	  
+	SCT->MATCH_H[3] = 0; 
+	SCT->MATCH_H[4] = 0;
+
+	SCT->OUT[2].CLR = (1<<3);
+	SCT->OUT[2].SET = (1<<4);
+
+	SCT->EVENT[3].STATE = 1;
+	SCT->EVENT[3].CTRL = SCT_HEVENT|SCT_COMBMODE_MATCH|SCT_MATCHSEL(0);
+
+	SCT->EVENT[4].STATE = 1;
+	SCT->EVENT[4].CTRL = SCT_HEVENT|SCT_COMBMODE_MATCH|SCT_MATCHSEL(1);
+
+	SCT->EVENT[5].STATE = 0;
+	SCT->EVENT[5].CTRL = 0;
+
+	SCT->EVENT[6].STATE = 0;
+	SCT->EVENT[6].CTRL = 0;
+
+	SCT->EVENT[7].STATE = 0;
+	SCT->EVENT[7].CTRL = 0;
+
+	SCT->START_H = 0;
+	SCT->STOP_H = 0;
+	SCT->HALT_H = 0;
+	SCT->LIMIT_H = (1<<4);
+
 	SCT->CONFIG = 0; 
 
-	//SWM->CTOUT_0 = 20;
+	SWM->CTOUT_2 = PIN_PWM90;
 	//SWM->CTOUT_1 = 17;
 
-	SCT->CTRL_L = (1<<3);
+	SCT->CTRL_U = SCT_CLRCTR_L|SCT_CLRCTR_H;
 
 	SetDutyPWM(0);
 }
@@ -364,7 +391,7 @@ static __irq void TahoHandler()
 			rpmCounter = 0;
 		};
 
-		HW::GPIO->NOT0 = 1<<15;
+		HW::GPIO->NOT0 = ROT;
 	};
 }
 

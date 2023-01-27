@@ -20,8 +20,15 @@ const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 u16 curADC = 0;
 u16 avrCurADC = 0;
 u32 fcurADC = 0;
-u16 vAP = 0;
-u32 fvAP = 0;
+
+u16 auxADC = 0;
+u16 avrAuxADC = 0;
+u32 fauxADC = 0;
+
+u16 fb90ADC = 0;
+u16 avrFB90ADC = 0;
+u32 fFB90ADC = 0;
+
 u32 tachoCount = 0;
 u32 motoCounter = 0;
 u32 targetRPM = 0;
@@ -329,19 +336,20 @@ static void InitADC()
 	//SWM->PINASSIGN[3] = (SWM->PINASSIGN[3] & 0x00FFFFFF) | 0x09000000;
 	//SWM->PINASSIGN[4] = (SWM->PINASSIGN[4] & 0xFF000000) | 0x00100FFF;
 
-	SWM->PINENABLE0.B.ADC_0 = 0;
-	SWM->PINENABLE0.B.ADC_1 = 0;
-
+	SWM->PINENABLE0.B.ADC_0		= 0;	//ISEN
+	SWM->PINENABLE0.B.ADC_1		= 0;	//ILOW
+	SWM->PINENABLE0.B.ADC_3		= 0;	//FB_AUXPWR
+	SWM->PINENABLE0.B.ADC_10	= 0;	//FB_90
 
 	SYSCON->PDRUNCFG &= ~(1<<4);
 	SYSCON->SYSAHBCLKCTRL |= CLK::ADC_M;
 
-	ADC->CTRL = (1<<30)|4;
+	ADC->CTRL = ADC_CTRL_CALMODE|ADC_CTRL_CLKDIV(4);
 
-	while(ADC->CTRL & (1<<30));
+	while(ADC->CTRL & ADC_CTRL_CALMODE);
 
-	ADC->CTRL = 24;
-	ADC->SEQA_CTRL = 3|(1UL<<31)|(1<<27);
+	ADC->CTRL = ADC_CTRL_CLKDIV(24);
+	ADC->SEQA_CTRL = ADC_SEQ_CTRL_CHANNELS((1<<0)|(1<<1)|(1<<3)|(1<<10))|ADC_SEQ_CTRL_SEQ_ENA(1)|ADC_SEQ_CTRL_BURST(1);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -426,6 +434,9 @@ static void UpdateMotor()
 		HW::ResetWDT();
 	
 		fcurADC += curADC - avrCurADC; avrCurADC = fcurADC >> 8;
+
+		auxADC	= ((HW::ADC->DAT3 &0xFFF0) * 238) >> 16;  
+		fb90ADC	= ((HW::ADC->DAT10&0xFFF0) * 93) >> 16;  
 
 		if (targetRPM == 0)
 		{

@@ -13,6 +13,9 @@
 #define CUR_MIN		100
 #define IMP_CUR_LIM	13000
 #define POWER_LIM	30000
+#define VREG_MIN	100
+#define VREG_MAX	480
+#define RPM_VREG_K	(6 * 256/10)
 
 
 const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
@@ -20,14 +23,6 @@ const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 u16 curADC = 0;
 u16 avrCurADC = 0;
 u32 fcurADC = 0;
-
-u16 auxADC = 0;
-u16 avrAuxADC = 0;
-u32 fauxADC = 0;
-
-u16 fb90ADC = 0;
-u16 avrFB90ADC = 0;
-u32 fFB90ADC = 0;
 
 u32 tachoCount = 0;
 u32 motoCounter = 0;
@@ -141,6 +136,8 @@ static u32 tachoPLL = 0;
 
 const u16 periodPWM90	= US2CLK(10);
 const u16 maxDutyPWM90	= US2CLK(9);
+
+static void SetDutyPWM(u16 v);
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -320,11 +317,18 @@ static void InitPWM()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void SetDutyPWM(u16 v)
+static void SetDutyPWM(u16 v)
 {
 	if (v > limDuty) v = limDuty;
 	
 	HW::SCT->MATCHREL_L[0] = maxDuty - (curDuty = (v < maxDuty) ? v : maxDuty);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void SetDutyPWM90(u16 v)
+{
+	HW::SCT->MATCHREL_H[0] = (v < maxDutyPWM90) ? v : maxDutyPWM90;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -341,7 +345,12 @@ static void InitADC()
 	SWM->PINENABLE0.B.ADC_3		= 0;	//FB_AUXPWR
 	SWM->PINENABLE0.B.ADC_10	= 0;	//FB_90
 
-	SYSCON->PDRUNCFG &= ~(1<<4);
+	IOCON->PIO0_6.D		= 0;
+	IOCON->PIO0_7.D		= 0;
+	IOCON->PIO0_13.D	= 0;
+	IOCON->PIO0_23.D	= 0;
+
+	SYSCON->PDRUNCFG &= ~PDRUNCFG_ADC_PD;
 	SYSCON->SYSAHBCLKCTRL |= CLK::ADC_M;
 
 	ADC->CTRL = ADC_CTRL_CALMODE|ADC_CTRL_CLKDIV(4);
@@ -405,6 +414,90 @@ static __irq void TahoHandler()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+i16 auxADC = 0;
+i16 avrAuxADC = 0;
+u32 fauxADC = 0;
+
+i16 fb90ADC = 0;
+i16 avrFB90ADC = 0;
+u32 fFB90ADC = 0;
+
+u16 targetVREG = 0;
+u16 curVREG = 0;
+
+u16 curDuty90 = 0;
+u16 dstDuty90 = 0;
+
+u16 corrDuty90 = 0x1000;
+//u16 addDuty90 = NS2CLK(560);
+
+bool lockAuxLoop90 = false;
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void UpdateVREG()
+{
+	static CTM32 tm;
+	static CTM32 tm2;
+
+	if (tm.Check(US2CTM(1001)))
+	{
+		auxADC	= ((HW::ADC->DAT3 &0xFFF0) * 2771) >> 16;  
+		fb90ADC	= ((HW::ADC->DAT10&0xFFF0) * 1033) >> 16;  
+
+		fauxADC	 += auxADC	- avrAuxADC;	avrAuxADC	= fauxADC >> 8;
+		fFB90ADC += fb90ADC	- avrFB90ADC;	avrFB90ADC	= fFB90ADC >> 8;
+
+		if (tm2.Check(MS2CTM(10)))
+		{
+			dstDuty90 = (periodPWM90 * curVREG + avrAuxADC/2) / avrAuxADC + NS2CLK(560);
+
+			if (lockAuxLoop90)
+			{
+				curDuty90 = dstDuty90;
+			}
+			else
+			{
+				if (curDuty90 < dstDuty90)
+				{
+					curDuty90 += 1;
+				}
+				else if (curDuty90 > dstDuty90)
+				{
+					curDuty90 -= 1;
+				};
+			};
+
+			if (curDuty90 == dstDuty90)
+			{
+				if (avrFB90ADC < ((i16)curVREG-5))
+				{
+					if (corrDuty90 < 0x1200) corrDuty90 += 1;
+				}
+				else if (avrFB90ADC > ((i16)curVREG+5))
+				{
+					if (corrDuty90 > 0xE00) corrDuty90 -= 1;
+				};
+			};
+
+			u16 duty = (curDuty90 * corrDuty90) >> 12;
+
+			SetDutyPWM90(duty);
+
+			if (curVREG > targetVREG)
+			{
+				curVREG = targetVREG;
+			}
+			else
+			{
+				if (curVREG < targetVREG && curVREG < VREG_MAX) curVREG += 1;
+			};
+		};
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void UpdateMotor()
 {
 	static u16 pt = 0;
@@ -434,9 +527,6 @@ static void UpdateMotor()
 		HW::ResetWDT();
 	
 		fcurADC += curADC - avrCurADC; avrCurADC = fcurADC >> 8;
-
-		auxADC	= ((HW::ADC->DAT3 &0xFFF0) * 238) >> 16;  
-		fb90ADC	= ((HW::ADC->DAT10&0xFFF0) * 93) >> 16;  
 
 		if (targetRPM == 0)
 		{
@@ -489,6 +579,9 @@ static void UpdateMotor()
 				tm.Reset();
 
 				SetDutyPWM(tachoPLL = maxDuty/8);
+
+				targetVREG = VREG_MIN;
+				lockAuxLoop90 = false;
 
 				break;
 
@@ -573,6 +666,8 @@ static void UpdateMotor()
 				{
 					tachoCount = tachoLim;
 					tachoStep = 64;
+				
+					lockAuxLoop90 = true;
 
 					tm.Reset();
 					//tmOvrCrnt.Reset();
@@ -583,6 +678,8 @@ static void UpdateMotor()
 				{
 					SetDutyPWM(tachoPLL);
 				};
+					
+				targetVREG = (targetRPM * RPM_VREG_K) >> 8;
 
 				break;
 
@@ -605,6 +702,9 @@ static void UpdateMotor()
 				DisableDriver();
 
 				dir = false;
+
+				targetVREG = VREG_MIN;
+				lockAuxLoop90 = false;
 
 				motorState++;
 
@@ -781,7 +881,18 @@ void InitHardware()
 
 void UpdateHardware()
 {
-	UpdateMotor();
+	static byte i = 0;
+
+	#define CALL(p) case (__LINE__-S): p; break;
+
+	enum C { S = (__LINE__+3) };
+	switch(i++)
+	{
+		CALL( UpdateMotor();	);
+		CALL( UpdateVREG();		);
+	};
+
+	i = (i > (__LINE__-S-3)) ? 0 : i;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

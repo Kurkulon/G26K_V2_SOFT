@@ -36,7 +36,7 @@ extern void SetMaxCurrent(u16 v);
 
 //extern void SetDutyPWMDir(i32 v);
 
-extern void SetDutyPWM(u16 v);
+//extern void SetDutyPWM(u16 v);
 
 //extern void OpenValve(bool forced = false);
 //extern void CloseValve(bool forced = false);

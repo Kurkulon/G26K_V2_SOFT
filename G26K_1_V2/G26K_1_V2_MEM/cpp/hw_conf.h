@@ -85,18 +85,18 @@
 	// ++++++++++++++	SERCOM	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define SPI_SERCOM_NUM		0
-//	#define SERCOM_1			1
+	#define UART2_LPC			1
 //	#define SERCOM_2			2
 	#define I2C_SERCOM_NUM		3
 	//#define DSP_SERCOM_NUM		4
 	#define UART1_DSP			5
 	//#define SERCOM_6			6
-	#define UART0_LPC			7
+	//#define SERCOM_7			7
 
 	// ++++++++++++++	DMA	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define	NAND_DMA			DMA_CH0
-	#define	UART0_DMA			DMA_CH1
+	#define	UART1_DMA			DMA_CH1
 	//#define	COM2_DMA			DMA_CH2
 	#define	UART2_DMA			DMA_CH3
 	#define	SPI_DMA_TX			DMA_CH4
@@ -424,52 +424,52 @@
 	// ++++++++++++++	USART	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-	#define PIO_UTXD0			HW::PIOB 
-	#define PIO_URXD0			HW::PIOB 
+	//#define PIO_UTXD0			HW::PIOB 
+	//#define PIO_URXD0			HW::PIOB 
 	#define PIO_UTXD1			HW::PIOB 
 	#define PIO_URXD1			HW::PIOB 
 	#define PIO_UTXD2			HW::PIOC 
 	#define PIO_URXD2			HW::PIOC 
-	#define PIO_RTS0			HW::PIOC 
+	//#define PIO_RTS0			HW::PIOC 
 	#define PIO_RTS1			HW::PIOC 
 	#define PIO_RTS2			HW::PIOC 
 
-	#define PMUX_UTXD0			PORT_PMUX_D
-	#define PMUX_URXD0			PORT_PMUX_D 
+	//#define PMUX_UTXD0			PORT_PMUX_D
+	//#define PMUX_URXD0			PORT_PMUX_D 
 	#define PMUX_UTXD1			PORT_PMUX_C
 	#define PMUX_URXD1			PORT_PMUX_C 
 	#define PMUX_UTXD2			PORT_PMUX_C 
 	#define PMUX_URXD2			PORT_PMUX_C 
 
-	#define UART0_TXPO			USART_TXPO_0 
-	#define UART0_RXPO			USART_RXPO_1 
-
 	#define UART1_TXPO			USART_TXPO_0 
 	#define UART1_RXPO			USART_RXPO_1 
 
-	#define PIN_UTXD0			21 
-	#define PIN_URXD0			20 
+	#define UART2_TXPO			USART_TXPO_0 
+	#define UART2_RXPO			USART_RXPO_1 
+
+	//#define PIN_UTXD0			21 
+	//#define PIN_URXD0			20 
 	#define PIN_UTXD1			16 
 	#define PIN_URXD1			17 
-	#define PIN_UTXD2			7 
-	#define PIN_URXD2			6 
-	#define PIN_RTS0			21
+	#define PIN_UTXD2			27 
+	#define PIN_URXD2			28
+	//#define PIN_RTS0			21
 	#define PIN_RTS1			11
 	#define PIN_RTS2			5
 
 
-	#define UTXD0				(1<<PIN_UTXD0) 
-	#define URXD0				(1<<PIN_URXD0) 
+	//#define UTXD0				(1<<PIN_UTXD0) 
+	//#define URXD0				(1<<PIN_URXD0) 
 	#define UTXD1				(1<<PIN_UTXD1) 
 	#define URXD1				(1<<PIN_URXD1) 
 	#define UTXD2				(1<<PIN_UTXD2) 
 	#define URXD2				(1<<PIN_URXD2) 
-	#define RTS0				(1<<PIN_RTS0) 
+	//#define RTS0				(1<<PIN_RTS0) 
 	#define RTS1				(1<<PIN_RTS1) 
 	#define RTS2				(1<<PIN_RTS2) 
 
-	#define UART0_GEN_SRC		GEN_MCK
-	#define UART0_GEN_CLK		GEN_MCK_CLK
+	#define UART2_GEN_SRC		GEN_MCK
+	#define UART2_GEN_CLK		GEN_MCK_CLK
 
 	#define UART1_GEN_SRC		GEN_MCK
 	#define UART1_GEN_CLK		GEN_MCK_CLK

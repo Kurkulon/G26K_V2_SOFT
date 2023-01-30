@@ -92,17 +92,17 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define INIT_PORTF_MUX			0x000F		//  0000 0000 0000 1111
-#define INIT_PORTG_MUX			0xFF00		//  1111 1111 0000 0000
+#define INIT_PORTF_MUX			0								//  0000 0000 0000 1111
+#define INIT_PORTG_MUX			0								//  1111 1111 0000 0000
 
-#define INIT_PORTF_FER 			0x1E0F		//  0001 1110 0000 1111
-#define INIT_PORTG_FER 			0xFF00		//  1111 1111 0000 0000
+#define INIT_PORTF_FER 			0								//  0001 1110 0000 1111
+#define INIT_PORTG_FER 			0								//  1111 1111 0000 0000
 
-#define INIT_PORTFIO_DIR 		0x01A0		//  0000 0001 1010 0000
-#define INIT_PORTGIO_DIR 		0x00FF		//  0000 0000 1111 1111
+#define INIT_PORTFIO_DIR 		PF5|PF9|PF10					//  0000 0001 1010 0000
+#define INIT_PORTGIO_DIR 		PG2|PG3|PG5|PG12|PG13|PG14		//  0000 0000 1111 1111
 
-#define INIT_PORTFIO_INEN 		0x0000		//  0000 0000 0000 0000
-#define INIT_PORTGIO_INEN 		0x0000		//  0000 0000 0000 0000
+#define INIT_PORTFIO_INEN 		PF3|PF4							//  0000 0000 0000 0000
+#define INIT_PORTGIO_INEN 		PG15							//  0000 0000 0000 0000
 
 #define INIT_PORTGIO 			0
 #define INIT_PORTFIO 			0
@@ -136,15 +136,15 @@
 #define PIO_RTS_SET				*pPORTFIO_SET
 #define PIO_RTS_CLR				*pPORTFIO_CLEAR
 #define PIO_RTS_DIR				*pPORTFIO_DIR
-#define PIO_RTS_MUX				*pPORTF_MUX
+#define PIO_RTS_FER				*pPORTF_FER
 
 #define PIN_RTS					5
 #define MASK_RTS				(1UL<<PIN_RTS)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define MAIN_LOOP_PIN_SET()		{*pPORTFIO_SET = 1<<7;}
-#define MAIN_LOOP_PIN_CLR()		{*pPORTFIO_CLEAR = 1<<7;}
+#define MAIN_LOOP_PIN_SET()		{*pPORTGIO_SET = PG2;}
+#define MAIN_LOOP_PIN_CLR()		{*pPORTGIO_CLEAR = PG2;}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

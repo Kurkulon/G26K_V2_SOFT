@@ -553,6 +553,8 @@ void UpdateHardware()
 
 	if (!ctm.Check(US2RT(50))) return;
 
+	HW::ResetWDT();
+
 	switch (i)
 	{
 		case 0:

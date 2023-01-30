@@ -38,8 +38,11 @@ __packed struct RspMoto
 	u16 	rw;
 	u16 	mororStatus; 
 	u16		current;
+	u16		currentLow;
 	u16		rpm;
 	u16		motoCounter;
+	u16		auxVoltage;
+	u16		motoVoltage;
 	u16 	crc;  
 };
 

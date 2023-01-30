@@ -126,7 +126,7 @@
 #define PIO_RTS_SET				*pPORTFIO_SET
 #define PIO_RTS_CLR				*pPORTFIO_CLEAR
 #define PIO_RTS_DIR				*pPORTFIO_DIR
-#define PIO_RTS_MUX				*pPORTF_MUX
+#define PIO_RTS_FER				*pPORTF_FER
 
 #define PIN_RTS					5
 #define MASK_RTS				(1UL<<PIN_RTS)
@@ -172,7 +172,7 @@
 #define INIT_PORTGIO_MASKA		0
 #define INIT_PORTGIO_MASKB		0
 
-#define INIT_WDOG_CNT			MS2CLK(10)
+#define INIT_WDOG_CNT			MS2CLK(100)
 #define INIT_WDOG_CTL			WDEV_RESET|WDEN
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

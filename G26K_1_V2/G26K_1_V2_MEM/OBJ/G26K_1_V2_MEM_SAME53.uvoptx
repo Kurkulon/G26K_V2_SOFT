@@ -148,7 +148,40 @@
           <Name></Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint/>
+      <Breakpoint>
+        <Bp>
+          <Number>0</Number>
+          <Type>0</Type>
+          <LineNumber>3409</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>53172</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\3409</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>2709</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>50952</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2709</Expression>
+        </Bp>
+      </Breakpoint>
       <WatchWindow1>
         <Ww>
           <count>0</count>
@@ -243,22 +276,37 @@
         <Ww>
           <count>18</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rcvManQuality</ItemText>
+          <ItemText>motoTargetRPS,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>19</count>
           <WinNumber>1</WinNumber>
-          <ItemText>_ZN4MEMBILi512EE9_freeListE</ItemText>
+          <ItemText>motoRPS,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>20</count>
           <WinNumber>1</WinNumber>
-          <ItemText>_ZN4MEMBILi1536EE9_freeListE</ItemText>
+          <ItemText>motoCur,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>21</count>
           <WinNumber>1</WinNumber>
-          <ItemText>_ZN4MEMBILi2304EE9_freeListE</ItemText>
+          <ItemText>motoCounter</ItemText>
+        </Ww>
+        <Ww>
+          <count>22</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motoVoltage,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>23</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>auxVoltage,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>24</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motoCurLow,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

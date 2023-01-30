@@ -181,12 +181,14 @@ static TM32 imModeTimeout;
 //static u16 motoEnable = 0;		// двигатель включить или выключить
 static u16 motoTargetRPS = 0;		// заданные обороты двигателя
 static u16 motoRPS = 0;				// обороты двигателя, об/сек
-static u16 motoCur = 0;				// ток двигателя, мА
-//static u16 motoStat = 0;			// статус двигателя: 0 - выкл, 1 - вкл
+static u16 motoCur = 0;				// ток двигателя, 0...9400 мА
+static u16 motoCurLow = 0;			// ток двигателя, 0...4500 мА
+static u16 motoStat = 0;			// статус двигателя
 static u16 motoCounter = 0;			// счётчик оборотов двигателя 1/6 оборота
 //static u16 cmSPR = 32;			// Количество волновых картин на оборот головки в режиме цементомера
 //static u16 imSPR = 100;			// Количество точек на оборот головки в режиме имиджера
 //static u16 *curSPR = &cmSPR;		// Количество импульсов излучателя на оборот в текущем режиме
+static u16 auxVoltage = 0;
 static u16 motoVoltage = 90;
 static u16 motoRcvCount = 0;
 
@@ -380,7 +382,7 @@ void CallBackDspReq01(Ptr<REQ> &q)
 			if (q->crcOK && rsp.rw == (dspReqWord|1))
 			{
 				curFireVoltage = rsp.v01.fireVoltage;
-				motoVoltage = rsp.v01.motoVoltage;
+				//motoVoltage = rsp.v01.motoVoltage;
 				
 				dspStatus |= 1;
 				dspRcvCount++;
@@ -445,8 +447,8 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 	q.CallBack = CallBackDspReq01;
 	//q.rb = &rb;
 	//q.wb = &wb;
-	q.preTimeOut = MS2CLK(1);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(1);
+	q.postTimeOut = US2COM(100);
 	q.ready = false;
 	q.tryCount = tryCount;
 	//q.ptr = &r;
@@ -571,8 +573,8 @@ Ptr<REQ> CreateDspReq05(u16 tryCount)
 	REQ &q = *rq;
 
 	q.CallBack = CallBackDspReq05;
-	q.preTimeOut = MS2CLK(10);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(10);
+	q.postTimeOut = US2COM(100);
 	//q.rb = &rb;
 	//q.wb = &wb;
 	q.ready = false;
@@ -639,8 +641,8 @@ Ptr<REQ> CreateDspReq06(u16 stAdr, u16 count, void* data, u16 count2, void* data
 	REQ &q = *rq;
 
 	q.CallBack = CallBackDspReq06;
-	q.preTimeOut = MS2CLK(500);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(500);
+	q.postTimeOut = US2COM(100);
 	//q.rb = &rb;
 	//q.wb = &wb;
 	q.ready = false;
@@ -766,10 +768,13 @@ static void CallBackMotoReq(Ptr<REQ> &q)
 
 		if (rsp.rw == 0x101)
 		{
-			motoRPS = rsp.rpm;
-			motoCur = rsp.current;
-			//motoStat = rsp.mororStatus;
+			motoRPS		= rsp.rpm;
+			motoCur		= rsp.current;
+			motoCurLow	= rsp.currentLow;
+			motoStat	= rsp.mororStatus;
 			motoCounter = rsp.motoCounter;
+			auxVoltage	= rsp.auxVoltage;
+			motoVoltage	= rsp.motoVoltage;
 			motoRcvCount++;
 		};
 	};
@@ -797,8 +802,8 @@ static Ptr<REQ> CreateMotoReq()
 	q.CallBack = CallBackMotoReq;
 	//q.rb = &rb;
 	//q.wb = &wb;
-	q.preTimeOut = MS2CLK(1);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(1);
+	q.postTimeOut = US2COM(100);
 	q.ready = false;
 	q.checkCRC = true;
 	q.updateCRC = false;
@@ -854,8 +859,8 @@ Ptr<REQ> CreateBootMotoReq01(u16 flashLen, u16 tryCount)
 	REQ &q = *rq;
 
 	q.CallBack = CallBackBootMotoReq01;
-	q.preTimeOut = MS2CLK(10);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(10);
+	q.postTimeOut = US2COM(100);
 	//q.rb = &rb;
 	//q.wb = &wb;
 	q.ready = false;
@@ -912,8 +917,8 @@ Ptr<REQ> CreateBootMotoReq02(u16 stAdr, u16 count, const u32* data, u16 tryCount
 	REQ &q = *rq;
 
 	q.CallBack = CallBackBootMotoReq02;
-	q.preTimeOut = MS2CLK(300);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(300);
+	q.postTimeOut = US2COM(100);
 	//q.rb = &rb;
 	//q.wb = &wb;
 	q.ready = false;
@@ -982,8 +987,8 @@ Ptr<REQ> CreateBootMotoReq03()
 	REQ &q = *rq;
 
 	q.CallBack = 0;
-	q.preTimeOut = MS2CLK(10);
-	q.postTimeOut = US2CLK(100);
+	q.preTimeOut = MS2COM(10);
+	q.postTimeOut = US2COM(100);
 	//q.rb = &rb;
 	//q.wb = &wb;
 	q.ready = false;
@@ -1851,7 +1856,7 @@ static void UpdateMan()
 
 		case 2:
 
-			if (tm.Check(US2CLK(100)))
+			if (tm.Check(US2CTM(100)))
 			{
 				//manTrmData[0] = 1;
 				//manTrmData[1] = 0;
@@ -2418,7 +2423,7 @@ static void UpdateTestFlashWrite()
 
 	static CTM32 rtm;
 
-	if (rtm.Check(MS2CLK(1)))
+	if (rtm.Check(MS2CTM(1)))
 	{
 		testDspReqCount++;
 
@@ -2635,7 +2640,7 @@ static void FlashMoto()
 
 	bool hs = false;
 
-	while (!ctm.Check(MS2CLK(200)))
+	while (!ctm.Check(MS2CTM(200)))
 	{
 		reqHS.guid = masterGUID;
 		reqHS.crc = GetCRC16(&reqHS, sizeof(reqHS) - sizeof(reqHS.crc));
@@ -2648,7 +2653,7 @@ static void FlashMoto()
 
 		rb.data = &rspHS;
 		rb.maxLen = sizeof(rspHS);
-		commoto.Read(&rb, MS2CLK(5), US2CLK(100));
+		commoto.Read(&rb, MS2COM(5), US2COM(100));
 
 		while (commoto.Update()) HW::WDT->Update();;
 
@@ -2692,7 +2697,7 @@ static void FlashMoto()
 
 					ctm.Reset();
 
-					while (!ctm.Check(MS2CLK(1))) HW::WDT->Update();
+					while (!ctm.Check(MS2CTM(1))) HW::WDT->Update();
 
 					count -= len;
 					p += len;
@@ -2707,7 +2712,7 @@ static void FlashMoto()
 
 		ctm.Reset();
 
-		while (!ctm.Check(MS2CLK(1))) HW::WDT->Update();
+		while (!ctm.Check(MS2CTM(1))) HW::WDT->Update();
 	};
 }
 
@@ -3405,7 +3410,7 @@ int main()
 
 	//__breakpoint(0);
 
-	//FlashMoto();
+	FlashMoto();
 
 	//FlashDSP();
 

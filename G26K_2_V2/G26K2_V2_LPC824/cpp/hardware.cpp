@@ -24,6 +24,10 @@ u16 curADC = 0;
 u16 avrCurADC = 0;
 u32 fcurADC = 0;
 
+u16 lowCurADC = 0;
+u16 avrLowCurADC = 0;
+u32 fLowCurADC = 0;
+
 u32 tachoCount = 0;
 u32 motoCounter = 0;
 u32 targetRPM = 0;
@@ -276,7 +280,7 @@ static void InitPWM()
 	SCT->STATE_H = 0;
 	SCT->REGMODE_H = 0;
 
-	SCT->MATCHREL_H[0] = US2CLK(1)-1; 
+	SCT->MATCHREL_H[0] = 0; 
 	SCT->MATCHREL_H[1] = periodPWM90-1;
 	SCT->MATCH_H[2] = 0;	  
 	SCT->MATCH_H[3] = 0; 
@@ -428,7 +432,7 @@ u16 curVREG = 0;
 u16 curDuty90 = 0;
 u16 dstDuty90 = 0;
 
-u16 corrDuty90 = 0x1000;
+u16 corrDuty90 = 0x100;
 //u16 addDuty90 = NS2CLK(560);
 
 bool lockAuxLoop90 = false;
@@ -448,50 +452,53 @@ static void UpdateVREG()
 		fauxADC	 += auxADC	- avrAuxADC;	avrAuxADC	= fauxADC >> 8;
 		fFB90ADC += fb90ADC	- avrFB90ADC;	avrFB90ADC	= fFB90ADC >> 8;
 
+		dstDuty90 = (periodPWM90 * curVREG + auxADC/2) / auxADC + NS2CLK(560);
+
+		if (lockAuxLoop90)
+		{
+			curDuty90 = dstDuty90;
+		}
+		else
+		{
+			if (curDuty90 < dstDuty90)
+			{
+				curDuty90 += 1;
+			}
+			else if (curDuty90 > dstDuty90)
+			{
+				curDuty90 -= 1;
+			};
+		};
+
+		if (curDuty90 == dstDuty90)
+		{
+			if (fb90ADC < ((i16)curVREG-5))
+			{
+				if (corrDuty90 < 0x140) corrDuty90 += 2;
+			}
+			else if (fb90ADC > ((i16)curVREG+5))
+			{
+				if (corrDuty90 > 0xC0) corrDuty90 -= 2;
+			};
+		};
+
+		u16 duty = (curDuty90 * corrDuty90) >> 8;
+
+		SetDutyPWM90(duty);
+
 		if (tm2.Check(MS2CTM(10)))
 		{
-			dstDuty90 = (periodPWM90 * curVREG + avrAuxADC/2) / avrAuxADC + NS2CLK(560);
-
-			if (lockAuxLoop90)
-			{
-				curDuty90 = dstDuty90;
-			}
-			else
-			{
-				if (curDuty90 < dstDuty90)
-				{
-					curDuty90 += 1;
-				}
-				else if (curDuty90 > dstDuty90)
-				{
-					curDuty90 -= 1;
-				};
-			};
-
-			if (curDuty90 == dstDuty90)
-			{
-				if (avrFB90ADC < ((i16)curVREG-5))
-				{
-					if (corrDuty90 < 0x1200) corrDuty90 += 1;
-				}
-				else if (avrFB90ADC > ((i16)curVREG+5))
-				{
-					if (corrDuty90 > 0xE00) corrDuty90 -= 1;
-				};
-			};
-
-			u16 duty = (curDuty90 * corrDuty90) >> 12;
-
-			SetDutyPWM90(duty);
-
 			if (curVREG > targetVREG)
 			{
-				curVREG = targetVREG;
+				if (curVREG > targetVREG && curVREG > VREG_MIN) curVREG -= 1;
+				//curVREG = targetVREG;
 			}
 			else
 			{
 				if (curVREG < targetVREG && curVREG < VREG_MAX) curVREG += 1;
 			};
+
+			if (corrDuty90 > 0x130) curVREG = 0, corrDuty90 = 0;
 		};
 	};
 }
@@ -510,9 +517,9 @@ static void UpdateMotor()
 
 	static TM32 tm;//, tmRPM;
 
-	curADC = ((HW::ADC->DAT0&0xFFF0) * 9400) >> 16;  
+	curADC = ((HW::ADC->DAT0&0xFFF0) * 16925) >> 16;  
 
-	if (curADC > 110) curADC -= 110; else curADC = 0;
+	if (curADC > 37) curADC -= 37; else curADC = 0;
 
 	if (curADC > maxCur)
 	{	
@@ -528,6 +535,11 @@ static void UpdateMotor()
 	
 		fcurADC += curADC - avrCurADC; avrCurADC = fcurADC >> 8;
 
+		lowCurADC = ((HW::ADC->DAT1&0xFFF0) * 4950) >> 16; 
+		if (lowCurADC > 40) lowCurADC -= 40; else lowCurADC = 0;
+
+		fLowCurADC += lowCurADC - avrLowCurADC; avrLowCurADC = fLowCurADC >> 8;
+	
 		if (targetRPM == 0)
 		{
 			motorState = 0;
@@ -667,6 +679,7 @@ static void UpdateMotor()
 					tachoCount = tachoLim;
 					tachoStep = 64;
 				
+					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
 					lockAuxLoop90 = true;
 
 					tm.Reset();
@@ -679,8 +692,6 @@ static void UpdateMotor()
 					SetDutyPWM(tachoPLL);
 				};
 					
-				targetVREG = (targetRPM * RPM_VREG_K) >> 8;
-
 				break;
 
 			case 5: // Стабилизация оборотов

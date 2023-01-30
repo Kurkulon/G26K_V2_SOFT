@@ -1138,7 +1138,7 @@ int main( void )
 	{
 		*pPORTFIO_SET = 1<<8;
 		
-		//UpdateMode();
+		UpdateMode();
 
 		*pPORTFIO_CLEAR = 1<<8;
 

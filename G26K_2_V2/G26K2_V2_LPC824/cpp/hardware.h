@@ -156,6 +156,54 @@ inline u16 GetAvrCurrent()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+inline u16 GetCurrentLow()
+{
+	extern u16 lowCurADC;
+	return lowCurADC;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline u16 GetAvrCurrentLow()
+{
+	extern u16 avrLowCurADC;
+	return avrLowCurADC;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline u16 GetAuxVoltage()
+{
+	extern i16 auxADC;
+	return auxADC;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline u16 GetAvrAuxVoltage()
+{
+	extern i16 avrAuxADC;
+	return avrAuxADC;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline u16 GetMotoVoltage()
+{
+	extern i16 fb90ADC;
+	return fb90ADC;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline u16 GetAvrMotoVoltage()
+{
+	extern i16 avrFB90ADC;
+	return avrFB90ADC;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 inline u16 GetRPM()
 {
 	extern u16 rpm;
@@ -186,28 +234,15 @@ inline u32 GetmotoCounter()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-inline bool CalibrateShaftPos()
+inline byte GetMotorState()
 {
 	extern byte motorState;
 
-	if (IsMotorIdle())
-	{
-		motorState = 5;
-		return true;
-	};
-
-	return false;
+	return motorState;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-inline bool InitShaftPos()
-{
-	extern byte motorState;
-
-	motorState = 9;
-	return true;
-}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -265,6 +265,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>curVREG,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>23</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>avrLowCurADC,0x0A</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
@@ -437,6 +442,10 @@
       <pSingCmdsp></pSingCmdsp>
       <pMultCmdsp></pMultCmdsp>
       <SystemViewers>
+        <Entry>
+          <Name>System Viewer\ADC</Name>
+          <WinId>35905</WinId>
+        </Entry>
         <Entry>
           <Name>System Viewer\SCT</Name>
           <WinId>35902</WinId>

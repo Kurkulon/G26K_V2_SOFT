@@ -37,13 +37,17 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define MS2CLK(x) ((u32)(x*1.0*SCLK/1e3+0.5))
-#define US2CLK(x) ((u32)(x*1.0*SCLK/1e6+0.5))
-#define NS2CLK(x) ((u32)(x*1.0*SCLK/1e9+0.5))
+#define MS2SCLK(x)	((u32)(x*1.0*SCLK/1e3+0.5))
+#define US2SCLK(x)	((u32)(x*1.0*SCLK/1e6+0.5))
+#define NS2SCLK(x)	((u32)(x*1.0*SCLK/1e9+0.5))
 
-#define MS2CCLK(x) ((u32)(x*1.0*CCLK/1e3+0.5))
-#define US2CCLK(x) ((u32)(x*1.0*CCLK/1e6+0.5))
-#define NS2CCLK(x) ((u32)(x*1.0*CCLK/1e9+0.5))
+#define MS2CLK(x)	MS2SCLK(x) 
+#define US2CLK(x)	US2SCLK(x)
+#define NS2CLK(x)	NS2SCLK(x)
+
+#define MS2CCLK(x)	((u32)(x*1.0*CCLK/1e3+0.5))
+#define US2CCLK(x)	((u32)(x*1.0*CCLK/1e6+0.5))
+#define NS2CCLK(x)	((u32)(x*1.0*CCLK/1e9+0.5))
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -119,8 +123,13 @@
 #define INIT_PORTGIO_MASKA		0
 #define INIT_PORTGIO_MASKB		0
 
-#define INIT_WDOG_CNT			MS2CLK(10)
+#define INIT_WDOG_CNT			MS2CLK(1000)
+
+#ifndef __DEBUG
 #define INIT_WDOG_CTL			WDEV_RESET|WDEN
+#else
+#define INIT_WDOG_CTL			WDEV_RESET|WDEN
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -145,6 +154,11 @@
 
 #define MAIN_LOOP_PIN_SET()		{*pPORTGIO_SET = PG2;}
 #define MAIN_LOOP_PIN_CLR()		{*pPORTGIO_CLEAR = PG2;}
+#define MAIN_LOOP_PIN_TGL()		{*pPORTGIO_TOGGLE = PG2;}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define BAUD_RATE_DIVISOR 	4
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

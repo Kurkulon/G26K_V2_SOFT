@@ -308,7 +308,7 @@ static void UpdateBlackFin()
 
 			rb.data = build_date;
 			rb.maxLen = sizeof(build_date);
-			com.Read(&rb, ~0, US2CCLK(25));
+			com.Read(&rb, ~0, US2COM(50));
 			i++;
 
 			break;
@@ -1141,7 +1141,6 @@ int main( void )
 		UpdateMode();
 
 		*pPORTFIO_CLEAR = 1<<8;
-
 	};
 
 //	return 0;

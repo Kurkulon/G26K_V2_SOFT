@@ -869,23 +869,23 @@ Ptr<REQ> CreateBootMotoReq01(u16 flashLen, u16 tryCount)
 	q.updateCRC = false;
 	
 	q.wb.data = &req;
-	q.wb.len = sizeof(req.F01) + sizeof(req.func);
+	q.wb.len = sizeof(req.F1);
 	
 	q.rb.data = &rsp;
 	q.rb.maxLen = sizeof(rsp);
 
-	req.func = 1;
-	req.F01.flashLen = flashLen;
-	req.F01.align = ~flashLen;
+	req.F1.func = 1;
+	req.F1.len = flashLen;
+	req.F1.align = ~flashLen;
 
-	req.F01.crc	= GetCRC16(&req, q.wb.len - sizeof(req.F01.crc));
+	req.F1.crc	= GetCRC16(&req, sizeof(req.F1) - sizeof(req.F1.crc));
 
 	return rq;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void CallBackBootMotoReq02(Ptr<REQ> &q)
+void CallBackBootMotoReq03(Ptr<REQ> &q)
 {
 	if (!q->crcOK) 
 	{
@@ -899,7 +899,7 @@ void CallBackBootMotoReq02(Ptr<REQ> &q)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ptr<REQ> CreateBootMotoReq02(u16 stAdr, u16 count, const u32* data, u16 tryCount)
+Ptr<REQ> CreateBootMotoReq03(u16 stAdr, u16 count, const u32* data, u16 tryCount)
 {
 	Ptr<REQ> rq;
 	
@@ -916,7 +916,7 @@ Ptr<REQ> CreateBootMotoReq02(u16 stAdr, u16 count, const u32* data, u16 tryCount
 	
 	REQ &q = *rq;
 
-	q.CallBack = CallBackBootMotoReq02;
+	q.CallBack = CallBackBootMotoReq03;
 	q.preTimeOut = MS2COM(300);
 	q.postTimeOut = US2COM(100);
 	//q.rb = &rb;
@@ -929,9 +929,9 @@ Ptr<REQ> CreateBootMotoReq02(u16 stAdr, u16 count, const u32* data, u16 tryCount
 	q.rb.data = &rsp;
 	q.rb.maxLen = sizeof(rsp);
 
-	req.func = 2;
+	req.F3.func = 3;
 
-	u16 max = ArraySize(req.F02.page);
+	u16 max = ArraySize(req.F3.pdata);
 
 	if (count > max)
 	{
@@ -940,9 +940,9 @@ Ptr<REQ> CreateBootMotoReq02(u16 stAdr, u16 count, const u32* data, u16 tryCount
 
 	u32 count2 = max - count;
 
-	req.F02.padr = stAdr;
+	req.F3.padr = stAdr;
 
-	u32 *d = req.F02.page;
+	u32 *d = req.F3.pdata;
 
 	while(count > 0)
 	{
@@ -956,20 +956,20 @@ Ptr<REQ> CreateBootMotoReq02(u16 stAdr, u16 count, const u32* data, u16 tryCount
 		count2--;
 	};
 
-	u16 len = sizeof(req.F02) + sizeof(req.func) - sizeof(req.F02.crc);
+	u16 len = sizeof(req.F3) - sizeof(req.F3.crc);
 
-	req.F02.align = 0xAAAA;
-	req.F02.crc = GetCRC16(&req, len);
+	req.F3.align = 0xAAAA;
+	req.F3.crc = GetCRC16(&req, len);
 
 	q.wb.data = &req;
-	q.wb.len = len+sizeof(req.F02.crc);
+	q.wb.len = len+sizeof(req.F3.crc);
 
 	return rq;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ptr<REQ> CreateBootMotoReq03()
+Ptr<REQ> CreateBootMotoReq02()
 {
 	Ptr<REQ> rq;
 	
@@ -999,15 +999,15 @@ Ptr<REQ> CreateBootMotoReq03()
 	q.rb.data = &rsp;
 	q.rb.maxLen = sizeof(rsp);
 	
-	req.func = 3;
-	req.F03.align += 1; 
+	req.F2.func = 2;
+	req.F2.align += 1; 
 
-	u16 len = sizeof(req.F03) + sizeof(req.func) - sizeof(req.F03.crc);
+	u16 len = sizeof(req.F2) - sizeof(req.F2.crc);
 
-	req.F03.crc = GetCRC16(&req, len);
+	req.F2.crc = GetCRC16(&req, len);
 
 	q.wb.data = &req;
-	q.wb.len = len + sizeof(req.F03.crc);
+	q.wb.len = len + sizeof(req.F2.crc);
 
 	return rq;
 }
@@ -2529,27 +2529,12 @@ static void FlashDSP()
 	{
 		RspDsp05 *rsp = (RspDsp05*)req->rb.data;
 
-		u16 flen;
-		const u32 *fpages;
-		u16 flashCRC;
-		u16 flashLen;
-		//u32 startAdr;
-
-		//if (req->rb.len < sizeof(RspDsp05))
-		//{
-		//	startAdr = 0; flashLen = rsp->v1.flashLen; flashCRC = rsp->v1.flashCRC;
-		//}
-		//else
-		//{
-		//	startAdr = rsp->v2.startAdr; flashLen = rsp->v2.flashLen; flashCRC = rsp->v2.flashCRC;
-		//};
-
-		flen = sizeof(dspFlashPages);
-		fpages = dspFlashPages;
+		u16 flen = sizeof(dspFlashPages);
+		const u32 *fpages = dspFlashPages;
 
 		u16 fcrc = GetCRC16(fpages, flen);
 
-		if (flashCRC != fcrc || flashLen != flen)
+		if (rsp->flashCRC != fcrc || rsp->flashLen != flen)
 		{
 			u16 count = flen+2;
 			u16 adr = 0;
@@ -2589,18 +2574,6 @@ static void FlashDSP()
 			req = CreateDspReq07();
 
 			qdsp.Add(req); while(!req->ready) { qdsp.Update();	};
-
-			//DisableDSP();
-			//
-			//tm.Reset();
-
-			//while (!tm.Check(1)) HW::WDT->Update();
-
-			//EnableDSP();
-			
-			//tm.Reset();
-
-			//while (!tm.Check(100)) HW::WDT->Update();
 		};
 	};
 }
@@ -2674,7 +2647,7 @@ static void FlashMoto()
 		{
 			RspBootMoto *rsp = (RspBootMoto*)req->rb.data;
 
-			if (rsp->F01.flashCRC != motoFlashCRC || rsp->F01.flashLen != motoFlashLen)
+			if (rsp->F1.sCRC != motoFlashCRC || rsp->F1.len != motoFlashLen)
 			{
 				u16 count = motoFlashLen/4;
 				u32 adr = 0;
@@ -2686,13 +2659,13 @@ static void FlashMoto()
 
 					for(u32 i = 3; i > 0; i--)
 					{
-						req = CreateBootMotoReq02(adr, len, p, 3);
+						req = CreateBootMotoReq03(adr, len, p, 3);
 
 						qmoto.Add(req); while(!req->ready) { qmoto.Update(); HW::WDT->Update(); };
 
 						RspBootMoto *rsp = (RspBootMoto*)req->rb.data;
 
-						if (req->crcOK && rsp->F02.status) { break;	}
+						if (req->crcOK && rsp->F3.status) { break;	}
 					};
 
 					ctm.Reset();
@@ -2706,7 +2679,7 @@ static void FlashMoto()
 			};
 		};
 
-		req = CreateBootMotoReq03();
+		req = CreateBootMotoReq02();
 
 		qmoto.Add(req); while(!req->ready) { qmoto.Update(); HW::WDT->Update();	};
 
@@ -3412,7 +3385,7 @@ int main()
 
 	FlashMoto();
 
-	//FlashDSP();
+	FlashDSP();
 
 #endif
 

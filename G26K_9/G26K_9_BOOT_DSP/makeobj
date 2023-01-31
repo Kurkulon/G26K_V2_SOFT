@@ -17,7 +17,7 @@ libdir = $(curdir)\..\..\..\G_LIBS_BF592
 
 !ifeq version Debug
 
-debug_compiler_options = -O0
+debug_compiler_options = -O0 -D __DEBUG
 debug_linker_options = 
 libsuffix=d
 

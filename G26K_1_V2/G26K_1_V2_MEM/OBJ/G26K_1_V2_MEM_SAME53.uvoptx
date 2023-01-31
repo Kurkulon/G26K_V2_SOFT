@@ -152,9 +152,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>3409</LineNumber>
+          <LineNumber>2537</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>53172</Address>
+          <Address>50038</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -163,14 +163,14 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\3409</Expression>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2537</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>2709</LineNumber>
+          <LineNumber>3388</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>50952</Address>
+          <Address>53182</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -179,7 +179,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2709</Expression>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\3388</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

@@ -55,13 +55,11 @@ __packed struct RspBootMotoHS { unsigned __int64 guid; u16 crc; };
 
 struct ReqBootMoto
 {
-	u32 func;
-
 	union
 	{
-		struct { u32 flashLen;  u16 align; u16 crc; } F01; // Get Flash CRC
-		struct { u32 padr; u32 page[16]; u16 align; u16 crc; } F02; // Write page
-		struct { u16 align; u16 crc; } F03; // Exit boot loader
+		struct { u32 func; u32 len;								u16 align; u16 crc; }	F1; // Get CRC
+		struct { u32 func;										u16 align; u16 crc; }	F2; // Exit boot loader
+		struct { u32 func; u32 padr; u32 plen; u32 pdata[16];	u16 align; u16 crc; }	F3; // Programm page
 	};
 };
 
@@ -69,13 +67,11 @@ struct ReqBootMoto
 
 struct RspBootMoto
 {
-	u32 func;
-
 	union
 	{
-		struct { u32 flashLen; u16 flashCRC; u16 crc; } F01;
-		struct { u32 padr; u32 status; u16 align; u16 crc; } F02;
-		struct { u16 align; u16 crc; } F03;							// Exit boot loader
+		struct { u32 func; u32 pageLen;	u32 len;	u16 sCRC;	u16 crc; }	F1; // Get CRC
+		struct { u32 func;							u16 align;	u16 crc; } 	F2; // Exit boot loader
+		struct { u32 func; u32 padr;	u32 status; u16 align;	u16 crc; } 	F3; // Programm page
 	};
 };
 
@@ -182,12 +178,10 @@ __packed struct  ReqDsp05	// запрос контрольной суммы и длины программы во флэш-
 __packed struct  RspDsp05	// запрос контрольной суммы и длины программы во флэш-памяти
 { 
 	u16		rw; 
-
-	__packed union
-	{
-		__packed struct { u16 flashLen; u16 flashCRC; u16 crc; } v1;
-		__packed struct { u16 flashLen; u32 startAdr; u16 flashCRC; u16 crc; } v2;
-	};
+	u16		flashLen; 
+	u32		startAdr; 
+	u16		flashCRC; 
+	u16		crc;
 };  
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

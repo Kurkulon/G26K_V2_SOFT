@@ -3,10 +3,17 @@
 #include "CRC16.h"
 //#include "at25df021.h"
 #include "list.h"
+#include "spi.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static byte build_date[512] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n";
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static u16 SPI_CS_MASK[] = { PF8 };
+
+static S_SPIM	spi(0, HW::PORTF, HW::PIOF, SPI_CS_MASK, ArraySize(SPI_CS_MASK), IVG_SPI0, SCLK);
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -61,7 +68,7 @@ static u16 refDelay = 0;
 static u16 refAmp = 0;
 static u16 refTime = 0;
 
-static i32 avrBuf[PPI_BUF_LEN] = {0};
+static i32 avrBuf[PPI_BUF_LEN] = {0x55555555};
 
 static u16 flashCRC = 0;
 static u32 flashLen = 0;
@@ -1126,7 +1133,7 @@ int main( void )
 
 	static u32 pt = 0;
 
-	//static RTM32 tm;
+	static RTM32 tm;
 
 	InitHardware();
 
@@ -1134,13 +1141,37 @@ int main( void )
 
 	//CheckFlash();
 
+	spi.Connect(1000000);
+
+	static DSCSPI dsc;
+
+	dsc.adr = 0x55555555;
+	dsc.alen = 4;
+	dsc.baud = 50;
+	dsc.csnum = 0;
+	dsc.mode = CPHA|CPOL;
+	dsc.wdata = avrBuf;
+	dsc.wlen = 10;
+	dsc.rdata = 0;
+	dsc.rlen = 0;
+
 	while (1)
 	{
-		*pPORTFIO_SET = 1<<8;
-		
-		UpdateMode();
+		HW::PIOG->SET(PG2);
 
-		*pPORTFIO_CLEAR = 1<<8;
+		if (tm.Check(MS2RT(100)))
+		{
+			spi.AddRequest(&dsc);
+		};
+
+		if (dsc.ready)
+		{
+			__breakpoint();
+		};
+		
+		HW::PIOG->CLR(PG2);
+
+		HW::ResetWDT();
 	};
 
 //	return 0;

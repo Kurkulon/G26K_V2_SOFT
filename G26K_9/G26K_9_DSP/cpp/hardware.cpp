@@ -523,17 +523,17 @@ void InitHardware()
 {
 	LowLevelInit();
 
-	InitRTT();
+	//InitRTT();
 
 //	InitPPI();
 
-	InitTWI();
+	//InitTWI();
 
-	InitFire();
+	//InitFire();
 
-	InitShaft();
+	//InitShaft();
 
-	InitRot();
+	//InitRot();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

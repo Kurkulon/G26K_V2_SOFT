@@ -13,7 +13,7 @@ static byte build_date[512] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n"
 
 static u16 SPI_CS_MASK[] = { PF8 };
 
-static S_SPIM	spi(0, HW::PORTF, HW::PIOF, SPI_CS_MASK, ArraySize(SPI_CS_MASK), IVG_SPI0, SCLK);
+static S_SPIM	spi(0, HW::PORTF, HW::PIOF, SPI_CS_MASK, ArraySize(SPI_CS_MASK), SCLK);
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -68,7 +68,7 @@ static u16 refDelay = 0;
 static u16 refAmp = 0;
 static u16 refTime = 0;
 
-static i32 avrBuf[PPI_BUF_LEN] = {0x55555555};
+static i32 avrBuf[PPI_BUF_LEN] = {0};
 
 static u16 flashCRC = 0;
 static u32 flashLen = 0;
@@ -1126,6 +1126,8 @@ static void UpdateMode()
 
 i16 index_max = 0;
 
+byte buf[100];
+
 int main( void )
 {
 	static byte s = 0;
@@ -1145,15 +1147,15 @@ int main( void )
 
 	static DSCSPI dsc;
 
-	dsc.adr = 0x55555555;
+	dsc.adr = 3;
 	dsc.alen = 4;
-	dsc.baud = 50;
+	dsc.baud = 2;
 	dsc.csnum = 0;
 	dsc.mode = CPHA|CPOL;
-	dsc.wdata = avrBuf;
-	dsc.wlen = 10;
-	dsc.rdata = 0;
-	dsc.rlen = 0;
+	dsc.wdata = 0;
+	dsc.wlen = 0;
+	dsc.rdata = buf;
+	dsc.rlen = 100;
 
 	while (1)
 	{
@@ -1166,12 +1168,14 @@ int main( void )
 
 		if (dsc.ready)
 		{
-			__breakpoint();
+			dsc.ready = false;
 		};
 		
 		HW::PIOG->CLR(PG2);
 
 		HW::ResetWDT();
+
+		spi.Update();
 	};
 
 //	return 0;

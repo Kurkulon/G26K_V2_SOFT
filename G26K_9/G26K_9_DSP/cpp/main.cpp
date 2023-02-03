@@ -329,6 +329,8 @@ static void UpdateBlackFin()
 					if (RequestFunc(&wb, &rb))
 					{
 						com.Write(&wb);
+						spi.SetMode(CPHA|CPOL);
+						spi.WriteAsyncDMA(wb.data, wb.len);
 						i++;
 					}
 					else
@@ -346,7 +348,7 @@ static void UpdateBlackFin()
 
 		case 2:
 
-			if (!com.Update())
+			if (!com.Update() && spi.CheckWriteComplete())
 			{
 				if (curDsc != 0)
 				{
@@ -1143,39 +1145,27 @@ int main( void )
 
 	//CheckFlash();
 
-	spi.Connect(1000000);
+	spi.Connect(25000000);
 
-	static DSCSPI dsc;
+	//static DSCSPI dsc;
 
-	dsc.adr = 3;
-	dsc.alen = 4;
-	dsc.baud = 2;
-	dsc.csnum = 0;
-	dsc.mode = CPHA|CPOL;
-	dsc.wdata = 0;
-	dsc.wlen = 0;
-	dsc.rdata = buf;
-	dsc.rlen = 100;
+	//dsc.adr = 3;
+	//dsc.alen = 4;
+	//dsc.baud = 2;
+	//dsc.csnum = 0;
+	//dsc.mode = CPHA|CPOL;
+	//dsc.wdata = 0;
+	//dsc.wlen = 0;
+	//dsc.rdata = buf;
+	//dsc.rlen = 100;
 
 	while (1)
 	{
 		HW::PIOG->SET(PG2);
 
-		if (tm.Check(MS2RT(100)))
-		{
-			spi.AddRequest(&dsc);
-		};
+		UpdateMode();
 
-		if (dsc.ready)
-		{
-			dsc.ready = false;
-		};
-		
 		HW::PIOG->CLR(PG2);
-
-		HW::ResetWDT();
-
-		spi.Update();
 	};
 
 //	return 0;

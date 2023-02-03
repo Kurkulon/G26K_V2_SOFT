@@ -3383,7 +3383,7 @@ int main()
 
 	//__breakpoint(0);
 
-	FlashMoto();
+	//FlashMoto();
 
 	FlashDSP();
 

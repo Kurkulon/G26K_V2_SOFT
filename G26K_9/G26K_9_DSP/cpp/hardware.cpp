@@ -20,8 +20,11 @@
 #define StartPPI()	{ *pTIMER_ENABLE = TIMEN1;  }
 #define StopPPI()	{ *pTIMER_DISABLE = TIMDIS1; }
 
-#define StartFire()	{ *pTIMER_ENABLE = TIMEN0; }
-//#define StopFire()	{ *pTIMER_DISABLE = TIMDIS0; }
+#define StartFire()	{ HW::TIMER->Enable = FIRE1_TIMEN|FIRE2_TIMEN; }
+#define StopFire()	{ HW::TIMER->Disable = FIRE1_TIMEN|FIRE2_TIMEN; }
+
+#define DisableSwArr()	{ PIO_RST_SW_ARR->CLR(BM_RST_SW_ARR); }
+#define EnableSwArr()	{ PIO_RST_SW_ARR->SET(BM_RST_SW_ARR); }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -30,7 +33,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-byte bitGain[16] = {GAIN_M0, GAIN_M1, GAIN_M2, GAIN_M3, GAIN_M4, GAIN_M5, GAIN_M6, GAIN_M7, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8 };
+//byte bitGain[16] = {GAIN_M0, GAIN_M1, GAIN_M2, GAIN_M3, GAIN_M4, GAIN_M5, GAIN_M6, GAIN_M7, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -116,14 +119,14 @@ u16	GetMotoVoltage()
 
 void SetGain(byte v) 
 {
-	*pPORTGIO = (*pPORTGIO & ~0xF) | bitGain[v&0xF];
+	//*pPORTGIO = (*pPORTGIO & ~0xF) | bitGain[v&0xF];
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void SetMux(byte a) 
 {
-	*pPORTGIO = (*pPORTGIO & ~A0) | ((a & 1) << PIN_A0);
+	//*pPORTGIO = (*pPORTGIO & ~A0) | ((a & 1) << PIN_A0);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -314,7 +317,7 @@ static void Fire()
 	}
 	else
 	{
-		ReadPPI(mainPPI);
+		//ReadPPI(mainPPI);
 	};
 }
 
@@ -367,13 +370,15 @@ EX_INTERRUPT_HANDLER(TIMER_PPI_ISR)
 
 EX_INTERRUPT_HANDLER(SYNC_ISR)
 {
-	*pPORTFIO_CLEAR = BM_SYNC;
+	PIO_SYNC->ClearTriggerIRQ(BM_SYNC);
 
-	Fire();
+	StartFire();
+
+	//Fire();
 
 	fireSyncCount += 1;
 
-	ssync();
+	//ssync();
 }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -400,50 +405,62 @@ static void InitFire()
 		freePPI.Add(&dsc);
 	};
 
-	*pPORTF_FER |= PF9;
-	*pPORTF_MUX &= ~PF9;
+	PIO_FIRE->SetFER(BM_FIRE1|BM_FIRE2);
+	PIO_FIRE->ClrMUX(BM_FIRE1|BM_FIRE2);
+
+	PIO_RST_SW_ARR->ClrFER(BM_RST_SW_ARR);
+	PIO_RST_SW_ARR->DirSet(BM_RST_SW_ARR);
+	PIO_RST_SW_ARR->CLR(BM_RST_SW_ARR);
+
+	//HW::PIOF->Dir |= PF9;
 
 	// PPI clk
 
-	*pTIMER_DISABLE = TIMDIS1;
-	*pTIMER1_CONFIG = PERIOD_CNT|PWM_OUT;
-	*pTIMER1_PERIOD = 5;
-	*pTIMER1_WIDTH = 2;
+	StopFire();
+	
+	FIRE1_TIMER->Config = EMU_RUN|PWM_OUT|PULSE_HI;
+	FIRE1_TIMER->Period = ~0;
+	FIRE1_TIMER->Width = NS2SCLK(100);
+
+	FIRE2_TIMER->Config = EMU_RUN|PWM_OUT|PULSE_HI;
+	FIRE2_TIMER->Period = ~0;
+	FIRE2_TIMER->Width = NS2SCLK(200);
 
 	*pPPI_CONTROL = 0;
 	*pDMA0_CONFIG = 0;
 
-	InitIVG(IVG_PPI_DMA0, PID_DMA0_PPI, PPI_ISR);
+	//InitIVG(IVG_PPI_DMA0, PID_DMA0_PPI, PPI_ISR);
 
 	InitIVG(IVG_PORTF_SYNC, PID_Port_F_Interrupt_A, SYNC_ISR);
 
-	*pPORTFIO_INEN |= BM_SYNC;
-	*pPORTFIO_EDGE |= BM_SYNC;
-	*pPORTFIO_BOTH &= ~BM_SYNC;
-	*pPORTFIO_CLEAR = BM_SYNC;
-	*pPORTFIO_MASKA = BM_SYNC;
+	PIO_SYNC->EnableIRQA_Rise(BM_SYNC);
+	PIO_SYNC->MaskA_Clr = ~BM_SYNC;
+
+	//PIO_SYNC->ClrFER(BM_SYNC);
+	//PIO_SYNC->Inen |= BM_SYNC;
+	//PIO_SYNC->Edge |= BM_SYNC;
+	//PIO_SYNC->Both &= ~BM_SYNC;
+	//PIO_SYNC->CLR(BM_SYNC);
+	//PIO_SYNC->MaskA = BM_SYNC;
 
 	SetPPI(mainPPI, dspVars.mainSens, 0);
 	SetPPI(refPPI, dspVars.refSens, 1);
 
-	ReadPPI(mainPPI);
+	//ReadPPI(mainPPI);
 
 	//InitIVG(IVG_GPTIMER0_FIRE, PID_GP_Timer_0, FIRE_PPI_ISR);
 
-	*pTIMER0_CONFIG = PWM_OUT|PULSE_HI/*|IRQ_ENA*/;
-	*pTIMER0_PERIOD = ~0;//MS2CLK(1000) / 500 / 4;
-	*pTIMER0_WIDTH = US2CLK(1);
-	*pTIMER_ENABLE = TIMEN0; 
-	//InitIVG(IVG_FIRE, PID_GP_Timer_0, FIRE_ISR);
 	
 	InitIVG(IVG_CORETIMER, 0, TIMER_PPI_ISR);
+
+	EnableSwArr();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 EX_INTERRUPT_HANDLER(SHAFT_ISR)
 {
-	*pPORTFIO_CLEAR = BM_SHAFT;
+	PIO_DSHAFT->ClearTriggerIRQ(BM_DSHAFT);
 
 	shaftCount++;
 
@@ -463,12 +480,16 @@ static void InitShaft()
 {
 	InitIVG(IVG_PORTF_SHAFT, PID_Port_F_Interrupt_B, SHAFT_ISR);
 
-	*pPORTFIO_INEN |= BM_SHAFT;
-	*pPORTFIO_EDGE |= BM_SHAFT;
-	*pPORTFIO_POLAR |= BM_SHAFT;	// falling edge
-	*pPORTFIO_BOTH &= ~BM_SHAFT;
-	*pPORTFIO_CLEAR = BM_SHAFT;
-	*pPORTFIO_MASKB = BM_SHAFT;
+	PIO_DSHAFT->EnableIRQB_Rise(BM_DSHAFT);
+
+	//PIO_DSHAFT->Inen |= BM_DSHAFT;
+	//PIO_DSHAFT->Edge |= BM_DSHAFT;
+	//PIO_DSHAFT->Polar |= BM_DSHAFT;	// falling edge
+	//PIO_DSHAFT->Both &= ~BM_DSHAFT;
+	//PIO_DSHAFT->CLR(BM_DSHAFT);
+	//PIO_DSHAFT->MaskB = BM_DSHAFT;
+
+	PIO_DSHAFT->MaskB_Clr = ~BM_DSHAFT;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -477,7 +498,7 @@ EX_INTERRUPT_HANDLER(ROT_ISR)
 {
 	*pPORTGIO_SET = 1<<6;
 
-	*pPORTGIO_CLEAR = BM_ROT;
+	PIO_ROT->ClearTriggerIRQ(BM_ROT);
 
 	motoCount++;
 
@@ -499,13 +520,16 @@ static void InitRot()
 {
 	InitIVG(IVG_PORTG_ROT, PID_Port_G_Interrupt_A, ROT_ISR);
 
-	*pPORTG_MUX &= ~BM_ROT;
-	*pPORTGIO_DIR &= ~BM_ROT;
-	*pPORTGIO_INEN |= BM_ROT;
-	*pPORTGIO_EDGE |= BM_ROT;
-	*pPORTGIO_BOTH |= BM_ROT;
-	*pPORTGIO_CLEAR = BM_ROT;
-	*pPORTGIO_MASKA = BM_ROT;
+	PIO_ROT->EnableIRQA_Rise(BM_ROT);
+	PIO_ROT->MaskA_Clr = ~BM_ROT;
+
+	//*pPORTG_MUX &= ~BM_ROT;
+	//*pPORTGIO_DIR &= ~BM_ROT;
+	//*pPORTGIO_INEN |= BM_ROT;
+	//*pPORTGIO_EDGE |= BM_ROT;
+	//*pPORTGIO_BOTH |= BM_ROT;
+	//*pPORTGIO_CLEAR = BM_ROT;
+	//*pPORTGIO_MASKA = BM_ROT;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -523,17 +547,17 @@ void InitHardware()
 {
 	LowLevelInit();
 
-	//InitRTT();
+	InitRTT();
 
 //	InitPPI();
 
-	//InitTWI();
+	InitTWI();
 
-	//InitFire();
+	InitFire();
 
-	//InitShaft();
+	InitShaft();
 
-	//InitRot();
+	InitRot();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

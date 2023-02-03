@@ -154,7 +154,7 @@
           <Type>0</Type>
           <LineNumber>2537</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>50038</Address>
+          <Address>50042</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -170,7 +170,7 @@
           <Type>0</Type>
           <LineNumber>3388</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>53182</Address>
+          <Address>53184</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -180,6 +180,22 @@
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\3388</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>2574</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>50386</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2574</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -307,6 +323,16 @@
           <count>24</count>
           <WinNumber>1</WinNumber>
           <ItemText>motoCurLow,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>25</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>curFireVoltage,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>26</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>mv,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

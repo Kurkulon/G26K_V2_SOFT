@@ -142,10 +142,10 @@
 #define BOOT_MAN_REQ_WORD		0xAD00
 #define BOOT_MAN_REQ_MASK 		0xFF00
 
-#define PIO_RTS_SET				*pPORTFIO_SET
-#define PIO_RTS_CLR				*pPORTFIO_CLEAR
-#define PIO_RTS_DIR				*pPORTFIO_DIR
-#define PIO_RTS_FER				*pPORTF_FER
+#define PIO_RTS					HW::PIOF
+//#define PIO_RTS_CLR				*pPORTFIO_CLEAR
+//#define PIO_RTS_DIR				*pPORTFIO_DIR
+//#define PIO_RTS_FER				*pPORTF_FER
 
 #define PIN_RTS					5
 #define MASK_RTS				(1UL<<PIN_RTS)

@@ -1038,48 +1038,50 @@ static void UpdateMode()
 
 	if (dsc != 0)
 	{
-		*pPORTFIO_SET = 1<<7;
+		HW::PIOF->BSET(7);
 
-		if (dsc->sensType == 0)
-		{
-			Filtr_Data(*dsc, filtrType);
+		FreeDscPPI(dsc);
 
-			if (imThr == 0)
-			{
-				Filtr_Wavelet(*dsc, imDescr, imDelay);
-			}
-			else
-			{
-				GetAmpTimeIM_3(*dsc, imDescr, imDelay, imThr, dsc->fi_amp, dsc->fi_time, dsc->maxAmp);
-			};
-			
-			switch (mode)
-			{
-				case 0: ProcessDataCM(*dsc); break;
-				case 1: ProcessDataIM(*dsc); break;
-			};
-		}
-		else
-		{
-			Filtr_Data(*dsc, (filtrType == 2 || filtrType == 3) ? 2 : 0);
-			
-			if (refThr == 0)
-			{
-				Filtr_Wavelet(*dsc, refDescr, refDelay);
-			}
-			else
-			{
-				GetAmpTimeIM_3(*dsc, refDescr, refDelay, refThr, dsc->fi_amp, dsc->fi_time, dsc->maxAmp);
-			};
+		//if (dsc->sensType == 0)
+		//{
+		//	Filtr_Data(*dsc, filtrType);
 
-			refAmp	= dsc->fi_amp;
-			refTime = dsc->fi_time;
-			
-			ProcessDataCM(*dsc);
-		};
+		//	if (imThr == 0)
+		//	{
+		//		Filtr_Wavelet(*dsc, imDescr, imDelay);
+		//	}
+		//	else
+		//	{
+		//		GetAmpTimeIM_3(*dsc, imDescr, imDelay, imThr, dsc->fi_amp, dsc->fi_time, dsc->maxAmp);
+		//	};
+		//	
+		//	switch (mode)
+		//	{
+		//		case 0: ProcessDataCM(*dsc); break;
+		//		case 1: ProcessDataIM(*dsc); break;
+		//	};
+		//}
+		//else
+		//{
+		//	Filtr_Data(*dsc, (filtrType == 2 || filtrType == 3) ? 2 : 0);
+		//	
+		//	if (refThr == 0)
+		//	{
+		//		Filtr_Wavelet(*dsc, refDescr, refDelay);
+		//	}
+		//	else
+		//	{
+		//		GetAmpTimeIM_3(*dsc, refDescr, refDelay, refThr, dsc->fi_amp, dsc->fi_time, dsc->maxAmp);
+		//	};
+
+		//	refAmp	= dsc->fi_amp;
+		//	refTime = dsc->fi_time;
+		//	
+		//	ProcessDataCM(*dsc);
+		//};
 
 		//idle();
-		*pPORTFIO_CLEAR = 1<<7;
+		HW::PIOF->BCLR(7);
 	}
 	else
 	{

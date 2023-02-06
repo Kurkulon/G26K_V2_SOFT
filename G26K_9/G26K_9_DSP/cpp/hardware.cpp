@@ -6,6 +6,8 @@
 //#include <ccblkfn.h>
 
 #include "list.h"
+#include "DMA.h"
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -17,8 +19,8 @@
 #define PPI_BUF_NUM 8
 
 
-#define StartPPI()	{ *pTIMER_ENABLE = TIMEN1;  }
-#define StopPPI()	{ *pTIMER_DISABLE = TIMDIS1; }
+#define Start_SPORT()	{ HW::SPORT0->TCR1 = /*TCKFE|*/DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; HW::SPORT1->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; }
+#define Stop_SPORT()	{ HW::SPORT0->TCR1 = 0; HW::SPORT1->TCR1 = 0; }
 
 #define StartFire()	{ HW::TIMER->Enable = FIRE1_TIMEN|FIRE2_TIMEN; }
 #define StopFire()	{ HW::TIMER->Disable = FIRE1_TIMEN|FIRE2_TIMEN; }
@@ -36,6 +38,11 @@
 //byte bitGain[16] = {GAIN_M0, GAIN_M1, GAIN_M2, GAIN_M3, GAIN_M4, GAIN_M5, GAIN_M6, GAIN_M7, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+DMA_CH	dmaRxSp0(SPORT0_RX_DMA);
+DMA_CH	dmaRxSp1(SPORT1_RX_DMA);
+DMA_CH	dmaTxSp0(SPORT0_TX_DMA);
+DMA_CH	dmaTxSp1(SPORT1_TX_DMA);
 
 static DSCPPI *curDscPPI = 0;
 static DSCPPI *lastDscPPI = 0;
@@ -236,11 +243,11 @@ void FreeDscPPI(DSCPPI* dsc)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void ReadPPI(PPI &ppi)
+static void Read_SPORT(PPI &ppi)
 {
 	curDscPPI = AllocDscPPI();
 
-	StopPPI();
+	Stop_SPORT();
 
 	if (curDscPPI != 0)
 	{
@@ -249,27 +256,48 @@ static void ReadPPI(PPI &ppi)
 		curDscPPI->sampleDelay = ppi.sd;
 		curDscPPI->sampleTime = ppi.st;
 
-		SetMux(curDscPPI->sensType = ppi.sensType);
-		SetGain(curDscPPI->gain = ppi.gain);
+//		SetMux(curDscPPI->sensType = ppi.sensType);
+//		SetGain(curDscPPI->gain = ppi.gain);
 
 		//*pTIMER0_CONFIG = PWM_OUT|PULSE_HI;
 		//*pTIMER0_PERIOD = ppi.fireDiv*2;
-		*pTIMER0_WIDTH = ppi.fireDiv;
+		//*pTIMER0_WIDTH = ppi.fireDiv;
 
-		*pTIMER1_CONFIG = PERIOD_CNT|PWM_OUT|PULSE_HI;
-		*pTIMER1_PERIOD = curDscPPI->ppiclkdiv = ppi.clkDiv;
-		*pTIMER1_WIDTH = curDscPPI->ppiclkdiv>>1;
+		//*pTIMER1_CONFIG = PERIOD_CNT|PWM_OUT|PULSE_HI;
+		//*pTIMER1_PERIOD = curDscPPI->ppiclkdiv = ppi.clkDiv;
+		//*pTIMER1_WIDTH = curDscPPI->ppiclkdiv>>1;
 
-		*pDMA0_START_ADDR = curDscPPI->data+(curDscPPI->offset = ppiOffset);
-		*pDMA0_X_COUNT = ppi.len + 32; curDscPPI->len = ppi.len;
-		*pDMA0_X_MODIFY = 2;
+		dmaRxSp0.Disable();
+		dmaRxSp1.Disable();
+		//dmaSp1.Disable();
 
-		*pPPI_COUNT = 0;//*pDMA0_X_COUNT - 1;
-		*pPPI_DELAY = 0;
-		*pDMA0_CONFIG = FLOW_STOP|DI_EN|WDSIZE_16|SYNC|WNR|DMAEN;
-		*pPPI_CONTROL = FLD_SEL|PORT_CFG|DLEN_12|XFR_TYPE|PORT_EN;
+		HW::SPORT0->TCR1 = 0;
+		HW::SPORT0->TCR2 = SLEN(13);
+		HW::SPORT0->TCLKDIV = 3; curDscPPI->ppiclkdiv = ppi.clkDiv;
+		HW::SPORT0->TFSDIV = 16;
+
+		HW::SPORT1->TCR1 = 0;
+		HW::SPORT1->TCR2 = SLEN(13);
+		HW::SPORT1->TCLKDIV = 3; curDscPPI->ppiclkdiv = ppi.clkDiv;
+		HW::SPORT1->TFSDIV = 16;
+
+		//HW::SPORT1->RCR1 = 0;
+		//HW::SPORT1->RCR2 = 11|RXSE;
+		//HW::SPORT1->RCLKDIV = curDscPPI->ppiclkdiv = ppi.clkDiv;
+		//HW::SPORT1->RFSDIV = 49;
+
+		dmaRxSp0.Read16(curDscPPI->data+(curDscPPI->offset = ppiOffset), ppi.len + 32);
+
+		//dmaTxSp0.Write16(curDscPPI->data+(curDscPPI->offset = ppiOffset), ppi.len + 32); curDscPPI->len = ppi.len;
+
+		//HW::DMA->CH[SPORT1_RX_DMA].START_ADDR = curDscPPI->data+(curDscPPI->offset = ppiOffset);
+		//HW::DMA->CH[SPORT1_RX_DMA].X_COUNT = ppi.len + 32; curDscPPI->len = ppi.len;
+		//HW::DMA->CH[SPORT1_RX_DMA].X_MODIFY = 2;
+
+		//HW::DMA->CH[SPORT0_RX_DMA].CONFIG = FLOW_STOP|DI_EN|WDSIZE_16|SYNC|WNR|DMAEN;
+		//HW::DMA->CH[SPORT1_RX_DMA].CONFIG = FLOW_STOP|DI_EN|WDSIZE_16|SYNC|WNR|DMAEN;
 		
-		ssync();
+		//ssync();
 	};
 }
 
@@ -288,7 +316,7 @@ static void Fire()
 			if (curDscPPI->ppidelay == 0)
 			{ 
 				*pTCNTL = 0;
-				StartPPI();
+				Start_SPORT();
 			}
 			else
 			{
@@ -317,23 +345,24 @@ static void Fire()
 	}
 	else
 	{
-		//ReadPPI(mainPPI);
+		Read_SPORT(mainPPI);
 	};
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-EX_INTERRUPT_HANDLER(PPI_ISR)
+EX_INTERRUPT_HANDLER(SPORT_ISR)
 {
 	static u32 pt = 0;
 
-	if (*pDMA0_IRQ_STATUS & (DMA_DONE|DMA_ERR))
-	{
-		*pDMA0_IRQ_STATUS = DMA_DONE|DMA_ERR;
-		*pPPI_CONTROL = 0;
-		*pDMA0_CONFIG = 0;
+	HW::PIOG->BSET(5);
 
-		StopPPI();
+	if (dmaRxSp0.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
+	{
+		Stop_SPORT();
+
+		dmaRxSp0.Disable(); //dmaSp1.Disable();
+		dmaRxSp1.Disable();
 
 		curDscPPI->busy = false;
 		readyPPI.Add(curDscPPI);
@@ -344,27 +373,30 @@ EX_INTERRUPT_HANDLER(PPI_ISR)
 		{
 			pt = t;
 
-			ReadPPI(refPPI);
+			Read_SPORT(refPPI);
 			
 			Fire();
 		}
 		else
 		{
-			ReadPPI(mainPPI);
+			Read_SPORT(mainPPI);
 		};
 
-		ssync();
+		//ssync();
 	};
+
+	HW::PIOG->BCLR(5);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 EX_INTERRUPT_HANDLER(TIMER_PPI_ISR)
 {
-	StartPPI();
+	Start_SPORT();
+
 	*pTCNTL = 0;
 
-	ssync();
+	//ssync();
 }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -372,9 +404,9 @@ EX_INTERRUPT_HANDLER(SYNC_ISR)
 {
 	PIO_SYNC->ClearTriggerIRQ(BM_SYNC);
 
-	StartFire();
+	//StartFire();
 
-	//Fire();
+	Fire();
 
 	fireSyncCount += 1;
 
@@ -426,15 +458,36 @@ static void InitFire()
 	FIRE2_TIMER->Period = ~0;
 	FIRE2_TIMER->Width = NS2SCLK(200);
 
-	*pPPI_CONTROL = 0;
-	*pDMA0_CONFIG = 0;
+	HW::PIOF->SetFER(PF0|PF1|PF6|PF7);
+	HW::PIOF->ClrMUX(PF0|PF1|PF6|PF7);
+	HW::PIOG->SetFER(PG0|PG1|PG6|PG7);
+	HW::PIOG->ClrMUX(PG0|PG1|PG6|PG7);
 
-	//InitIVG(IVG_PPI_DMA0, PID_DMA0_PPI, PPI_ISR);
+	dmaTxSp0.Disable();
+	dmaTxSp1.Disable();
+
+	HW::SPORT0->RCR1 = 0;
+	HW::SPORT1->RCR1 = 0;
+
+	*pSPORT_GATECLK = SPORT0_GATECLK_EN|SPORT1_GATECLK_EN|SPORT0_GATECLK_STATE|SPORT1_GATECLK_STATE;
+
+	HW::SPORT0->RCR2 = SLEN(13);
+	HW::SPORT0->RCR1 = LARFS|LRFS|RFSR|RSPEN;
+	HW::SPORT1->RCR2 = SLEN(13);
+	HW::SPORT1->RCR1 = LARFS|LRFS|RFSR|RSPEN;
+
+
+	//HW::SIC->IntAssign(PID_DMA2_SPORT0_TX, IVG_SPORT_DMA);
+
+	//HW::SIC->IntAssign(PID_DMA1_SPORT0_RX, IVG_SPORT_DMA);
+	//HW::EIC->InitIVG(IVG_SPORT_DMA, SPORT_ISR);
+
+	InitIVG(IVG_SPORT_DMA, PID_DMA1_SPORT0_RX, SPORT_ISR);
 
 	InitIVG(IVG_PORTF_SYNC, PID_Port_F_Interrupt_A, SYNC_ISR);
 
 	PIO_SYNC->EnableIRQA_Rise(BM_SYNC);
-	PIO_SYNC->MaskA_Clr = ~BM_SYNC;
+	PIO_SYNC->ClrMaskA(~BM_SYNC);
 
 	//PIO_SYNC->ClrFER(BM_SYNC);
 	//PIO_SYNC->Inen |= BM_SYNC;
@@ -489,7 +542,7 @@ static void InitShaft()
 	//PIO_DSHAFT->CLR(BM_DSHAFT);
 	//PIO_DSHAFT->MaskB = BM_DSHAFT;
 
-	PIO_DSHAFT->MaskB_Clr = ~BM_DSHAFT;
+	PIO_DSHAFT->ClrMaskB(~BM_DSHAFT);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -521,7 +574,7 @@ static void InitRot()
 	InitIVG(IVG_PORTG_ROT, PID_Port_G_Interrupt_A, ROT_ISR);
 
 	PIO_ROT->EnableIRQA_Rise(BM_ROT);
-	PIO_ROT->MaskA_Clr = ~BM_ROT;
+	PIO_ROT->ClrMaskA(~BM_ROT);
 
 	//*pPORTG_MUX &= ~BM_ROT;
 	//*pPORTGIO_DIR &= ~BM_ROT;

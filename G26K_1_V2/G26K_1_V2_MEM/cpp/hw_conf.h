@@ -116,8 +116,8 @@
 
 	// ++++++++++++++	TC	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define MANT_TC			TC0
-	#define MANI_TC			TC1
+	#define MANI_TC			TC0
+	//#define MANT_TC			TC1
 	//#define 				TC2
 	//#define 				TC3
 	//#define 				TC4
@@ -164,7 +164,7 @@
 
 	// ++++++++++++++	TCC	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define ROT_TCC			TCC0
+	#define MANT_TCC		TCC0
 	//#define				TCC1
 	#define MANR_TCC		TCC2
 	#define SYNC_TCC		TCC3
@@ -245,20 +245,22 @@
 
 
 	// ++++++++++++++	MANCH	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	#define MAN_TRANSMIT_V2
 
 	#define PIO_MANCH		HW::PIOC
-	#define PIN_L1			25 
-	#define PIN_H1			24 
-	#define PIN_L2			27 
-	#define PIN_H2			26
+	#define PIN_L1			13 
+	#define PIN_H1			 
+	#define PIN_L2			14 
+	#define PIN_H2			
 	#define MANCH_PMUX		PORT_PMUX_F
 	#define L1_WO_NUM		3
 	#define L2_WO_NUM		4
 
 	#define L1				(1UL<<PIN_L1)
-	#define H1				(1UL<<PIN_H1)
+	#define H1				0
 	#define L2				(1UL<<PIN_L2)
-	#define H2				(1UL<<PIN_H2)
+	#define H2				0
 
 	#define PIO_RXD			HW::PIOB
 	#define PIN_RXD			23
@@ -400,14 +402,14 @@
 	// ++++++++++++++	SYNC ROT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define PIN_SYNC		12
-	#define PIN_ROT			14
+	//#define PIN_ROT			14
 
 	#define SYNC			(1<<PIN_SYNC)
-	#define ROT				(1<<PIN_ROT)
+	//#define ROT				(1<<PIN_ROT)
 	#define PIO_SYNC		HW::PIOB
-	#define PIO_ROT			HW::PIOB
+	//#define PIO_ROT			HW::PIOB
 	#define PMUX_SYNC		PORT_PMUX_F
-	#define PMUX_ROT		PORT_PMUX_F
+	//#define PMUX_ROT		PORT_PMUX_F
 
 
 	// ++++++++++++++	SHAFT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -507,17 +509,17 @@
 
 	// ++++++++++++++	PIO INIT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define PIOA_INIT_DIR		((1<<0)|(1<<1)|(0xFF<<4)|(0xFF<<14)|(1<<25)|(1<<27))
-	#define PIOA_INIT_SET		((1<<0)|(1<<1)|(1<<27))
-	#define PIOA_INIT_CLR		((0xFF<<4)|(0xFF<<14)|(1<<25))
+	#define PIOA_INIT_DIR		(PA11|PA16|PA24|PA25|PA27)
+	#define PIOA_INIT_SET		(0)
+	#define PIOA_INIT_CLR		(PA11|PA16|PA24|PA25|PA27)
 
-	#define PIOB_INIT_DIR		((0xF<<0)|(0x1FF<<4)|(0x3F<<16)|(7<<23)|(3UL<<30))
+	#define PIOB_INIT_DIR		(PB06|PB07|PB08|PB09|PB14|PB15|PB21)
 	#define PIOB_INIT_SET		(0)
-	#define PIOB_INIT_CLR		((0xF<<0)|(0x1FF<<4)|(0x3F<<16)|(7<<23)|(3UL<<30))
+	#define PIOB_INIT_CLR		(PB06|PB07|PB08|PB09|PB14|PB15|PB21)
 
-	#define PIOC_INIT_DIR		(~0)
-	#define PIOC_INIT_SET		(0)
-	#define PIOC_INIT_CLR		(~0)
+	#define PIOC_INIT_DIR		(RTS1|RTS2|L1|L2|RESET|ENVCORE|PC12|PC17|PC18|PC19|PC25|PC26)
+	#define PIOC_INIT_SET		(ENVCORE)
+	#define PIOC_INIT_CLR		(RTS1|RTS2|L1|L2|RESET|PC12|PC17|PC18|PC19|PC25|PC26)
 
 	#define Pin_MainLoop_Set()	HW::PIOA->BSET(25)
 	#define Pin_MainLoop_Clr()	HW::PIOA->BCLR(25)

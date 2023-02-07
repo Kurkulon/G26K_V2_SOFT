@@ -52,7 +52,7 @@ static u16 crc_ccit_result = 0;
 
 #define GEAR_RATIO 12.25
 
-const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
+//const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 
 //const u16 testNandChipMask = 0xFFFF;
 
@@ -504,11 +504,11 @@ static void WDT_Init()
 #ifdef CPU_SAME53	
 
 	#define SyncTmr						HW::SYNC_TCC
-	#define RotTmr						HW::ROT_TCC
+	//#define RotTmr						HW::ROT_TCC
 	#define SYNC_GEN					CONCAT2(GEN_,SYNC_TCC)
 	#define SYNC_GEN_CLK				CONCAT2(CLK_,SYNC_TCC) 
-	#define ROT_GEN						CONCAT2(GEN_,ROT_TCC)
-	#define ROT_GEN_CLK					CONCAT2(CLK_,ROT_TCC) 
+	//#define ROT_GEN						CONCAT2(GEN_,ROT_TCC)
+	//#define ROT_GEN_CLK					CONCAT2(CLK_,ROT_TCC) 
 
 	#if (SYNC_GEN_CLK > 100000000)
 			#define SYNC_PRESC_NUM		256
@@ -524,29 +524,29 @@ static void WDT_Init()
 			#define SYNC_PRESC_NUM		1
 	#endif
 
-	#if (ROT_GEN_CLK > 100000000)
-			#define ROT_PRESC_NUM		256
-	#elif (ROT_GEN_CLK > 50000000)
-			#define ROT_PRESC_NUM		64
-	#elif (ROT_GEN_CLK > 20000000)
-			#define ROT_PRESC_NUM		16
-	#elif (ROT_GEN_CLK > 10000000)
-			#define ROT_PRESC_NUM		8
-	#elif (ROT_GEN_CLK > 5000000)
-			#define ROT_PRESC_NUM		4
-	#else
-			#define ROT_PRESC_NUM		1
-	#endif
+	//#if (ROT_GEN_CLK > 100000000)
+	//		#define ROT_PRESC_NUM		256
+	//#elif (ROT_GEN_CLK > 50000000)
+	//		#define ROT_PRESC_NUM		64
+	//#elif (ROT_GEN_CLK > 20000000)
+	//		#define ROT_PRESC_NUM		16
+	//#elif (ROT_GEN_CLK > 10000000)
+	//		#define ROT_PRESC_NUM		8
+	//#elif (ROT_GEN_CLK > 5000000)
+	//		#define ROT_PRESC_NUM		4
+	//#else
+	//		#define ROT_PRESC_NUM		1
+	//#endif
 
 	#define SYNC_PRESC_DIV				CONCAT2(TCC_PRESCALER_DIV,SYNC_PRESC_NUM)
-	#define ROT_PRESC_DIV				CONCAT2(TCC_PRESCALER_DIV,ROT_PRESC_NUM)
+	//#define ROT_PRESC_DIV				CONCAT2(TCC_PRESCALER_DIV,ROT_PRESC_NUM)
 
-	#define US2ROT(v)					(((v)*(ROT_GEN_CLK/1000/ROT_PRESC_NUM)+500)/1000)
+	//#define US2ROT(v)					(((v)*(ROT_GEN_CLK/1000/ROT_PRESC_NUM)+500)/1000)
 	#define US2SYNC(v)					(((v)*(SYNC_GEN_CLK/1000/SYNC_PRESC_NUM)+500)/1000)
 
 
 	inline void Sync_ClockEnable()		{ HW::GCLK->PCHCTRL[CONCAT2(GCLK_,SYNC_TCC)] = SYNC_GEN|GCLK_CHEN;	HW::MCLK->ClockEnable(CONCAT2(PID_,SYNC_TCC));	}
-	inline void Rot_ClockEnable()		{ HW::GCLK->PCHCTRL[CONCAT2(GCLK_,ROT_TCC)]	 = ROT_GEN|GCLK_CHEN;	HW::MCLK->ClockEnable(CONCAT2(PID_,ROT_TCC));	}
+	//inline void Rot_ClockEnable()		{ HW::GCLK->PCHCTRL[CONCAT2(GCLK_,ROT_TCC)]	 = ROT_GEN|GCLK_CHEN;	HW::MCLK->ClockEnable(CONCAT2(PID_,ROT_TCC));	}
 
 #elif defined(CPU_XMC48)
 
@@ -642,14 +642,14 @@ void Set_Sync_Rot(u16 RPS, u16 samplePerRound)
 
 	//u16 r = (samplePerRound + 36) / 72;
 	
-	u32 r = ((u32)RPS * pulsesPerHeadRoundFix4) >> 4;
+	//u32 r = ((u32)RPS * pulsesPerHeadRoundFix4) >> 4;
 
-	if (r != 0)
-	{
-		r = US2ROT((100000000 + r/2) / r);
-	};
+	//if (r != 0)
+	//{
+	//	r = US2ROT((100000000 + r/2) / r);
+	//};
 
-	if (r > 0xFFFF) r = 0xFFFF;
+	//if (r > 0xFFFF) r = 0xFFFF;
 
 	#ifdef CPU_SAME53	
 
@@ -658,12 +658,12 @@ void Set_Sync_Rot(u16 RPS, u16 samplePerRound)
 
 		SyncTmr->CTRLA = (t != 0) ? TCC_ENABLE|SYNC_PRESC_DIV : SYNC_PRESC_DIV;
 
-		RotTmr->CC[0] = r;
+		//RotTmr->CC[0] = r;
 
-		RotTmr->CTRLA = (r != 0) ? TCC_ENABLE|ROT_PRESC_DIV : ROT_PRESC_DIV;
+		//RotTmr->CTRLA = (r != 0) ? TCC_ENABLE|ROT_PRESC_DIV : ROT_PRESC_DIV;
 
 		SyncTmr->CTRLBSET = TCC_CMD_RETRIGGER;
-		RotTmr->CTRLBSET = TCC_CMD_RETRIGGER;
+		//RotTmr->CTRLBSET = TCC_CMD_RETRIGGER;
 
 	#elif defined(CPU_XMC48)
 
@@ -711,10 +711,10 @@ static void Init_Sync_Rot()
 
 
 	PIO_SYNC->SetWRCONFIG(SYNC, PMUX_SYNC|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX|PORT_INEN);
-	PIO_ROT->SetWRCONFIG(ROT,	PMUX_ROT|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX|PORT_INEN);	
+	//PIO_ROT->SetWRCONFIG(ROT,	PMUX_ROT|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX|PORT_INEN);	
 
 	Sync_ClockEnable();
-	Rot_ClockEnable();
+	//Rot_ClockEnable();
 
 	SyncTmr->CTRLA = TCC_SWRST;
 
@@ -731,23 +731,23 @@ static void Init_Sync_Rot()
 
 	SyncTmr->CTRLA = TCC_ENABLE|SYNC_PRESC_DIV;
 
-	RotTmr->CTRLA = TCC_SWRST;
+	//RotTmr->CTRLA = TCC_SWRST;
 
-	while(RotTmr->SYNCBUSY);
+	//while(RotTmr->SYNCBUSY);
 
-	RotTmr->CTRLA = ROT_PRESC_DIV;
-	RotTmr->WAVE = TCC_WAVEGEN_MFRQ;//|TCC_POL0;
-	RotTmr->DRVCTRL = 0;//TCC_NRE0|TCC_NRE1|TCC_NRV0|TCC_NRV1;
-	RotTmr->CC[0] = 250;
-	//RotTmr->CC[0] = 2; 
-	//RotTmr->CC[1] = 2; 
+	//RotTmr->CTRLA = ROT_PRESC_DIV;
+	//RotTmr->WAVE = TCC_WAVEGEN_MFRQ;//|TCC_POL0;
+	//RotTmr->DRVCTRL = 0;//TCC_NRE0|TCC_NRE1|TCC_NRV0|TCC_NRV1;
+	//RotTmr->CC[0] = 250;
+	////RotTmr->CC[0] = 2; 
+	////RotTmr->CC[1] = 2; 
 
-	RotTmr->EVCTRL = 0;
+	//RotTmr->EVCTRL = 0;
 
-	RotTmr->CTRLA = ROT_PRESC_DIV;//TCC_ENABLE;
+	//RotTmr->CTRLA = ROT_PRESC_DIV;//TCC_ENABLE;
 	
 	SyncTmr->CTRLBSET = TCC_CMD_RETRIGGER;
-	RotTmr->CTRLBSET = TCC_CMD_RETRIGGER;
+	//RotTmr->CTRLBSET = TCC_CMD_RETRIGGER;
 
 
 #elif defined(CPU_XMC48)

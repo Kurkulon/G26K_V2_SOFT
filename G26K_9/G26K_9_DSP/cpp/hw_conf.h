@@ -89,7 +89,7 @@
 #define IVG_PORTF_SYNC		7
 #define IVG_PORTF_SHAFT		8
 #define IVG_GPTIMER2_RTT	9
-#define IVG_SPORT_DMA		10
+#define IVG_SPORT0_DMA		10
 #define IVG_PORTG_ROT		11
 #define IVG_TWI				12
 
@@ -97,9 +97,9 @@
 
 #define	PPI_DMA				0
 #define	SPORT0_RX_DMA		1
-#define	SPORT0_TX_DMA		2
+//#define	SPORT0_TX_DMA		2
 #define	SPORT1_RX_DMA		3
-#define	SPORT1_TX_DMA		4
+//#define	SPORT1_TX_DMA		4
 #define	SPI0_DMA			5
 #define	SPI1_DMA			6
 #define	UART_RX_DMA			7

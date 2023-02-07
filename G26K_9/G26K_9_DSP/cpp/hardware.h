@@ -218,7 +218,7 @@ extern DSCPPI* GetDscPPI();
 extern void FreeDscPPI(DSCPPI* dsc);
 extern DSCPPI* AllocDscPPI();
 
-extern void SetGain(byte v);
+//extern void SetGain(byte v);
 
 extern void SetFireVoltage(u16 v);
 extern u16	GetFireVoltage();

@@ -19,11 +19,13 @@
 #define PPI_BUF_NUM 8
 
 
-#define Start_SPORT01()	{ HW::SPORT0->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; HW::SPORT1->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; }
-#define Stop_SPORT01()	{ HW::SPORT0->TCR1 = 0; HW::SPORT1->TCR1 = 0; }
-#define Start_SPORT0()	{ HW::SPORT0->TCR1 = TCKFE|DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; }
+//#define Start_SPORT01()	{ HW::SPORT0->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; HW::SPORT1->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; }
+//#define Stop_SPORT01()	{ HW::SPORT0->TCR1 = 0; HW::SPORT1->TCR1 = 0; }
+
+#define Start_SPORT0()	{/* HW::SPORT0->RCR1 |= RSPEN;*/ HW::SPORT0->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; }
 #define Start_SPORT1()	{ HW::SPORT1->TCR1 = DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN; }
-#define Stop_SPORT0()	{ HW::SPORT0->TCR1 = 0; }
+
+#define Stop_SPORT0()	{ HW::SPORT0->TCR1 = 0; /*HW::SPORT0->RCR1 = 0;*/}
 #define Stop_SPORT1()	{ HW::SPORT1->TCR1 = 0; }
 
 #define StartFire()	{ HW::TIMER->Enable = FIRE1_TIMEN|FIRE2_TIMEN; }
@@ -265,9 +267,9 @@ static void Read_SPORT0(PPI &ppi)
 		dmaRxSp0.Disable();
 
 		HW::SPORT0->TCR1 = 0;
-		HW::SPORT0->TCR2 = SLEN(13);
-		HW::SPORT0->TCLKDIV = 10; curDscPPI0->ppiclkdiv = ppi.clkDiv;
-		HW::SPORT0->TFSDIV = 20;
+		HW::SPORT0->TCR2 = SLEN(12);
+		HW::SPORT0->TCLKDIV = 1; curDscPPI0->ppiclkdiv = ppi.clkDiv;
+		HW::SPORT0->TFSDIV = 14;
 
 		dmaRxSp0.Read16(curDscPPI0->data+(curDscPPI0->offset = ppiOffset), ppi.len + 32); 
 
@@ -378,17 +380,17 @@ EX_INTERRUPT_HANDLER(SPORT0_ISR)
 		readyPPI.Add(curDscPPI0);
 		curDscPPI0 = 0;
 
-		u32 t = mmsec;
+		//u32 t = mmsec;
 
-		if ((t - pt) >= 30011)
-		{
-			pt = t;
+		//if ((t - pt) >= 30011)
+		//{
+		//	pt = t;
 
-			Read_SPORT0(refPPI);
-			
-			Fire();
-		}
-		else
+		//	Read_SPORT0(refPPI);
+		//	
+		//	Fire();
+		//}
+		//else
 		{
 			Read_SPORT0(mainPPI);
 		};
@@ -512,8 +514,8 @@ static void InitFire()
 
 	HW::PIOF->SetFER(PF0|PF1|PF6|PF7);
 	HW::PIOF->ClrMUX(PF0|PF1|PF6|PF7);
-	HW::PIOG->SetFER(PG0|PG1|PG6|PG7);
-	HW::PIOG->ClrMUX(PG0|PG1|PG6|PG7);
+	HW::PIOG->SetFER(PG0|PG1|PG2|PG6|PG7);
+	HW::PIOG->ClrMUX(PG0|PG1|PG2|PG6|PG7);
 
 	dmaRxSp0.Disable();
 	dmaRxSp1.Disable();
@@ -521,12 +523,12 @@ static void InitFire()
 	HW::SPORT0->RCR1 = 0;
 	HW::SPORT1->RCR1 = 0;
 
-	*pSPORT_GATECLK = SPORT0_GATECLK_EN|SPORT1_GATECLK_EN|SPORT0_GATECLK_STATE|SPORT1_GATECLK_STATE;
+	*pSPORT_GATECLK = SPORT0_GATECLK_EN|SPORT1_GATECLK_EN/*|SPORT0_GATECLK_STATE|SPORT1_GATECLK_STATE*/;
 
-	HW::SPORT0->RCR2 = SLEN(13);
-	HW::SPORT0->RCR1 = RCKFE|/*LARFS|*/LRFS|RFSR|RSPEN;
-	HW::SPORT1->RCR2 = SLEN(13);
-	HW::SPORT1->RCR1 = RCKFE|LARFS|LRFS|RFSR|RSPEN;
+	HW::SPORT0->RCR2 = SLEN(12);
+	HW::SPORT0->RCR1 = /*RCKFE|LARFS|*/LRFS|RFSR|RSPEN;
+	HW::SPORT1->RCR2 = SLEN(12);
+	HW::SPORT1->RCR1 = LARFS|LRFS|RFSR|RSPEN;
 
 
 	//HW::SIC->IntAssign(PID_DMA2_SPORT0_TX, IVG_SPORT_DMA);
@@ -881,6 +883,28 @@ void UpdateHardware()
 			break;
 
 		case 7:
+
+			if (dsc.ready)
+			{
+				wbuf[0] = 0x80|(9<<3)|3;	
+				wbuf[1] = 1;	
+
+				dsc.adr = 0x70;
+				dsc.wdata = wbuf;
+				dsc.wlen = 2;
+				dsc.rdata = 0;
+				dsc.rlen = 0;
+				dsc.wdata2 = 0;
+				dsc.wlen2 = 0;
+
+				TWI_AddRequest(&dsc);
+
+				i++;
+			};
+
+			break;
+
+		case 8:
 
 			if (dsc.ready)
 			{

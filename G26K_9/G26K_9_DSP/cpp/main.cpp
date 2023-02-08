@@ -442,10 +442,10 @@ static void Filtr_Data(DSCPPI &dsc, u32 filtrType)
 	}
 	else
 	{
-		//for (u32 i = dsc.len; i > 0; i--)
-		//{
-		//	*d = d[4] - 2048; d++;
-		//};
+		for (u32 i = dsc.len; i > 0; i--)
+		{
+			*d = d[4] - 2048; d++;
+		};
 	};
 }
 

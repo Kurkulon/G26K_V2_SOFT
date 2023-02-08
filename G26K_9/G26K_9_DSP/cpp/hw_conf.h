@@ -11,7 +11,7 @@
 #define CLKIN_DIV			2	// 1, 2
 
 #define PLL_MUL				32	// 5...64
-#define SCLK_DIV			4	// 1...15
+#define SCLK_DIV			2	// 1...15
 #define CCLK_CSEL			0	// 0...3
 #define CCLK_DIV			(1UL<<CCLK_CSEL)
 

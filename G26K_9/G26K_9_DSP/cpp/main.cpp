@@ -1145,7 +1145,7 @@ int main( void )
 
 	//CheckFlash();
 
-	spi.Connect(25000000);
+	spi.Connect(50000000);
 
 	//static DSCSPI dsc;
 

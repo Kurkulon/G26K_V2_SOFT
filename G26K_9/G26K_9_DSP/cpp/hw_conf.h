@@ -90,8 +90,9 @@
 #define IVG_PORTF_SHAFT		8
 #define IVG_GPTIMER2_RTT	9
 #define IVG_SPORT0_DMA		10
-#define IVG_PORTG_ROT		11
-#define IVG_TWI				12
+#define IVG_SPORT1_DMA		11
+#define IVG_PORTG_ROT		12
+#define IVG_TWI				13
 
 // ++++++++++++++	DMA	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -183,6 +184,21 @@
 #define BM_DSP_MOSI				(1UL<<PIN_DSP_MOSI	)
 #define BM_DSP_MISO				(1UL<<PIN_DSP_MISO	)
 #define BM_DSP_SCK				(1UL<<PIN_DSP_SCK	)
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define PIO_MUX_SYNC			HW::PIOG
+#define PIO_MUX_RESET			HW::PIOG
+
+#define PIN_MUX_SCK				8
+#define PIN_MUX_DIN				9
+#define PIN_MUX_RESET			10
+#define PIN_MUX_SYNC			11
+
+#define BM_MUX_SCK				(1UL<<PIN_MUX_SCK	)
+#define BM_MUX_DIN				(1UL<<PIN_MUX_DIN	)
+#define BM_MUX_RESET			(1UL<<PIN_MUX_RESET	)
+#define BM_MUX_SYNC				(1UL<<PIN_MUX_SYNC	)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

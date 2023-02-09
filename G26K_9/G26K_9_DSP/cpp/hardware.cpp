@@ -7,6 +7,7 @@
 
 #include "list.h"
 #include "DMA.h"
+#include "spi.h"
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -43,10 +44,18 @@
 
 //byte bitGain[16] = {GAIN_M0, GAIN_M1, GAIN_M2, GAIN_M3, GAIN_M4, GAIN_M5, GAIN_M6, GAIN_M7, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8, GAIN_M8 };
 
+static bool cmdGainUpdate = false;
+static byte gainDataBuf[2];
+
+static u16 GAIN_CS_MASK[] = { BM_MUX_SYNC };
+static S_SPIM	spiGain(1, PIO_MUX_SYNC, GAIN_CS_MASK, ArraySize(GAIN_CS_MASK), SCLK, BM_MUX_SCK|BM_MUX_DIN);
+																				  
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 DMA_CH	dmaRxSp0(SPORT0_RX_DMA);
 DMA_CH	dmaRxSp1(SPORT1_RX_DMA);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static DSCPPI *curDscPPI0 = 0;
 static DSCPPI *curDscPPI1 = 0;
@@ -129,9 +138,10 @@ u16	GetMotoVoltage()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void SetGain(byte v) 
+static void SetGain(byte g1, byte g2, byte g3, byte g4) 
 {
-	//*pPORTGIO = (*pPORTGIO & ~0xF) | bitGain[v&0xF];
+	gainDataBuf[0] = (g3&15) | ((g4&15)<<4);
+	gainDataBuf[1] = (g1&15) | ((g2&15)<<4);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -195,6 +205,8 @@ void SetDspVars(const ReqDsp01 *v)
 	SetPPI(refPPI, dspVars.refSens, 1);
 	
 	firesPerRound = (dspVars.mode == 0) ? dspVars.wavesPerRoundCM : dspVars.wavesPerRoundIM;
+
+	SetGain(mainPPI.gain,mainPPI.gain, refPPI.gain, refPPI.gain);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -512,8 +524,8 @@ static void InitFire()
 	FIRE2_TIMER->Period = ~0;
 	FIRE2_TIMER->Width = NS2SCLK(200);
 
-	HW::PIOF->SetFER(PF0|PF1|PF6|PF7);
-	HW::PIOF->ClrMUX(PF0|PF1|PF6|PF7);
+	HW::PIOF->SetFER(PF0|PF1|PF2|PF6|PF7);
+	HW::PIOF->ClrMUX(PF0|PF1|PF2|PF6|PF7);
 	HW::PIOG->SetFER(PG0|PG1|PG2|PG6|PG7);
 	HW::PIOG->ClrMUX(PG0|PG1|PG2|PG6|PG7);
 
@@ -537,7 +549,7 @@ static void InitFire()
 	//HW::EIC->InitIVG(IVG_SPORT_DMA, SPORT_ISR);
 
 	InitIVG(IVG_SPORT0_DMA, PID_DMA1_SPORT0_RX, SPORT0_ISR);
-	//InitIVG(IVG_SPORT_DMA, PID_DMA3_SPORT1_RX, SPORT1_ISR);
+	InitIVG(IVG_SPORT1_DMA, PID_DMA3_SPORT1_RX, SPORT1_ISR);
 
 	InitIVG(IVG_PORTF_SYNC, PID_Port_F_Interrupt_A, SYNC_ISR);
 
@@ -634,36 +646,47 @@ static void InitRot()
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-void InitHardware()
+static void InitGain()
 {
-	LowLevelInit();
+	spiGain.Connect(1000000);
 
-	InitRTT();
-
-//	InitPPI();
-
-	InitTWI();
-
-	InitFire();
-
-	InitShaft();
-
-	InitRot();
+	PIO_MUX_RESET->DirSet(BM_MUX_RESET);
+	PIO_MUX_RESET->CLR(BM_MUX_RESET);
 }
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void UpdateHardware()
+static void UpdateGain()
+{
+	static RTM32 tm;
+	static DSCSPI dsc;
+
+	if (tm.Check(MS2RT(201)) || cmdGainUpdate)
+	{
+		cmdGainUpdate = false;
+
+		PIO_MUX_RESET->SET(BM_MUX_RESET);
+
+		dsc.alen = 0;
+		dsc.baud = NS2SCLK(250);
+		dsc.csnum = 0;
+		dsc.mode = CPHA;	// CPOL CPHA
+		dsc.wdata = gainDataBuf;
+		dsc.wlen = sizeof(gainDataBuf);
+		dsc.rdata = 0;
+		dsc.rlen = 0;
+
+		spiGain.AddRequest(&dsc);
+	};
+
+	spiGain.Update();
+
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Update_ADC_DAC()
 {
 	static byte i = 0;
 	static DSCTWI dsc;
@@ -915,6 +938,60 @@ void UpdateHardware()
 
 
 	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void InitHardware()
+{
+	LowLevelInit();
+
+	InitRTT();
+
+//	InitPPI();
+
+	InitTWI();
+
+	InitFire();
+
+	InitShaft();
+
+	InitRot();
+
+	InitGain();
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void UpdateHardware()
+{
+	static byte i = 0;
+
+	#define CALL(p) case (__LINE__-S): p; break;
+
+	enum C { S = (__LINE__+3) };
+	switch(i++)
+	{
+		CALL( Update_ADC_DAC()	);
+		CALL( UpdateGain()		);
+	};
+
+	i &= 1; // i = (i > (__LINE__-S-3)) ? 0 : i;
+
+	#undef CALL
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

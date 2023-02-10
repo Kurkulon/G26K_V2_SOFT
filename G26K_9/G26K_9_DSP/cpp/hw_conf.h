@@ -229,8 +229,13 @@
 #define INIT_PORTGIO_MASKA		0
 #define INIT_PORTGIO_MASKB		0
 
+#ifndef __DEBUG
 #define INIT_WDOG_CNT			MS2CLK(100)
 #define INIT_WDOG_CTL			WDEV_RESET|WDEN
+#else
+#define INIT_WDOG_CNT			MS2CLK(100)
+#define INIT_WDOG_CTL			WDEV_RESET|WDDIS
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

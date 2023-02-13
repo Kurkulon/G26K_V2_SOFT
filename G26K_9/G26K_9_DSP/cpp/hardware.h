@@ -11,36 +11,33 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define PPI_BUF_LEN (1024+64)
+#define SPORT_BUF_LEN	(2048+64)
 
-struct DSCPPI
+struct DSCSPORT
 {
-	DSCPPI	*next;
-	u32		mmsec;
-	u32		rotCount;
-	u32		rotMMSEC;
-	u32		shaftTime;
-	u32		shaftPrev;
-	u32		fireIndex;
-	u32		ppidelay;
-	u16		motoCount;
-	u16		shaftCount;
-	u16		sensType;
-	u16		gain;
-	u16		len;
-	u16		offset;
-	u16		ppiclkdiv;
-	u16		sampleTime;
-	u16		sampleDelay;
-	u16		maxAmp;
-	u16		fi_amp;
-	u16		fi_time;
-	u16		ax;
-	u16		ay;
-	u16		az;
-	u16		at;
-	u16		busy;
-	u16		data[PPI_BUF_LEN];
+	DSCSPORT	*next;
+	u32			mmsec;
+	u32			rotCount;
+	//u32			rotMMSEC;
+	u32			shaftTime;
+	//u32			shaftPrev;
+	u32			fireIndex;
+	u16			sportDelay;
+	u16			motoCount;
+	u16			shaftCount;
+	u16			sensType;
+	u16			gain;
+	u16			len;
+	u16			ch_num;
+	u16			sport_tfsdiv;
+	u16			sampleTime;
+	u16			sampleDelay;
+	u16			ax;
+	u16			ay;
+	u16			az;
+	u16			at;
+	u16			busy;
+	u16			data[SPORT_BUF_LEN];
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -109,6 +106,23 @@ struct RspIM	// 0xAD50
 #pragma pack()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define RSPWAVE_BUF_LEN	(1024+(sizeof(RspCM)+1)/2+16)
+
+struct RSPWAVE
+{
+	RSPWAVE		*next;
+	u32			fireIndex;
+	u16			mode;
+	u16			shaftCount;
+	u16			dataLen;
+
+	u16			data[RSPWAVE_BUF_LEN];
+
+	inline u16 MaxLen() { return ArraySize(data); }
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //#pragma pack(1)
 
@@ -214,9 +228,9 @@ extern void SetDspVars(const ReqDsp01 *v);
 
 //extern void SyncReadSPORT(void *dst1, void *dst2, u16 len1, u16 len2, u16 clkdiv, bool *ready0, bool *ready1);
 //extern void ReadPPI(void *dst);
-extern DSCPPI* GetDscPPI();
-extern void FreeDscPPI(DSCPPI* dsc);
-extern DSCPPI* AllocDscPPI();
+extern DSCSPORT* GetDscSPORT();
+extern void FreeDscSPORT(DSCSPORT* dsc);
+extern DSCSPORT* AllocDscSPORT();
 
 //extern void SetGain(byte v);
 

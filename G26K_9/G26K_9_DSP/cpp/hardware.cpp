@@ -17,7 +17,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define PPI_BUF_NUM 8
+#define SPORT_BUF_NUM 4
 
 
 #define Start_SPORT()	{ HW::SPORT0->TCR1 = sp0TCR1; HW::SPORT1->TCR1 = sp1TCR1; }
@@ -68,13 +68,13 @@ DMA_CH	dmaRxSp1(SPORT1_RX_DMA);
 static u16 sp0TCR1 = 0;
 static u16 sp1TCR1 = 0;
 
-static DSCPPI *curDscPPI0 = 0;
-static DSCPPI *curDscPPI1 = 0;
+static DSCSPORT *curDscSPORT0 = 0;
+static DSCSPORT *curDscSPORT1 = 0;
 //static DSCPPI *lastDscPPI = 0;
 
 //static u16 ppi_buf[PPI_BUF_LEN][PPI_BUF_NUM];
 
-static DSCPPI ppidsc[PPI_BUF_NUM];
+static DSCSPORT sportdsc[SPORT_BUF_NUM];
 //static u16 startIndPPI = 0;
 //static u16 endIndPPI = 0;g118
 
@@ -87,9 +87,9 @@ u16 ppiOffset = sizeof(RspCM)/2; //19;
 
 u32 mmsec = 0; // 0.1 ms
 
-#pragma instantiate List<DSCPPI>
-static List<DSCPPI> freePPI;
-static List<DSCPPI> readyPPI;
+#pragma instantiate List<DSCSPORT>
+static List<DSCSPORT> freeSPORT;
+static List<DSCSPORT> readySPORT;
 
 static ReqDsp01 dspVars;
 
@@ -252,42 +252,43 @@ static void InitRTT()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-DSCPPI* GetDscPPI()
+DSCSPORT* GetDscSPORT()
 {
-	return readyPPI.Get();
+	return readySPORT.Get();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-DSCPPI* AllocDscPPI()
+DSCSPORT* AllocDscSPORT()
 {
-	return freePPI.Get();
+	return freeSPORT.Get();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void FreeDscPPI(DSCPPI* dsc)
+void FreeDscSPORT(DSCSPORT* dsc)
 {
-	freePPI.Add(dsc);
+	freeSPORT.Add(dsc);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void Read_SPORT0(PPI &ppi)
 {
-	curDscPPI0 = AllocDscPPI();
+	curDscSPORT0 = AllocDscSPORT();
 
 	Stop_SPORT0();
 
-	if (curDscPPI0 != 0)
+	if (curDscSPORT0 != 0)
 	{
-		curDscPPI0->busy = false;
-		curDscPPI0->ppidelay = ppi.delay;
-		curDscPPI0->sampleDelay = ppi.sd;
-		curDscPPI0->sampleTime = ppi.st;
-		curDscPPI0->sensType = ppi.sensType;
-		curDscPPI0->gain = ppi.gain;
-		curDscPPI0->len = ppi.len;
+		curDscSPORT0->busy = false;
+		curDscSPORT0->sportDelay = ppi.delay;
+		curDscSPORT0->sampleDelay = ppi.sd;
+		curDscSPORT0->sampleTime = ppi.st;
+		curDscSPORT0->sensType = ppi.sensType;
+		curDscSPORT0->gain = ppi.gain;
+		curDscSPORT0->len = ppi.len;
+		curDscSPORT0->ch_num = 1;
 
 		FIRE1_TIMER->Width = ppi.fireDiv;
 
@@ -297,9 +298,9 @@ static void Read_SPORT0(PPI &ppi)
 		sp0TCR1 = __TCR1;
 		HW::SPORT0->TCR2 = __TCR2;
 		HW::SPORT0->TCLKDIV = __TCLKDIV; 
-		HW::SPORT0->TFSDIV = curDscPPI0->ppiclkdiv = ppi.tfsdiv; //14;
+		HW::SPORT0->TFSDIV = curDscSPORT0->sport_tfsdiv = ppi.tfsdiv; //14;
 
-		dmaRxSp0.Read16(curDscPPI0->data+(curDscPPI0->offset = ppiOffset), ppi.len + 32); 
+		dmaRxSp0.Read16(curDscSPORT0->data, ppi.len + 32); 
 
 		//ssync();
 	};
@@ -309,19 +310,20 @@ static void Read_SPORT0(PPI &ppi)
 
 static void Read_SPORT1(PPI &ppi)
 {
-	curDscPPI1 = AllocDscPPI();
+	curDscSPORT1 = AllocDscSPORT();
 
 	Stop_SPORT1();
 
-	if (curDscPPI1 != 0)
+	if (curDscSPORT1 != 0)
 	{
-		curDscPPI1->busy = false;
-		curDscPPI1->ppidelay = ppi.delay;
-		curDscPPI1->sampleDelay = ppi.sd;
-		curDscPPI1->sampleTime = ppi.st;
-		curDscPPI1->sensType = ppi.sensType;
-		curDscPPI1->gain = ppi.gain;
-		curDscPPI1->len = ppi.len;
+		curDscSPORT1->busy = false;
+		curDscSPORT1->sportDelay = ppi.delay;
+		curDscSPORT1->sampleDelay = ppi.sd;
+		curDscSPORT1->sampleTime = ppi.st;
+		curDscSPORT1->sensType = ppi.sensType;
+		curDscSPORT1->gain = ppi.gain;
+		curDscSPORT1->len = ppi.len;
+		curDscSPORT1->ch_num = 1;
 
 		FIRE2_TIMER->Width = ppi.fireDiv;
 
@@ -331,9 +333,9 @@ static void Read_SPORT1(PPI &ppi)
 		sp1TCR1 = __TCR1;
 		HW::SPORT1->TCR2 = __TCR2;
 		HW::SPORT1->TCLKDIV = __TCLKDIV; 
-		HW::SPORT1->TFSDIV = curDscPPI1->ppiclkdiv = ppi.tfsdiv;
+		HW::SPORT1->TFSDIV = curDscSPORT1->sport_tfsdiv = ppi.tfsdiv;
 
-		dmaRxSp1.Read16(curDscPPI1->data+(curDscPPI1->offset = ppiOffset), ppi.len + 32); 
+		dmaRxSp1.Read16(curDscSPORT1->data, ppi.len + 32); 
 
 		//ssync();
 	};
@@ -345,13 +347,13 @@ static void Read_SPORT1(PPI &ppi)
 
 static void Fire()
 {
-	if (expected_true(curDscPPI0 != 0))
+	if (expected_true(curDscSPORT0 != 0))
 	{
-		if (!curDscPPI0->busy)
+		if (!curDscSPORT0->busy)
 		{
-			curDscPPI0->busy = true;
+			curDscSPORT0->busy = true;
 
-			//if (curDscPPI0->ppidelay == 0)
+			//if (curDscSPORT0->ppidelay == 0)
 			//{ 
 			//	*pTCNTL = 0;
 			//	Start_SPORT0();
@@ -359,26 +361,26 @@ static void Fire()
 			//else
 			//{
 			//	*pTSCALE = 0;
-			//	*pTCOUNT = curDscPPI0->ppidelay;
+			//	*pTCOUNT = curDscSPORT0->ppidelay;
 			//	*pTCNTL = TINT|TMPWR|TMREN;
 			//};
 
-			curDscPPI0->fireIndex = fireSyncCount;
+			curDscSPORT0->fireIndex = fireSyncCount;
 
-			curDscPPI0->mmsec = mmsec;
-			curDscPPI0->shaftTime = shaftMMSEC;
-			curDscPPI0->shaftPrev = shaftPrevMMSEC;
+			curDscSPORT0->mmsec = mmsec;
+			curDscSPORT0->shaftTime = shaftMMSEC;
+			//curDscSPORT0->shaftPrev = shaftPrevMMSEC;
 
-			curDscPPI0->rotCount = rotCount;
-			curDscPPI0->rotMMSEC = rotMMSEC;
+			curDscSPORT0->rotCount = rotCount;
+			//curDscSPORT0->rotMMSEC = rotMMSEC;
 
-			curDscPPI0->motoCount = motoCount; //dspVars.motoCount;
-			curDscPPI0->shaftCount = shaftCount;
+			curDscSPORT0->motoCount = motoCount; //dspVars.motoCount;
+			curDscSPORT0->shaftCount = shaftCount;
 
-			curDscPPI0->ax = dspVars.ax;
-			curDscPPI0->ay = dspVars.ay;
-			curDscPPI0->az = dspVars.az;
-			curDscPPI0->at = dspVars.at;
+			curDscSPORT0->ax = dspVars.ax;
+			curDscSPORT0->ay = dspVars.ay;
+			curDscSPORT0->az = dspVars.az;
+			curDscSPORT0->at = dspVars.at;
 		};
 	}
 	else
@@ -386,13 +388,13 @@ static void Fire()
 		Read_SPORT0(mainPPI);
 	};
 
-	if (expected_true(curDscPPI1 != 0))
+	if (expected_true(curDscSPORT1 != 0))
 	{
-		if (!curDscPPI1->busy)
+		if (!curDscSPORT1->busy)
 		{
-			curDscPPI1->busy = true;
+			curDscSPORT1->busy = true;
 
-			//if (curDscPPI0->ppidelay == 0)
+			//if (curDscSPORT0->ppidelay == 0)
 			//{ 
 			//	*pTCNTL = 0;
 			//	Start_SPORT0();
@@ -400,26 +402,26 @@ static void Fire()
 			//else
 			//{
 			//	*pTSCALE = 0;
-			//	*pTCOUNT = curDscPPI0->ppidelay;
+			//	*pTCOUNT = curDscSPORT0->ppidelay;
 			//	*pTCNTL = TINT|TMPWR|TMREN;
 			//};
 
-			curDscPPI1->fireIndex = fireSyncCount;
+			curDscSPORT1->fireIndex = fireSyncCount;
 
-			curDscPPI1->mmsec = mmsec;
-			curDscPPI1->shaftTime = shaftMMSEC;
-			curDscPPI1->shaftPrev = shaftPrevMMSEC;
+			curDscSPORT1->mmsec = mmsec;
+			curDscSPORT1->shaftTime = shaftMMSEC;
+			//curDscSPORT1->shaftPrev = shaftPrevMMSEC;
 
-			curDscPPI1->rotCount = rotCount;
-			curDscPPI1->rotMMSEC = rotMMSEC;
+			curDscSPORT1->rotCount = rotCount;
+			//curDscSPORT1->rotMMSEC = rotMMSEC;
 
-			curDscPPI1->motoCount = motoCount; //dspVars.motoCount;
-			curDscPPI1->shaftCount = shaftCount;
+			curDscSPORT1->motoCount = motoCount; //dspVars.motoCount;
+			curDscSPORT1->shaftCount = shaftCount;
 
-			curDscPPI1->ax = dspVars.ax;
-			curDscPPI1->ay = dspVars.ay;
-			curDscPPI1->az = dspVars.az;
-			curDscPPI1->at = dspVars.at;
+			curDscSPORT1->ax = dspVars.ax;
+			curDscSPORT1->ay = dspVars.ay;
+			curDscSPORT1->az = dspVars.az;
+			curDscSPORT1->at = dspVars.at;
 		};
 	}
 	else
@@ -448,9 +450,9 @@ EX_INTERRUPT_HANDLER(SPORT0_ISR)
 
 		HW::SPORT0->RCR1 = 0;
 
-		curDscPPI0->busy = false;
-		readyPPI.Add(curDscPPI0);
-		curDscPPI0 = 0;
+		curDscSPORT0->busy = false;
+		readySPORT.Add(curDscSPORT0);
+		curDscSPORT0 = 0;
 
 		//u32 t = mmsec;
 
@@ -491,9 +493,9 @@ EX_INTERRUPT_HANDLER(SPORT1_ISR)
 
 		HW::SPORT1->RCR1 = 0;
 
-		curDscPPI1->busy = false;
-		readyPPI.Add(curDscPPI1);
-		curDscPPI1 = 0;
+		curDscSPORT1->busy = false;
+		readySPORT.Add(curDscSPORT1);
+		curDscSPORT1 = 0;
 
 		//u32 t = mmsec;
 
@@ -559,13 +561,13 @@ EX_INTERRUPT_HANDLER(FIRE_ISR)
 
 static void InitFire()
 {
-	for (u16 i = 0; i < ArraySize(ppidsc); i++)
+	for (u16 i = 0; i < ArraySize(sportdsc); i++)
 	{
-		DSCPPI &dsc = ppidsc[i];
+		DSCSPORT &dsc = sportdsc[i];
 
 		dsc.busy = false;
 
-		freePPI.Add(&dsc);
+		freeSPORT.Add(&dsc);
 	};
 
 	PIO_FIRE->SetFER(BM_FIRE1|BM_FIRE2);

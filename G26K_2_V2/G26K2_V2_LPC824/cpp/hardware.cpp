@@ -7,16 +7,20 @@
 //#define OPEN_VALVE_CUR 600
 //#define CLOSE_VALVE_CUR 600
 
-#define GEAR_RATIO	12.25
-#define CUR_LIM		2000
-#define CUR_MAX		3000
-#define CUR_MIN		100
-#define IMP_CUR_LIM	13000
-#define POWER_LIM	30000
-#define VREG_MIN	100
-#define VREG_MAX	480
-#define RPM_VREG_K	(6 * 256/10)
-
+#define GEAR_RATIO			12.25
+#define CUR_LIM				2000
+#define CUR_MAX				3000
+#define CUR_MIN				100
+#define IMP_CUR_LIM			13000
+#define POWER_LIM			30000
+#define VREG_MIN			100
+#define VREG_MAX			480
+#define RPM_VREG_K			(6 * 256/10)
+#define DT_MOSFET			NS2CLK(200)
+#define VAUX_MIN			500
+#define VAUX_DEF			3000
+#define FB90_MAX			700
+#define FB90_VREG_DELTA		50
 
 const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 
@@ -34,6 +38,7 @@ u32 targetRPM = 0;
 u32 tachoLim = 0;
 u32 tachoStep = 1;
 u32 tachoStamp = 0;
+bool forcedTargetRPM = false;
 
 u16 limCur = CUR_LIM;
 u16 maxCur = CUR_MAX;
@@ -193,11 +198,31 @@ static void DisableDriver()
 
 void SetTargetRPM(u32 v)
 { 
-	if (targetRPM != v)
+	if (targetRPM != v && (!forcedTargetRPM || v != 0))
 	{
 		targetRPM = v;
 
 		motorState = 1;
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void SetForcedTargetRPM(u32 v)
+{ 
+	if (v != 0)
+	{
+		if (targetRPM < v)
+		{
+			targetRPM = v;
+			motorState = 1;
+		};
+
+		forcedTargetRPM = true;
+	}
+	else
+	{
+		forcedTargetRPM = false;
 	};
 }
 
@@ -449,36 +474,38 @@ static void UpdateVREG()
 		auxADC	= ((HW::ADC->DAT3 &0xFFF0) * 2771) >> 16;  
 		fb90ADC	= ((HW::ADC->DAT10&0xFFF0) * 1033) >> 16;  
 
-		fauxADC	 += auxADC	- avrAuxADC;	avrAuxADC	= fauxADC >> 8;
-		fFB90ADC += fb90ADC	- avrFB90ADC;	avrFB90ADC	= fFB90ADC >> 8;
+		fauxADC	 += auxADC	- avrAuxADC;	avrAuxADC	= fauxADC >> 4;
+		fFB90ADC += fb90ADC	- avrFB90ADC;	avrFB90ADC	= fFB90ADC >> 4;
 
-		dstDuty90 = (periodPWM90 * curVREG + auxADC/2) / auxADC + NS2CLK(560);
+		bool c = (fb90ADC > FB90_MAX);
 
-		if (lockAuxLoop90)
+		i16 v = (auxADC < VAUX_MIN) ? VAUX_DEF : auxADC;
+
+		dstDuty90 = (periodPWM90 * curVREG + v/2) / v + DT_MOSFET;
+
+		if (c)
 		{
-			curDuty90 = dstDuty90;
+			curDuty90 = 0; corrDuty90 = 0x100;
+			SetForcedTargetRPM(200);
 		}
-		else
+		else 
 		{
-			if (curDuty90 < dstDuty90)
-			{
-				curDuty90 += 1;
-			}
-			else if (curDuty90 > dstDuty90)
-			{
-				curDuty90 -= 1;
-			};
-		};
+			SetForcedTargetRPM(0);
 
-		if (curDuty90 == dstDuty90)
-		{
-			if (fb90ADC < ((i16)curVREG-5))
+			if (lockAuxLoop90)
 			{
-				if (corrDuty90 < 0x140) corrDuty90 += 2;
+				curDuty90 = dstDuty90;
 			}
-			else if (fb90ADC > ((i16)curVREG+5))
+			else
 			{
-				if (corrDuty90 > 0xC0) corrDuty90 -= 2;
+				if (curDuty90 < dstDuty90)
+				{
+					curDuty90 += 1;
+				}
+				else if (curDuty90 > dstDuty90)
+				{
+					curDuty90 -= 1;
+				};
 			};
 		};
 
@@ -488,17 +515,33 @@ static void UpdateVREG()
 
 		if (tm2.Check(MS2CTM(10)))
 		{
-			if (curVREG > targetVREG)
+			if (curDuty90 == dstDuty90)
+			{
+				if (avrFB90ADC < ((i16)curVREG-5))
+				{
+					if (corrDuty90 < 0x140) corrDuty90 += 1;
+				}
+				else if (avrFB90ADC > ((i16)curVREG+5))
+				{
+					if (corrDuty90 > 0xC0) corrDuty90 -= 1;
+				};
+			};
+
+			if ((avrFB90ADC+FB90_VREG_DELTA) <  curVREG)
+			{
+				curVREG = avrFB90ADC+FB90_VREG_DELTA;
+				corrDuty90 = 0x100;
+			}
+			else if (curVREG > targetVREG)
 			{
 				if (curVREG > targetVREG && curVREG > VREG_MIN) curVREG -= 1;
-				//curVREG = targetVREG;
 			}
 			else
 			{
 				if (curVREG < targetVREG && curVREG < VREG_MAX) curVREG += 1;
 			};
 
-			if (corrDuty90 > 0x130) curVREG = 0, corrDuty90 = 0;
+			//if (corrDuty90 > 0x130) curVREG = 0, corrDuty90 = 0;
 		};
 	};
 }

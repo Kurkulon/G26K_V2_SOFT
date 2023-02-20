@@ -21,6 +21,8 @@
 #define VAUX_DEF			3000
 #define FB90_MAX			700
 #define FB90_VREG_DELTA		50
+#define DELTA_DUTY_MAX		0x10000
+#define DELTA_DUTY_MIN		0x1000
 
 const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 
@@ -32,6 +34,7 @@ u16 lowCurADC = 0;
 u16 avrLowCurADC = 0;
 u32 fLowCurADC = 0;
 
+//u32 tachoMRT = 0;
 u32 tachoCount = 0;
 u32 motoCounter = 0;
 u32 targetRPM = 0;
@@ -136,12 +139,12 @@ const byte HG_pin[16] =		{ UH, UH, VH, VH, WH, UH, WH, VH,		VH, WH, UH, WH, VH, 
 
 const u16 pwmPeriod = 1250;
 const u16 maxDuty = 1200;
-static u16 limDuty = maxDuty;
-static u16 curDuty = 0;
+u16 limDuty = maxDuty;
+u16 curDuty = 0;
 
-static u32 impCur = 0; // mA
+u32 impCur = 0; // mA
 
-static u32 tachoPLL = 0;
+u32 tachoPLL = 0;
 
 const u16 periodPWM90	= US2CLK(10);
 const u16 maxDutyPWM90	= US2CLK(9);
@@ -443,6 +446,22 @@ static __irq void TahoHandler()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+union Fix16
+{
+protected:
+	u32 d;
+	u16 w[2];
+public:
+	Fix16() : d(0) {}
+
+	operator u16() { return w[1]; }
+	u16 operator=(u16 v) { w[1] = v; return v; }
+	u16 operator+=(i32 v) { d += v; return w[1]; }
+	u16 operator-=(i32 v) { d -= v; return w[1]; }
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 i16 auxADC = 0;
 i16 avrAuxADC = 0;
 u32 fauxADC = 0;
@@ -452,15 +471,17 @@ i16 avrFB90ADC = 0;
 u32 fFB90ADC = 0;
 
 u16 targetVREG = 0;
-u16 curVREG = 0;
+Fix16 curVREG;
 
-u16 curDuty90 = 0;
+Fix16 curDuty90;
 u16 dstDuty90 = 0;
+
+i32 deltaDuty = 0;
 
 u16 corrDuty90 = 0x100;
 //u16 addDuty90 = NS2CLK(560);
 
-bool lockAuxLoop90 = false;
+//bool lockAuxLoop90 = false;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -492,19 +513,26 @@ static void UpdateVREG()
 		{
 			SetForcedTargetRPM(0);
 
-			if (lockAuxLoop90)
+			i32 dv = curVREG - avrFB90ADC;
+			if (dv < 0 ) dv = -dv;
+
+			if (dv < 10)
 			{
 				curDuty90 = dstDuty90;
 			}
 			else
 			{
+				dv /= 8;
+
+				deltaDuty = (dv != 0) ? (((DELTA_DUTY_MAX-DELTA_DUTY_MIN)+dv/2)/dv+DELTA_DUTY_MIN) : DELTA_DUTY_MAX;
+
 				if (curDuty90 < dstDuty90)
 				{
-					curDuty90 += 1;
+					curDuty90 += deltaDuty;
 				}
 				else if (curDuty90 > dstDuty90)
 				{
-					curDuty90 -= 1;
+					curDuty90 -= deltaDuty;
 				};
 			};
 		};
@@ -527,18 +555,23 @@ static void UpdateVREG()
 				};
 			};
 
-			if ((avrFB90ADC+FB90_VREG_DELTA) <  curVREG)
+			//if ((avrFB90ADC+FB90_VREG_DELTA) < curVREG)
+			//{
+			//	curVREG = avrFB90ADC+FB90_VREG_DELTA;
+			//	corrDuty90 = 0x100;
+			//}
+			//else
 			{
-				curVREG = avrFB90ADC+FB90_VREG_DELTA;
-				corrDuty90 = 0x100;
-			}
-			else if (curVREG > targetVREG)
-			{
-				if (curVREG > targetVREG && curVREG > VREG_MIN) curVREG -= 1;
-			}
-			else
-			{
-				if (curVREG < targetVREG && curVREG < VREG_MAX) curVREG += 1;
+				if (targetVREG < curVREG)
+				{
+					curVREG = targetVREG;
+				}
+				else if (targetVREG > curVREG)
+				{
+					curVREG += 0x8000;
+				};
+
+				curVREG = LIM(curVREG, VREG_MIN, VREG_MAX);
 			};
 
 			//if (corrDuty90 > 0x130) curVREG = 0, corrDuty90 = 0;
@@ -636,7 +669,7 @@ static void UpdateMotor()
 				SetDutyPWM(tachoPLL = maxDuty/8);
 
 				targetVREG = VREG_MIN;
-				lockAuxLoop90 = false;
+				//lockAuxLoop90 = false;
 
 				break;
 
@@ -649,7 +682,7 @@ static void UpdateMotor()
 
 					tachoStep = 1;
 
-					tachoLim = v + 100;
+					tachoLim = v*2 + 100;
 
 					tachoCount = 0;
 
@@ -706,6 +739,8 @@ static void UpdateMotor()
 
 					tachoStamp = GetMilliseconds();
 
+					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
+
 					motorState++;
 				};
 
@@ -723,7 +758,7 @@ static void UpdateMotor()
 					tachoStep = 64;
 				
 					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
-					lockAuxLoop90 = true;
+					//lockAuxLoop90 = true;
 
 					tm.Reset();
 					//tmOvrCrnt.Reset();
@@ -732,6 +767,7 @@ static void UpdateMotor()
 				}
 				else
 				{
+					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
 					SetDutyPWM(tachoPLL);
 				};
 					
@@ -758,7 +794,7 @@ static void UpdateMotor()
 				dir = false;
 
 				targetVREG = VREG_MIN;
-				lockAuxLoop90 = false;
+				//lockAuxLoop90 = false;
 
 				motorState++;
 

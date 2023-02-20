@@ -3371,7 +3371,7 @@ int main()
 	InitEMAC();
 
 	FLASH_Init();
-
+ 
 	Update_RPS_SPR();
 
 #ifndef WIN32

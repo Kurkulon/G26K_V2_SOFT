@@ -555,23 +555,15 @@ static void UpdateVREG()
 				};
 			};
 
-			//if ((avrFB90ADC+FB90_VREG_DELTA) < curVREG)
-			//{
-			//	curVREG = avrFB90ADC+FB90_VREG_DELTA;
-			//	corrDuty90 = 0x100;
-			//}
-			//else
-			{
-				if (targetVREG < curVREG)
-				{
-					curVREG = targetVREG;
-				}
-				else if (targetVREG > curVREG)
-				{
-					curVREG += 0x8000;
-				};
+			u16 tv = LIM(targetVREG, VREG_MIN, VREG_MAX);
 
-				curVREG = LIM(curVREG, VREG_MIN, VREG_MAX);
+			if (tv > curVREG)
+			{
+				if ((avrFB90ADC+FB90_VREG_DELTA) > curVREG) curVREG += 0x8000;
+			}
+			else if (tv < curVREG)
+			{
+				curVREG = tv;
 			};
 
 			//if (corrDuty90 > 0x130) curVREG = 0, corrDuty90 = 0;

@@ -198,82 +198,102 @@
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>impCur,0x0A</ItemText>
+          <ItemText>curADC,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>10</count>
           <WinNumber>1</WinNumber>
-          <ItemText>curADC,0x0A</ItemText>
+          <ItemText>targetRPM,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>11</count>
           <WinNumber>1</WinNumber>
-          <ItemText>targetRPM,0x0A</ItemText>
+          <ItemText>auxADC,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>12</count>
           <WinNumber>1</WinNumber>
-          <ItemText>auxADC,0x0A</ItemText>
+          <ItemText>fb90ADC,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>13</count>
           <WinNumber>1</WinNumber>
-          <ItemText>fb90ADC,0x0A</ItemText>
+          <ItemText>avrAuxADC,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>14</count>
           <WinNumber>1</WinNumber>
-          <ItemText>avrAuxADC,0x0A</ItemText>
+          <ItemText>avrFB90ADC,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>15</count>
           <WinNumber>1</WinNumber>
-          <ItemText>avrFB90ADC,0x0A</ItemText>
+          <ItemText>targetVREG,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>16</count>
           <WinNumber>1</WinNumber>
-          <ItemText>targetVREG,0x0A</ItemText>
+          <ItemText>curDuty90</ItemText>
         </Ww>
         <Ww>
           <count>17</count>
           <WinNumber>1</WinNumber>
-          <ItemText>curDuty90</ItemText>
+          <ItemText>dstDuty90</ItemText>
         </Ww>
         <Ww>
           <count>18</count>
           <WinNumber>1</WinNumber>
-          <ItemText>dstDuty90</ItemText>
+          <ItemText>corrDuty90</ItemText>
         </Ww>
         <Ww>
           <count>19</count>
           <WinNumber>1</WinNumber>
-          <ItemText>corrDuty90</ItemText>
+          <ItemText>tachoMRT</ItemText>
         </Ww>
         <Ww>
           <count>20</count>
           <WinNumber>1</WinNumber>
-          <ItemText>tachoMRT</ItemText>
+          <ItemText>motoCounter,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>21</count>
           <WinNumber>1</WinNumber>
-          <ItemText>motoCounter,0x0A</ItemText>
+          <ItemText>curVREG,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>22</count>
           <WinNumber>1</WinNumber>
-          <ItemText>curVREG,0x0A</ItemText>
+          <ItemText>avrLowCurADC,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>23</count>
           <WinNumber>1</WinNumber>
-          <ItemText>avrLowCurADC,0x0A</ItemText>
+          <ItemText>deltaDuty</ItemText>
         </Ww>
         <Ww>
           <count>24</count>
           <WinNumber>1</WinNumber>
-          <ItemText>deltaDuty</ItemText>
+          <ItemText>power,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>25</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>limPower,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>26</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>maxPower,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>27</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>lastMaxPower,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>28</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>tachoStamp</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

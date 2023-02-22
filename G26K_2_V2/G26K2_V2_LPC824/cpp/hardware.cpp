@@ -11,7 +11,8 @@
 #define CUR_LIM				2000
 #define CUR_MAX				3000
 #define CUR_MIN				100
-#define IMP_CUR_LIM			13000
+#define ABS_CUR_LIM			5000
+#define ABS_CUR_MAX			6000
 #define POWER_LIM			30000
 #define VREG_MIN			100
 #define VREG_MAX			480
@@ -137,12 +138,20 @@ const byte states[16] =		{ WW, WW, UU, WW, VV, VV, UU, UU,		WW, UU, VV, VV, WW, 
 const byte LG_pin[16] =		{ UL, UL, VL, VL, WL, UL, WL, VL,		VL, WL, UL, WL, VL, VL, UL, WL };
 const byte HG_pin[16] =		{ UH, UH, VH, VH, WH, UH, WH, VH,		VH, WH, UH, WH, VH, VH, UH, WH };
 
-const u16 pwmPeriod = 1250;
-const u16 maxDuty = 1200;
+const u16 pwmPeriod = US2CLK(50);
+const u16 maxDuty = US2CLK(48);
+//const u16 loDuty = maxDuty/4;
+//const u16 hiDuty = maxDuty*3/4;
+
 u16 limDuty = maxDuty;
 u16 curDuty = 0;
 
-u32 impCur = 0; // mA
+u32 power = 0;
+u32 lastMaxPower = 0;
+u32 limPower = CUR_LIM * VREG_MAX;
+u32 maxPower = CUR_MAX * VREG_MAX;
+
+//u32 impCur = 0; // mA
 
 u32 tachoPLL = 0;
 
@@ -589,7 +598,7 @@ static void UpdateMotor()
 
 	if (curADC > 37) curADC -= 37; else curADC = 0;
 
-	if (curADC > maxCur)
+	if (curADC > ABS_CUR_MAX)
 	{	
 		DisableDriver();
 		motorState = 6;
@@ -613,21 +622,17 @@ static void UpdateMotor()
 			motorState = 0;
 		};
 
-		impCur = (u32)avrCurADC * pwmPeriod / (curDuty+10);
+		//impCur = (u32)avrCurADC * pwmPeriod / (curDuty+10);
 
-		//power = avrCurADC * voltage;
+		power = avrCurADC * avrFB90ADC;
+		limPower = limCur * VREG_MAX;
+		maxPower = maxCur * VREG_MAX;
 
-		if (avrCurADC > (limCur+100) || impCur > (IMP_CUR_LIM+1000))
+		if (avrCurADC > (ABS_CUR_LIM+100) || power > (limPower+1000))
 		{
 			if (limDuty > 2) limDuty -= 2; else limDuty = 0;
-
-			//tachoCount = 0;
-			//tachoStep = 1;
-			//tachoPLL >>= 1;
-
-			//motorState = 3;
 		}
-		else if ((avrCurADC < CUR_MIN) || ((avrCurADC < limCur) && (impCur < IMP_CUR_LIM)))
+		else if (avrCurADC < ABS_CUR_LIM && power < limPower)
 		{
 			if (limDuty < maxDuty) limDuty += 1;
 
@@ -740,8 +745,9 @@ static void UpdateMotor()
 
 			case 4: // Разгон
 
-				if ((GetMilliseconds()-tachoStamp) > 2000 || avrCurADC > maxCur)
+				if ((GetMilliseconds()-tachoStamp) > 2000 || power > maxPower)
 				{	
+					lastMaxPower = power;
 					motorState = 6;
 				}
 				else if (tachoCount >= tachoLim)
@@ -767,8 +773,9 @@ static void UpdateMotor()
 
 			case 5: // Стабилизация оборотов
 
-				if ((GetMilliseconds()-tachoStamp) > 1000 || avrCurADC > maxCur)
+				if ((GetMilliseconds()-tachoStamp) > 1000 || power > maxPower)
 				{	
+					lastMaxPower = power;
 					motorState++;
 				};
 

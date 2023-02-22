@@ -175,7 +175,7 @@ static void UpdateMan()
 				{
 					if (RequestMan(&wb, &rb))
 					{
-						com.Write(&wb);
+						com.Write(&wb, US2COM(20));
 						i++;
 					}
 					else

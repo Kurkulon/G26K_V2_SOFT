@@ -155,8 +155,8 @@ u32 maxPower = CUR_MAX * VREG_MAX;
 
 u32 tachoPLL = 0;
 
-const u16 periodPWM90	= US2CLK(10);
-const u16 maxDutyPWM90	= US2CLK(9);
+const u16 periodPWM90	= US2CLK(25);
+const u16 maxDutyPWM90	= US2CLK(15);
 
 static void SetDutyPWM(u16 v);
 
@@ -546,7 +546,7 @@ static void UpdateVREG()
 			};
 		};
 
-		u16 duty = (curDuty90 * corrDuty90) >> 8;
+		u16 duty = (curDuty90 * corrDuty90 + 128) >> 8;
 
 		SetDutyPWM90(duty);
 
@@ -554,11 +554,11 @@ static void UpdateVREG()
 		{
 			if (curDuty90 == dstDuty90)
 			{
-				if (avrFB90ADC < ((i16)curVREG-5))
+				if (avrFB90ADC < ((i16)curVREG-20))
 				{
 					if (corrDuty90 < 0x140) corrDuty90 += 1;
 				}
-				else if (avrFB90ADC > ((i16)curVREG+5))
+				else if (avrFB90ADC > ((i16)curVREG+20))
 				{
 					if (corrDuty90 > 0xC0) corrDuty90 -= 1;
 				};

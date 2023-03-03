@@ -4,11 +4,29 @@
 #include <types.h>
 #include <core.h>
 
-#define MCK_MHz 25
-#define MCK (MCK_MHz*1000000)
-#define NS2CLK(x) (((x)*MCK_MHz+500)/1000)
-#define US2CLK(x) ((x)*MCK_MHz)
-#define MS2CLK(x) ((x)*MCK_MHz*1000)
+#define CLKIN_MHz	25
+#define PLL_MSEL	2		// 1...32
+#define PLL_PSEL	1		// 0...3
+#define PLL_MHz		(CLKIN_MHz*PLL_MSEL)		
+#define FCCO_MHz	(PLL_MHz*(2UL<<PLL_PSEL))		// 156...320
+
+#if defined(FCCO_MHz) && ((FCCO_MHz < 156) || (FCCO_MHz > 320))
+#error  FCCO_MHz must be 156...320
+#endif
+
+#define MCK_DIV			1
+#define UARTCLK_DIV		1
+
+#ifdef PLL_MHz
+#define MCK_MHz ((float)PLL_MHz/MCK_DIV)
+#else
+#define MCK_MHz ((float)CLKIN_MHz/MCK_DIV)
+#endif
+
+#define MCK			((u32)(MCK_MHz*1000000UL))
+#define NS2CLK(x) 	((u32)(((x)*MCK_MHz+500)/1000))
+#define US2CLK(x) 	((u32)((x)*MCK_MHz))
+#define MS2CLK(x) 	((u32)((x)*MCK_MHz*1000))
 
 // ++++++++++++++	USIC	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

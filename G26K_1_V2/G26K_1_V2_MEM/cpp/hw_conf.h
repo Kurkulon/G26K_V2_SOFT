@@ -75,7 +75,7 @@
 	#define GEN_25M		2
 	#define GEN_1M		3
 	//#define GEN_500K	4
-	#define GEN_EXT32K	5
+	//#define GEN_EXT32K	5
 
 	#define GEN_MCK_CLK			MCK
 	#define GEN_32K_CLK			32768
@@ -243,6 +243,32 @@
 	#define Pin_SPI_IRQ_Set() HW::PIOB->BSET(15)		
 	#define Pin_SPI_IRQ_Clr() HW::PIOB->BCLR(15)		
 
+	// ++++++++++++++	DSP SPI	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	#define DSPSPI				HW::SPI7
+	#define PIO_DSP_SCK			HW::PIOB
+	#define PIO_DSP_MOSI		HW::PIOB
+	#define PIO_DSP_SS			HW::PIOB
+	#define PIO_SS				HW::PIOC
+
+	#define PIN_DSP_SCK			20
+	#define PIN_DSP_MOSI		19 
+	#define PIN_DSP_SS			18 
+	#define PIN_SS				21 
+
+	#define DSP_SCK				(1<<PIN_DSP_SCK	) 
+	#define DSP_MOSI			(1<<PIN_DSP_MOSI) 
+	#define DSP_SS				(1<<PIN_DSP_SS	) 
+	#define SS					(1<<PIN_SS		) 
+
+	#define DSPSPI_PMUX_SPCK	PORT_PMUX_C 
+	#define DSPSPI_PMUX_MOSI	PORT_PMUX_C 
+	#define DSPSPI_DIPO_BITS	SPI_DIPO(2)
+	#define DSPSPI_DOPO_BITS	SPI_DOPO(0) 
+
+	#define DSPSPI_GEN_SRC		GEN_MCK
+	#define DSPSPI_GEN_CLK		GEN_MCK_CLK
+	#define DSPSPI_BAUDRATE		8000000
 
 	// ++++++++++++++	MANCH	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	
@@ -489,9 +515,11 @@
 
 	// ++++++++++++++	CLOCK	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define CLOCK_IRQ		0//SCU_0_IRQn
-	#define PIO_32kHz		HW::PIOB 
-	#define PIN_32kHz		19 
+	#define PIO_RTCINT		HW::PIOC
+	#define PIN_RTCINT		2 
+	#define CLOCK_EXTINT	(PIN_RTCINT&15)
+	#define CLOCK_IRQ		(EIC_0_IRQ+(PIN_RTCINT&15))
+	#define RTCINT			(1UL<<PIN_RTCINT) 
 
 	// ++++++++++++++	EMAC	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

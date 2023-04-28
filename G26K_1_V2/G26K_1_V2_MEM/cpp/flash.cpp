@@ -38,7 +38,7 @@ static u32 chipSelect[NAND_MAX_CHIP] = { FCS0, FCS1, FCS2, FCS3 };
 
 #define maskChipSelect (FCS0|FCS1|FCS2|FCS3)
 
-static const char* chipRefDes[NAND_MAX_CHIP] = { "DD3 ", "DD4 ", "DD5 ", "DD6" };
+static const char* chipRefDes[NAND_MAX_CHIP] = { "DD3", "DD4", "DD5", "DD6" };
 
 #else
 

@@ -137,26 +137,17 @@ void SetClock(const RTC &t)
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifdef CPU_SAME53
 
 static __irq void Clock_IRQ()
 {
-	//if (HW::SCU_HIBERNATE->HDSTAT & SCU_HIBERNATE_HDSTAT_ULPWDG_Msk)
-	//{
-	//	if ((HW::SCU_GENERAL->MIRRSTS & SCU_GENERAL_MIRRSTS_HDCLR_Msk) == 0)	HW::SCU_HIBERNATE->HDCLR = SCU_HIBERNATE_HDCLR_ULPWDG_Msk;
-	//}
-	//else
-	//{
-	//	timeBDC.msec = (timeBDC.msec < 500) ? 0 : 999;
-	//};
+#ifdef CPU_SAME53
 
-	//HW::SCU_GCU->SRCLR = SCU_INTERRUPT_SRCLR_PI_Msk;
-}
+	HW::EIC->INTFLAG = 1UL<<CLOCK_EXTINT;
+	
+	timeBDC.msec = (timeBDC.msec < 500) ? 0 : 999;
 
 #elif defined(CPU_XMC48)
 
-static __irq void Clock_IRQ()
-{
 	if (HW::SCU_HIBERNATE->HDSTAT & SCU_HIBERNATE_HDSTAT_ULPWDG_Msk)
 	{
 		if ((HW::SCU_GENERAL->MIRRSTS & SCU_GENERAL_MIRRSTS_HDCLR_Msk) == 0)	HW::SCU_HIBERNATE->HDCLR = SCU_HIBERNATE_HDCLR_ULPWDG_Msk;
@@ -167,9 +158,9 @@ static __irq void Clock_IRQ()
 	};
 
 	HW::SCU_GCU->SRCLR = SCU_INTERRUPT_SRCLR_PI_Msk;
-}
 
 #endif
+}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef WIN32
@@ -240,6 +231,18 @@ static void InitClock()
 	CM4::NVIC->SET_ER(CLOCK_IRQ);	
 
 #ifdef CPU_SAME53
+
+	using namespace HW;
+
+	EIC->CTRLA = 0;
+	while(EIC->SYNCBUSY);
+
+	EIC->EVCTRL |= EIC_EXTINT0<<CLOCK_EXTINT;
+	EIC->SetConfig(CLOCK_EXTINT, 1, EIC_SENSE_FALL);
+	EIC->INTENSET = EIC_EXTINT0<<CLOCK_EXTINT;
+	EIC->CTRLA = EIC_ENABLE;
+
+	PIO_RTCINT->SetWRCONFIG(RTCINT, PORT_PMUX(0)|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX|PORT_INEN);
 
 #elif defined(CPU_XMC48)
 
@@ -1331,9 +1334,9 @@ void InitHardware()
 
 //	HW::GCLK->GENCTRL[GEN_500K] 	= GCLK_DIV(50)	|GCLK_SRC_XOSC1		|GCLK_GENEN;
 
-	PIO_32kHz->SetWRCONFIG(1UL<<PIN_32kHz, PORT_PMUX_M|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX|PORT_PULLEN);
+	//PIO_32kHz->SetWRCONFIG(1UL<<PIN_32kHz, PORT_PMUX_M|PORT_WRPINCFG|PORT_PMUXEN|PORT_WRPMUX|PORT_PULLEN);
 
-	HW::GCLK->GENCTRL[GEN_EXT32K]	= GCLK_DIV(1)	|GCLK_SRC_GCLKIN	|GCLK_GENEN		;
+	//HW::GCLK->GENCTRL[GEN_EXT32K]	= GCLK_DIV(1)	|GCLK_SRC_GCLKIN	|GCLK_GENEN		;
 
 
 	HW::MCLK->APBAMASK |= APBA_EIC;

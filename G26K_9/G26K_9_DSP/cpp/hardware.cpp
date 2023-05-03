@@ -659,7 +659,7 @@ static void InitShaft()
 {
 	InitIVG(IVG_PORTF_SHAFT, PID_Port_F_Interrupt_B, SHAFT_ISR);
 
-	PIO_DSHAFT->EnableIRQB_Rise(BM_DSHAFT);
+	//PIO_DSHAFT->EnableIRQB_High(BM_DSHAFT);
 
 	//PIO_DSHAFT->Inen |= BM_DSHAFT;
 	//PIO_DSHAFT->Edge |= BM_DSHAFT;

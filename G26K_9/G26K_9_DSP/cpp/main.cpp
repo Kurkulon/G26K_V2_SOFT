@@ -339,8 +339,8 @@ static void UpdateBlackFin()
 					if (RequestFunc(&wb, &rb))
 					{
 						com.Write(&wb);
-						spi.SetMode(CPHA|CPOL);
-						spi.WriteAsyncDMA(wb.data, wb.len);
+						//spi.SetMode(CPHA|CPOL);
+						//spi.WriteAsyncDMA(wb.data, wb.len);
 						i++;
 					}
 					else
@@ -358,7 +358,7 @@ static void UpdateBlackFin()
 
 		case 2:
 
-			if (!com.Update() && spi.CheckWriteComplete())
+			if (!com.Update() /*&& spi.CheckWriteComplete()*/)
 			{
 				if (curDsc != 0)
 				{
@@ -862,7 +862,7 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	rsp->len		= len;				//11. Длина (макс 1024)
 
 	//dsc->offset = (sizeof(*rsp) - sizeof(rsp->data)) / 2;
-	dsc->dataLen = sizeof(RspIM)/2 + len*2;
+	dsc->dataLen = (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2;
 
 	readyRspWave.Add(dsc);
 }

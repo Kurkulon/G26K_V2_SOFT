@@ -285,6 +285,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>mv,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>27</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>dspRcv50</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>

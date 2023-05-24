@@ -12,6 +12,9 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define SPORT_BUF_LEN	(2048+64)
+#define SENS_NUM	3
+#define NS2DSP(v) (((v)+10)/20)
+#define US2DSP(v) ((((v)*1000)+10)/20)
 
 struct DSCSPORT
 {
@@ -51,6 +54,9 @@ struct SENS
 	u16		thr;
 	u16		descr;
 	u16		freq;
+	u16 	filtr;
+	u16 	pack;
+	u16 	fi_Type;
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -96,6 +102,7 @@ struct RspIM	// 0xAD50
 	u16		ay; 
 	u16		az; 
 	u16		at;
+	u16		sensType; 
 	u16 	gain; 
 	u16		refAmp;
 	u16		refTime;
@@ -173,16 +180,15 @@ struct ReqDsp01	// чтение вектора
 	u16		az; 
 	u16		at;
 
-	SENS	mainSens;			// измерительный датчик
-	SENS	refSens;			// опорный датчик
+	SENS	sens[SENS_NUM];		// измерительный датчик 1
+	//SENS	sens2;				// измерительный датчик 2
+	//SENS	refSens;			// опорный датчик
 
 	u16		wavesPerRoundCM;	// Количество волновых картин на оборот головки в режиме цементомера
 	u16		wavesPerRoundIM;	// Количество точек на оборот головки в режиме имиджера
 
-	u16		filtrType;			// Фильтр
-	u16		packType;			// Упаковка
-
-	u16		fireVoltage;		// Напряжение излучателя (В)
+	u16		fireVoltage;		// Напряжение излучателя (0.1 В)
+	u16		sensMask;
 
 	u16 	crc;  
 };
@@ -201,8 +207,7 @@ struct RspDsp01	// чтение вектора
 	u16		len;				// Длина структуры
 	u16		version;			// Версия структуры
 
-	u16		fireVoltage;		// Напряжение излучателя (В)
-	u16		motoVoltage;		// Напряжение двигателя (В)
+	u16		fireVoltage;		// Напряжение излучателя (0.1 В)
 	u16 	crc;  
 };
 
@@ -221,7 +226,7 @@ struct  RspDsp06 { u16 rw; u16 res; u16 crc; };									// запись страницы во фл
 extern void InitHardware();
 extern void UpdateHardware();
 extern void InitIVG(u32 IVG, u32 PID, void (*EVT)());
-extern void SetDspVars(const ReqDsp01 *v);
+extern void SetDspVars(const ReqDsp01 *v, bool forced = false);
 
 
 //extern bool defPPI_Ready;
@@ -236,7 +241,6 @@ extern DSCSPORT* AllocDscSPORT();
 
 extern void SetFireVoltage(u16 v);
 extern u16	GetFireVoltage();
-extern u16	GetMotoVoltage();
 
 
 #endif // HARDWARE_H__15_05_2009__14_35

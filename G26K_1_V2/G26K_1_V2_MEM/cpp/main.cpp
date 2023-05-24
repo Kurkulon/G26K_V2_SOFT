@@ -40,6 +40,8 @@ enum { VERSION = 0x201 };
 #endif
 
 #define SENS_NUM	3
+#define NS2DSP(v) (((v)+10)/20)
+#define US2DSP(v) ((((v)*1000)+10)/20)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -62,22 +64,6 @@ enum { VERSION = 0x201 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct SensVars
-{
-	u16 gain;
-	u16 sampleTime;
-	u16 sampleLen;
-	u16 sampleDelay;
-	u16 deadTime;
-	u16 descriminant;
-	u16 freq;
-	u16 filtrType;
-	u16 packType;
-	u16 fi_Type;
-};
-	
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 __packed struct MainVars // NonVolatileVars  
 {
 	u32 timeStamp;
@@ -85,9 +71,9 @@ __packed struct MainVars // NonVolatileVars
 	u16 numDevice;
 	u16 numMemDevice;
 
-	SensVars	sens1;
-	SensVars	sens2;
-	SensVars	refSens;
+	SENS	sens1;
+	SENS	sens2;
+	SENS	refSens;
 
 	u16 cmSPR;
 	u16 imSPR;
@@ -476,25 +462,13 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 	req.ay				= ay;
 	req.az				= az;
 	req.at				= at;
-	req.gain 			= mv.sens1.gain;
-	req.st	 			= mv.sens1.sampleTime;
-	req.sl 				= mv.sens1.sampleLen;
-	req.sd 				= mv.sens1.sampleDelay;
-	req.thr				= mv.sens1.descriminant;
-	req.descr			= mv.sens1.deadTime;
-	req.freq			= mv.sens1.freq;
-	req.refgain 		= mv.refSens.gain;
-	req.refst			= mv.refSens.sampleTime;
-	req.refsl 			= mv.refSens.sampleLen;
-	req.refsd 			= mv.refSens.sampleDelay;
-	req.refthr			= mv.refSens.descriminant;
-	req.refdescr		= mv.refSens.deadTime;
-	req.refFreq			= mv.refSens.freq;
+	req.sens1 			= mv.sens1;
+	req.sens2 			= mv.sens2;
+	req.refSens			= mv.refSens;
 	req.vavesPerRoundCM = mv.cmSPR;
 	req.vavesPerRoundIM = mv.imSPR;
-	req.filtrType		= mv.sens1.filtrType;
-	req.packType		= mv.sens1.packType;
 	req.fireVoltage		= mv.fireVoltage;
+	req.sensMask		= mv.sensMask;
 
 	req.crc	= GetCRC16(&req, sizeof(ReqDsp01)-2);
 
@@ -1082,29 +1056,35 @@ static u32 InitRspMan_10(__packed u16 *data)
 	*(data++)	= mv.sens1.deadTime;					//	6. Мертвая зона датчика
 	*(data++)	= mv.sens1.descriminant;				//	7. Уровень дискриминации датчика
 	*(data++)	= mv.sens1.freq;						//	8. Частота излучателя (кГц)
-	*(data++)	= mv.sens2.gain;						//	9. КУ (измерительный датчик 2)
-	*(data++)	= mv.sens2.sampleTime;					//	10. Шаг оцифровки
-	*(data++)	= mv.sens2.sampleLen;					//	11. Длина оцифровки
-	*(data++)	= mv.sens2.sampleDelay; 				//	12. Задержка оцифровки
-	*(data++)	= mv.sens2.deadTime;					//	13. Мертвая зона датчика
-	*(data++)	= mv.sens2.descriminant;				//	14. Уровень дискриминации датчика
-	*(data++)	= mv.sens2.freq;						//	15. Частота излучателя (кГц)
-	*(data++)	= mv.refSens.gain;						//	16. КУ (опорный датчик)
-	*(data++)	= mv.refSens.sampleTime;				//	17. Шаг оцифровки
-	*(data++)	= mv.refSens.sampleLen;					//	18. Длина оцифровки
-	*(data++)	= mv.refSens.sampleDelay; 				//	19. Задержка оцифровки
-	*(data++)	= mv.refSens.deadTime;					//	20. Мертвая зона датчика
-	*(data++)	= mv.refSens.descriminant;				//	21. Уровень дискриминации датчика
-	*(data++)	= mv.refSens.freq;						//	22. Частота излучателя (кГц)
-	*(data++)	= mv.sens1.filtrType;					//	23. Фильтр
-	*(data++)	= mv.sens1.packType;					//	24. Упаковка
-	*(data++)	= mv.cmSPR;								//	25. Количество волновых картин на оборот головки в режиме цементомера
-	*(data++)	= mv.imSPR;								//	26. Количество точек на оборот головки в режиме имиджера
-	*(data++)	= mv.fireVoltage;						//	27. Напряжение излучателя (В)
-	*(data++)	= mv.motoLimCur;						//	28. Ограничение тока двигателя (мА)
-	*(data++)	= mv.motoMaxCur;						//	29. Аварийный ток двигателя (мА)
-	*(data++)	= mv.sens1.fi_Type;						//	30. Алгоритм поиска первого вступления (0 - по уровню дискриминации, 1 - ...)
-	*(data++)	= mv.sensMask;							//	31. Выбор измерительного датчика (бит 0 - измерительный датчик 1, бит 1 - измерительный датчик 2), допустимые значения 1,2,3
+	*(data++)	= mv.sens1.filtrType;					//	9. Фильтр
+	*(data++)	= mv.sens1.packType;					//	10. Упаковка
+	*(data++)	= mv.sens1.fi_Type;						//	11. Алгоритм поиска первого вступления (0 - по уровню дискриминации, 1 - ...)
+	*(data++)	= mv.sens2.gain;						//	12. КУ (измерительный датчик 2)
+	*(data++)	= mv.sens2.sampleTime;					//	13. Шаг оцифровки
+	*(data++)	= mv.sens2.sampleLen;					//	14. Длина оцифровки
+	*(data++)	= mv.sens2.sampleDelay; 				//	15. Задержка оцифровки
+	*(data++)	= mv.sens2.deadTime;					//	16. Мертвая зона датчика
+	*(data++)	= mv.sens2.descriminant;				//	17. Уровень дискриминации датчика
+	*(data++)	= mv.sens2.freq;						//	18. Частота излучателя (кГц)
+	*(data++)	= mv.sens2.filtrType;					//	19. Фильтр
+	*(data++)	= mv.sens2.packType;					//	20. Упаковка
+	*(data++)	= mv.sens2.fi_Type;						//	21. Алгоритм поиска первого вступления (0 - по уровню дискриминации, 1 - ...)
+	*(data++)	= mv.refSens.gain;						//	22. КУ (опорный датчик)
+	*(data++)	= mv.refSens.sampleTime;				//	23. Шаг оцифровки
+	*(data++)	= mv.refSens.sampleLen;					//	24. Длина оцифровки
+	*(data++)	= mv.refSens.sampleDelay; 				//	25. Задержка оцифровки
+	*(data++)	= mv.refSens.deadTime;					//	26. Мертвая зона датчика
+	*(data++)	= mv.refSens.descriminant;				//	27. Уровень дискриминации датчика
+	*(data++)	= mv.refSens.freq;						//	28. Частота излучателя (кГц)
+	*(data++)	= mv.refSens.filtrType;					//	29. Фильтр
+	*(data++)	= mv.refSens.packType;					//	30. Упаковка
+	*(data++)	= mv.refSens.fi_Type;					//	31. Алгоритм поиска первого вступления (0 - по уровню дискриминации, 1 - ...)
+	*(data++)	= mv.cmSPR;								//	32. Количество волновых картин на оборот головки в режиме цементомера
+	*(data++)	= mv.imSPR;								//	33. Количество точек на оборот головки в режиме имиджера
+	*(data++)	= mv.fireVoltage;						//	34. Напряжение излучателя (В)
+	*(data++)	= mv.motoLimCur;						//	35. Ограничение тока двигателя (мА)
+	*(data++)	= mv.motoMaxCur;						//	36. Аварийный ток двигателя (мА)
+	*(data++)	= mv.sensMask;							//	37. Выбор измерительного датчика (бит 0 - измерительный датчик 1, бит 1 - измерительный датчик 2), допустимые значения 1,2,3
 	
 	return data - start;
 }
@@ -1507,6 +1487,10 @@ static bool RequestMan_90(u16 *data, u16 len, MTB* mtb)
 		case 0x5:	mv.sens1.deadTime		= data[2];			break;
 		case 0x6:	mv.sens1.descriminant	= data[2];			break;
 		case 0x7:	mv.sens1.freq			= data[2];			break;
+		case 0x8:	mv.sens1.filtrType		= data[2];			break;
+		case 0x9:	mv.sens1.packType		= data[2];			break;
+		case 0xA:	mv.sens1.fi_Type		= data[2];			break;
+
 
 		case 0x11:	mv.sens2.gain			= data[2];			break;
 		case 0x12:	mv.sens2.sampleTime		= data[2];			break;
@@ -1515,6 +1499,9 @@ static bool RequestMan_90(u16 *data, u16 len, MTB* mtb)
 		case 0x15:	mv.sens2.deadTime		= data[2];			break;
 		case 0x16:	mv.sens2.descriminant	= data[2];			break;
 		case 0x17:	mv.sens2.freq			= data[2];			break;
+		case 0x18:	mv.sens2.filtrType		= data[2];			break;
+		case 0x19:	mv.sens2.packType		= data[2];			break;
+		case 0x1A:	mv.sens2.fi_Type		= data[2];			break;
 
 		case 0x21:	mv.refSens.gain			= data[2];			break;
 		case 0x22:	mv.refSens.sampleTime	= data[2];			break;
@@ -1523,21 +1510,19 @@ static bool RequestMan_90(u16 *data, u16 len, MTB* mtb)
 		case 0x25:	mv.refSens.deadTime		= data[2];			break;
 		case 0x26:	mv.refSens.descriminant	= data[2];			break;
 		case 0x27:	mv.refSens.freq			= data[2];			break;
+		case 0x28:	mv.refSens.filtrType	= data[2];			break;
+		case 0x29:	mv.refSens.packType		= data[2];			break;
+		case 0x2A:	mv.refSens.fi_Type		= data[2];			break;
 
-		case 0x30:	mv.sens1.filtrType		= data[2];			break;
-		case 0x31:	mv.sens1.packType		= data[2];			break;
+		case 0x30:	mv.cmSPR 				= data[2]; Update_RPS_SPR();	break;
+		case 0x31:	mv.imSPR 				= data[2]; Update_RPS_SPR();	break;
 
-		case 0x40:	mv.cmSPR 				= data[2]; Update_RPS_SPR();	break;
-		case 0x41:	mv.imSPR 				= data[2]; Update_RPS_SPR();	break;
+		case 0x40:	mv.fireVoltage			= data[2];			break;
 
-		case 0x50:	mv.fireVoltage			= data[2];			break;
+		case 0x51:	mv.motoLimCur			= data[2];			break;
+		case 0x52:	mv.motoMaxCur			= data[2];			break;
 
-		case 0x61:	mv.motoLimCur			= data[2];			break;
-		case 0x62:	mv.motoMaxCur			= data[2];			break;
-
-		case 0x70:
-
-		case 0x80:	mv.sensMask				= data[2];			break;
+		case 0x60:	mv.sensMask				= data[2];			break;
 
 		default:
 
@@ -2739,10 +2724,10 @@ static void InitMainVars()
 	mv.numMemDevice		= 11111;
 
 	mv.sens1.gain			= 0; 
-	mv.sens1.sampleTime		= 8; 
+	mv.sens1.sampleTime		= NS2DSP(400); 
 	mv.sens1.sampleLen		= 500; 
-	mv.sens1.sampleDelay 	= 400; 
-	mv.sens1.deadTime		= 400; 
+	mv.sens1.sampleDelay 	= US2DSP(50); 
+	mv.sens1.deadTime		= US2DSP(50); 
 	mv.sens1.descriminant	= 400; 
 	mv.sens1.freq			= 500;
 	mv.sens1.filtrType		= 0;
@@ -2750,10 +2735,10 @@ static void InitMainVars()
 	mv.sens1.fi_Type		= 0;
 
 	mv.sens2.gain			= 0; 
-	mv.sens2.sampleTime		= 8; 
+	mv.sens2.sampleTime		= NS2DSP(400); 
 	mv.sens2.sampleLen		= 500; 
-	mv.sens2.sampleDelay 	= 400; 
-	mv.sens2.deadTime		= 400; 
+	mv.sens2.sampleDelay 	= US2DSP(50); 
+	mv.sens2.deadTime		= US2DSP(50); 
 	mv.sens2.descriminant	= 400; 
 	mv.sens2.freq			= 500; 
 	mv.sens2.filtrType		= 0;
@@ -2761,10 +2746,10 @@ static void InitMainVars()
 	mv.sens2.fi_Type		= 0;
 
 	mv.refSens.gain			= 0; 
-	mv.refSens.sampleTime	= 8; 
+	mv.refSens.sampleTime	= NS2DSP(400); 
 	mv.refSens.sampleLen	= 500; 
-	mv.refSens.sampleDelay 	= 400; 
-	mv.refSens.deadTime		= 400; 
+	mv.refSens.sampleDelay 	= US2DSP(50); 
+	mv.refSens.deadTime		= US2DSP(50); 
 	mv.refSens.descriminant	= 400; 
 	mv.refSens.freq			= 500; 
 	mv.refSens.filtrType	= 0;

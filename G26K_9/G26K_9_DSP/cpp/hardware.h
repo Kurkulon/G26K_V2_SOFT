@@ -31,7 +31,7 @@ struct DSCSPORT
 	u16			sensType;
 	u16			gain;
 	u16			len;
-	u16			ch_num;
+	u16			chMask;
 	u16			sport_tfsdiv;
 	u16			sampleTime;
 	u16			sampleDelay;

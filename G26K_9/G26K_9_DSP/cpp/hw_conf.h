@@ -116,11 +116,11 @@
 #define BM_FIRE1			(1UL << PIN_FIRE1)
 #define BM_FIRE2			(1UL << PIN_FIRE2)
 
-#define FIRE1_TIMER			HW::TIMER0
-#define FIRE2_TIMER			HW::TIMER1
+#define FIRE1_TIMER			HW::TIMER1
+#define FIRE2_TIMER			HW::TIMER0
 
-#define FIRE1_TIMEN			TIMEN0
-#define FIRE2_TIMEN			TIMEN1
+#define FIRE1_TIMEN			TIMEN1
+#define FIRE2_TIMEN			TIMEN0
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

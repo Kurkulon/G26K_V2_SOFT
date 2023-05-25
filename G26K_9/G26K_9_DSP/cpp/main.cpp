@@ -143,7 +143,9 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	ReqDsp01 *req = (ReqDsp01*)data;
 
 	if (req->wavesPerRoundCM > 72) { req->wavesPerRoundCM = 72; }
-	if (req->wavesPerRoundIM > 500) { req->wavesPerRoundIM = 500; }
+	if (req->wavesPerRoundIM > 360) { req->wavesPerRoundIM = 360; }
+	
+	if (req->sensMask == 0) req->sensMask = 1;
 
 	PreProcessDspVars(req, (manCounter&0x7F) == 0);
 
@@ -718,7 +720,7 @@ static void ProcessSPORT()
 		{
 			u16 *d = rsp->data+(sizeof(RspCM)/2);
 
-			if (dsc->ch_num == 1)
+			if ((dsc->chMask&3) == 1)
 			{
 				u16 *s = dsc->data+1;
 
@@ -733,7 +735,7 @@ static void ProcessSPORT()
 
 				state = 0;
 			}
-			else
+			else if (dsc->chMask & 1)
 			{
 				u16 *s = dsc->data+1;
 
@@ -743,6 +745,21 @@ static void ProcessSPORT()
 				};
 
 				state += 1;
+			}
+			else // chMask == 2
+			{
+				u16 *s = dsc->data+3;
+
+				for (u32 i = dsc->len+4; i > 0; i--)
+				{
+					*(d++) = s[0] - 2048; s += 2;
+				};
+
+				FreeDscSPORT(dsc);
+
+				HW::PIOG->BCLR(13);
+
+				state = 0;
 			};
 
 			processWave.Add(rsp);

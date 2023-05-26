@@ -11,7 +11,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORT_BUF_LEN	(2048+64)
+#define SPORT_BUF_LEN	(1024+64)
 #define SENS_NUM	3
 #define NS2DSP(v) (((v)+10)/20)
 #define US2DSP(v) ((((v)*1000)+10)/20)
@@ -51,8 +51,8 @@ struct SENS
 	u16 	st;	 
 	u16 	sl; 
 	u16 	sd; 
-	u16		thr;
 	u16		descr;
+	u16		thr;
 	u16		freq;
 	u16 	filtr;
 	u16 	pack;
@@ -63,7 +63,7 @@ struct SENS
 
 #pragma pack(1)
 
-struct RspCM	// 0xAD40
+struct RspHdrCM	// 0xAD40
 {
 	u16 	rw;
 	u32 	mmsecTime; 
@@ -85,6 +85,12 @@ struct RspCM	// 0xAD40
 	u16 	sd; 
 	u16		packType;
 	u16		packLen;
+};
+
+struct RspCM
+{
+	RspHdrCM	hdr;
+	u16			data[16];
 };
 
 #pragma pack()
@@ -114,7 +120,7 @@ struct RspIM	// 0xAD50
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define RSPWAVE_BUF_LEN	(1024+(sizeof(RspCM)+1)/2+16)
+#define RSPWAVE_BUF_LEN	(512+(sizeof(RspHdrCM)+1)/2+16)
 
 struct RSPWAVE
 {

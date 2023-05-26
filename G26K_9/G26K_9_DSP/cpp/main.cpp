@@ -7,11 +7,11 @@
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define RSPWAVE_BUF_NUM 4
+#define RSPWAVE_BUF_NUM 8
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static byte build_date[512] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n";
+static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n";
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -48,7 +48,7 @@ static bool startFire = false;
 
 static u16 sampleDelay = US2DSP(30);//800;
 static u16 sampleTime = NS2DSP(400);
-static u16 sampleLen = 512;
+static u16 sampleLen = 64;
 static u16 gain = 0;
 
 static u16 wavesPerRoundCM = 100;	
@@ -73,6 +73,7 @@ static u16 mode = 0; // 0 - CM, 1 - IM
 struct SensVars
 {
 	u16 thr;
+	u16 descrIndx;
 	u16 descr;
 	u16 delay;
 	u16 filtr;
@@ -84,7 +85,7 @@ static SensVars sensVars[3] = {0}; //{{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
 static u16 refAmp = 0;
 static u16 refTime = 0;
 
-static i32 avrBuf[RSPWAVE_BUF_LEN - sizeof(RspCM)/2] = {0};
+static i32 avrBuf[RSPWAVE_BUF_LEN - sizeof(RspHdrCM)/2] = {0};
 
 
 //const i16 sin_Table[10] = {	0,	11585,	16384,	11585,	0,	-11585,	-16384,	-11585,	0,	11585 };
@@ -143,11 +144,13 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	ReqDsp01 *req = (ReqDsp01*)data;
 
 	if (req->wavesPerRoundCM > 72) { req->wavesPerRoundCM = 72; }
-	if (req->wavesPerRoundIM > 360) { req->wavesPerRoundIM = 360; }
+	if (req->wavesPerRoundIM > 250) { req->wavesPerRoundIM = 250; }
 	
 	if (req->sensMask == 0) req->sensMask = 1;
 
-	PreProcessDspVars(req, (manCounter&0x7F) == 0);
+	bool forced = (manCounter&0x7F) == 0;
+
+	PreProcessDspVars(req, forced);
 
 	mode = req->mode;
 
@@ -157,10 +160,27 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 		SENS &rs = req->sens[n];
 
 		sv.thr		= rs.thr;
-		sv.descr	= rs.descr;
-		sv.delay	= rs.sd;
 		sv.filtr	= rs.filtr;
 		sv.fi_type	= rs.fi_Type;
+
+		if (sv.descr != rs.descr || sv.delay != rs.sd || forced)
+		{
+			sv.descr = rs.descr;
+			sv.delay = rs.sd;
+
+			u16 t = sv.descr;
+
+			t = (t > sv.delay) ? (t - sv.delay) : 0;
+
+			if (t != 0)
+			{
+				sv.descrIndx = (t + rs.st/2) / rs.st;
+			}
+			else
+			{
+				sv.descrIndx = 0;
+			};
+		};
 	};
 
 	wavesPerRoundCM = req->wavesPerRoundCM;	
@@ -330,14 +350,14 @@ static void Update()
 
 static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 {
-	RspCM *rsp = (RspCM*)dsc.data;
-	u16 *d = dsc.data+sizeof(RspCM)/2;
+	RspCM &rsp = *((RspCM*)dsc.data);
+	u16 *d = rsp.data;
 
 	if (filtrType == 1)
 	{
 		i32 *ab = avrBuf/*[rsp->sensType]*/; 
 
-		for (u32 i = rsp->sl; i > 0; i--)
+		for (u32 i = rsp.hdr.sl; i > 0; i--)
 		{
 			i16 v = d[0];
 
@@ -350,7 +370,7 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 	{
 		//i32 av = 0;
 
-		for (u32 i = rsp->sl; i > 0; i--)
+		for (u32 i = rsp.hdr.sl; i > 0; i--)
 		{
 			i16 v = (d[0] + d[1])/2;
 			*(d++) = v;
@@ -361,7 +381,7 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 		i32 av = 0;
 		//i32 *ab = avrBuf;
 
-		for (u32 i = rsp->sl; i > 0; i--)
+		for (u32 i = rsp.hdr.sl; i > 0; i--)
 		{
 			i16 v = (d[2] - d[0] + d[3] - d[1])/4;
 			*(d++) = v;
@@ -375,55 +395,58 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 
 #pragma optimize_for_speed
 
-static void Filtr_Wavelet(RSPWAVE &dsc, u16 imDescr, u16 imDelay)
+static void Filtr_Wavelet(RSPWAVE &dsc, u16 descrIndx)
 {
-	RspCM *rsp = (RspCM*)dsc.data;
+	RspCM &rsp = *((RspCM*)dsc.data);
 
-	i16 *d = (i16*)(dsc.data + sizeof(RspCM)/2);
+	rsp.hdr.packLen = descrIndx;
+
+
+	i16 *d = (i16*)rsp.data;
 
 	i32 max = -32768;
 	i32 imax = -1;
 
-	i16 *p = d+rsp->sl;
-
-	for (i32 i = ArraySize(wavelet_Table); i > 0; i--) *(p++) = 0;
-
-	u16 descr = (imDescr > imDelay) ? (imDescr - imDelay) : 0;
-	i32 ind = (descr + rsp->st/2) / rsp->st;
-
-	ind = rsp->sl - ind;
-
-	for (i32 i = rsp->sl; i > 0 ; i--)
+	if (expected_true(descrIndx < rsp.hdr.sl))
 	{
-		i32 sum = 0;
+		i16 *p = d+rsp.hdr.sl;
 
-		for (i32 j = 0; j < ArraySize(wavelet_Table); j += 2)
+		for (i32 i = ArraySize(wavelet_Table); i > 0; i--) *(p++) = 0;
+
+		d += descrIndx;
+
+		for (i32 i = rsp.hdr.sl - descrIndx; i > 0 ; i--)
 		{
-			sum += (i32)d[j] * wavelet_Table[j]; //sin_Table[j&7];
+			i32 sum = 0;
+
+			for (i32 j = 0; j < ArraySize(wavelet_Table); j += 2)
+			{
+				sum += (i32)d[j] * wavelet_Table[j]; //sin_Table[j&7];
+			};
+
+			sum /= 16384*4;
+			
+			d++;//*(d++) = sum;
+
+			if (sum < 0) sum = -sum;
+
+			if (sum > max) { max = sum; imax = i; };
 		};
-
-		sum /= 16384*4;
-		
-		d++;//*(d++) = sum;
-
-		if (sum < 0) sum = -sum;
-
-		if (i <= ind && sum > max) { max = sum; imax = i; };
 	};
 
 	if (imax >= 0)
 	{
-		imax = rsp->sl - imax;
-		u32 t = rsp->sd + imax * rsp->st;
-		rsp->fi_time  = (t < 0xFFFF) ? t : 0xFFFF;
-		rsp->fi_amp = max;
-		rsp->maxAmp = max;
+		imax = rsp.hdr.sl - imax;
+		u32 t = rsp.hdr.sd + imax * rsp.hdr.st;
+		rsp.hdr.fi_time  = (t < 0xFFFF) ? t : 0xFFFF;
+		rsp.hdr.fi_amp = max;
+		rsp.hdr.maxAmp = max;
 	}
 	else
 	{
-		rsp->fi_time  = ~0;
-		rsp->fi_amp = 0;
-		rsp->maxAmp = 0;
+		rsp.hdr.fi_time  = ~0;
+		rsp.hdr.fi_amp = 0;
+		rsp.hdr.maxAmp = 0;
 	};
 }
 
@@ -433,23 +456,24 @@ static void Filtr_Wavelet(RSPWAVE &dsc, u16 imDescr, u16 imDelay)
 
 #pragma optimize_for_speed
 
-static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 imDescr, u16 imDelay,  u16 imThr)
+static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 {
-	RspCM *rsp = (RspCM*)dsc.data;
-	rsp->fi_amp = 0;
-	rsp->fi_time = ~0;
+	RspCM &rsp = *((RspCM*)dsc.data);
+	rsp.hdr.fi_amp = 0;
+	rsp.hdr.fi_time = ~0;
+	rsp.hdr.packLen = ind;
 
-	u16 *data = dsc.data + sizeof(RspCM)/2;
+	u16 *data = rsp.data;
 	
-	u16 descr = (imDescr > imDelay) ? (imDescr - imDelay) : 0;
+	//u16 descr = (imDescr > imDelay) ? (imDescr - imDelay) : 0;
 
-	u16 ind = descr / rsp->st;
+	//u16 ind = descr / rsp->st;
 
-	if (ind >= rsp->sl) return;
+	if (ind >= rsp.hdr.sl) return;
 
 	data += ind;
 
-	u16 len = rsp->sl - ind;
+	u16 len = rsp.hdr.sl - ind;
 
 	i32 max = -32768;
 	i32 imax = -1;
@@ -478,14 +502,14 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 imDescr, u16 imDelay,  u16 imThr)
 
 	if (imax >= 0)
 	{
-		rsp->fi_amp = max;
-		u32 t = rsp->sd + imax * rsp->st;
-		rsp->fi_time = (t < 0xFFFF) ? t : 0xFFFF;
+		rsp.hdr.fi_amp = max;
+		u32 t = rsp.hdr.sd + imax * rsp.hdr.st;
+		rsp.hdr.fi_time = (t < 0xFFFF) ? t : 0xFFFF;
 	};
 
-	if (rsp->sl > ind)
+	if (rsp.hdr.sl > ind)
 	{
-		for (u32 i = rsp->sl - ind; i > 0; i--)
+		for (u32 i = rsp.hdr.sl - ind; i > 0; i--)
 		{
 			i32 v = (i16)(*(data++));
 
@@ -494,7 +518,7 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 imDescr, u16 imDelay,  u16 imThr)
 		};
 	};
 
-	rsp->maxAmp = (ampmax < 0xFFFF) ? ampmax : 0xFFFF;
+	rsp.hdr.maxAmp = (ampmax < 0xFFFF) ? ampmax : 0xFFFF;
 }
 
 #pragma optimize_as_cmd_line
@@ -547,7 +571,7 @@ static void ProcessDataIM(RSPWAVE *dsc)
 	static u16 prevShaftCount = 0;
 	static u16 wpr = 180;
 
-	RspCM *rsp = (RspCM*)dsc->data;
+	const RspCM &rsp = *((RspCM*)dsc->data);
 
 	if (dsc->shaftCount != prevShaftCount)
 	{
@@ -574,13 +598,13 @@ static void ProcessDataIM(RSPWAVE *dsc)
 		{
 			RspIM *ir = (RspIM*)imdsc->data;
 
-			ir->mmsecTime	= rsp->mmsecTime;
-			ir->shaftTime	= rsp->shaftTime;
-			ir->gain		= rsp->gain;
-			ir->ax			= rsp->ax;
-			ir->ay			= rsp->ay;
-			ir->az			= rsp->az;
-			ir->at			= rsp->at;
+			ir->mmsecTime	= rsp.hdr.mmsecTime;
+			ir->shaftTime	= rsp.hdr.shaftTime;
+			ir->gain		= rsp.hdr.gain;
+			ir->ax			= rsp.hdr.ax;
+			ir->ay			= rsp.hdr.ay;
+			ir->az			= rsp.hdr.az;
+			ir->at			= rsp.hdr.at;
 
 			u16 *d = ir->data;
 
@@ -588,7 +612,7 @@ static void ProcessDataIM(RSPWAVE *dsc)
 		};
 	};
 
-	if (rsp->sensType == 1)
+	if (rsp.hdr.sensType == 2)
 	{
 		ProcessDataCM(dsc);
 	}
@@ -612,8 +636,8 @@ static void ProcessDataIM(RSPWAVE *dsc)
 
 			if (i < count)
 			{
-				*(data++) = rsp->fi_amp;
-				*(data++) = rsp->fi_time;
+				*(data++) = rsp.hdr.fi_amp;
+				*(data++) = rsp.hdr.fi_time;
 				i++;
 			};
 
@@ -680,7 +704,7 @@ static void ProcessSPORT()
 			else
 			{
 				rsp->mode = 0;
-				rsp->dataLen = sizeof(RspCM)/2+dsc->len;
+				rsp->dataLen = sizeof(RspHdrCM)/2+dsc->len;
 				rsp->fireIndex = dsc->fireIndex;
 				rsp->shaftCount = dsc->shaftCount;
 
@@ -690,35 +714,37 @@ static void ProcessSPORT()
 
 				angle = t;
 
-				RspCM *r = (RspCM*)rsp->data;
+				RspCM &r = *((RspCM*)rsp->data);
+				//RspHdrCM *r = (RspHdrCM*)rsp->data;
 
-				r->rw			= manReqWord|0x40;			//1. ответное слово
-				r->mmsecTime	= dsc->mmsec;
-				r->shaftTime	= dsc->shaftTime;
-				r->motoCount	= dsc->motoCount;
-				r->headCount	= dsc->shaftCount;
-				r->ax			= dsc->ax;
-				r->ay			= dsc->ay;
-				r->az			= dsc->az;
-				r->at			= dsc->at;
-				r->sensType		= dsc->sensType;
-				r->angle		= angle;
-				r->maxAmp		= 0;
-				r->fi_amp		= 0;
-				r->fi_time		= 0;
-				r->gain			= dsc->gain;
-				r->st 			= dsc->sampleTime;			//15. Шаг оцифровки
-				r->sl 			= dsc->len;					//16. Длина оцифровки (макс 2028)
-				r->sd 			= dsc->sampleDelay;			//17. Задержка оцифровки  
-				r->packType		= 0;						//18. Упаковка
-				r->packLen		= 0;						//19. Размер упакованных данных
+				r.hdr.rw		= manReqWord|0x40;			//1. ответное слово
+				r.hdr.mmsecTime	= dsc->mmsec;
+				r.hdr.shaftTime	= dsc->shaftTime;
+				r.hdr.motoCount	= dsc->motoCount;
+				r.hdr.headCount	= dsc->shaftCount;
+				r.hdr.ax		= dsc->ax;
+				r.hdr.ay		= dsc->ay;
+				r.hdr.az		= dsc->az;
+				r.hdr.at		= dsc->at;
+				r.hdr.sensType	= dsc->sensType;
+				r.hdr.angle		= angle;
+				r.hdr.maxAmp	= 0;
+				r.hdr.fi_amp	= 0;
+				r.hdr.fi_time	= 0;
+				r.hdr.gain		= dsc->gain;
+				r.hdr.st 		= dsc->sampleTime;			//15. Шаг оцифровки
+				r.hdr.sl 		= dsc->len;					//16. Длина оцифровки (макс 2028)
+				r.hdr.sd 		= dsc->sampleDelay;			//17. Задержка оцифровки  
+				r.hdr.packType	= 0;						//18. Упаковка
+				r.hdr.packLen	= 0;						//19. Размер упакованных данных
 
 				state += 1;
 			};
 		
 		case 2:
 		{
-			u16 *d = rsp->data+(sizeof(RspCM)/2);
+			RspCM &r = *((RspCM*)rsp->data);
+			u16 *d = r.data;
 
 			if ((dsc->chMask&3) == 1)
 			{
@@ -778,39 +804,41 @@ static void ProcessSPORT()
 			else
 			{
 				rsp->mode = 0;
-				rsp->dataLen = sizeof(RspCM)/2+dsc->len;
+				rsp->dataLen = sizeof(RspHdrCM)/2+dsc->len;
 				rsp->fireIndex = dsc->fireIndex;
 				rsp->shaftCount = dsc->shaftCount;
 
-				RspCM *r = (RspCM*)rsp->data;
+				RspCM &r = *((RspCM*)rsp->data);
+				//RspHdrCM *r = (RspHdrCM*)rsp->data;
 
-				r->rw			= manReqWord|0x40;			//1. ответное слово
-				r->mmsecTime	= dsc->mmsec;
-				r->shaftTime	= dsc->shaftTime;
-				r->motoCount	= dsc->motoCount;
-				r->headCount	= dsc->shaftCount;
-				r->ax			= dsc->ax;
-				r->ay			= dsc->ay;
-				r->az			= dsc->az;
-				r->at			= dsc->at;
-				r->sensType		= dsc->sensType;
-				r->angle		= angle;
-				r->maxAmp		= 0;
-				r->fi_amp		= 0;
-				r->fi_time		= 0;
-				r->gain			= dsc->gain;
-				r->st 			= dsc->sampleTime;			//15. Шаг оцифровки
-				r->sl 			= dsc->len;					//16. Длина оцифровки (макс 2028)
-				r->sd 			= dsc->sampleDelay;			//17. Задержка оцифровки  
-				r->packType		= 0;						//18. Упаковка
-				r->packLen		= 0;						//19. Размер упакованных данных
+				r.hdr.rw		= manReqWord|0x40;			//1. ответное слово
+				r.hdr.mmsecTime	= dsc->mmsec;
+				r.hdr.shaftTime	= dsc->shaftTime;
+				r.hdr.motoCount	= dsc->motoCount;
+				r.hdr.headCount	= dsc->shaftCount;
+				r.hdr.ax		= dsc->ax;
+				r.hdr.ay		= dsc->ay;
+				r.hdr.az		= dsc->az;
+				r.hdr.at		= dsc->at;
+				r.hdr.sensType	= dsc->sensType;
+				r.hdr.angle		= angle;
+				r.hdr.maxAmp	= 0;
+				r.hdr.fi_amp	= 0;
+				r.hdr.fi_time	= 0;
+				r.hdr.gain		= dsc->gain;
+				r.hdr.st 		= dsc->sampleTime;			//15. Шаг оцифровки
+				r.hdr.sl 		= dsc->len;					//16. Длина оцифровки (макс 2028)
+				r.hdr.sd 		= dsc->sampleDelay;			//17. Задержка оцифровки  
+				r.hdr.packType	= 0;						//18. Упаковка
+				r.hdr.packLen	= 0;						//19. Размер упакованных данных
 
 				state += 1;
 			}
 
 		case 4:
 		{
-			u16 *d = rsp->data+(sizeof(RspCM)/2);
+			RspCM &r = *((RspCM*)rsp->data);
+			u16 *d = r.data;
 			u16 *s = dsc->data+3;
 
 			for (u32 i = dsc->len+4; i > 0; i--)
@@ -845,7 +873,7 @@ static void UpdateMode()
 	{
 		HW::PIOG->BSET(3);
 
-		RspCM *rsp = (RspCM*)dsc->data;
+		RspHdrCM *rsp = (RspHdrCM*)dsc->data;
 
 		u16 n = rsp->sensType;
 
@@ -862,11 +890,11 @@ static void UpdateMode()
 
 		if (sens.fi_type != 0)
 		{
-			Filtr_Wavelet(*dsc, sens.descr, sens.delay);
+			Filtr_Wavelet(*dsc, sens.descrIndx);
 		}
 		else
 		{
-			GetAmpTimeIM_3(*dsc, sens.descr, sens.delay, sens.thr);
+			GetAmpTimeIM_3(*dsc, sens.descrIndx, sens.thr);
 		};
 			
 		if (n != 2)

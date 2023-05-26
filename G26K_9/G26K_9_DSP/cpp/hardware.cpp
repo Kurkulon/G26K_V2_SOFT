@@ -17,7 +17,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORT_BUF_NUM 4
+#define SPORT_BUF_NUM 6
 
 
 #define Start_SPORT()	{ HW::SPORT0->TCR1 = sp0TCR1; HW::SPORT1->TCR1 = sp1TCR1; }
@@ -81,7 +81,7 @@ static DSCSPORT sportdsc[SPORT_BUF_NUM];
 //u16 ppiClkDiv = NS2CLK(400);
 //u16 ppiLen = 16;
 
-static u16 ppiOffset = sizeof(RspCM)/2; //19;
+//static u16 ppiOffset = sizeof(RspHdrCM)/2; //19;
 
 //u32 ppiDelay = US2CCLK(10);
 
@@ -182,6 +182,7 @@ static void SetPPI(PPI &ppi, SENS &sens, u16 sensType, u16 chMask, bool forced)
 	ppi.len = sens.sl;
 
 	if (ppi.len < 16) ppi.len = 16;
+	if (ppi.len > 512) ppi.len = 512;
 
 	if (c || ppi.sd != sens.sd)
 	{

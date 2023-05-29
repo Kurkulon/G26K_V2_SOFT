@@ -50,6 +50,10 @@ initcode_name = $(libdir)\initcode_osc25.dxe
 
 ####################################################################################################################################################################################################
 
+startup_obj = $(objdir)\startup_BF592A.doj
+
+####################################################################################################################################################################################################
+
 
 .ERASE
 .EXTENSIONS:
@@ -61,7 +65,7 @@ initcode_name = $(libdir)\initcode_osc25.dxe
 .doj:	$(objdir)
 .dxe:	$(objdir)
 .h:	$(hdir)
-.s: $(cppdir)
+.s: $(cppdir);$(libdir)\cpp
 .d:	$(objdir)
 
 
@@ -75,12 +79,16 @@ initcode_name = $(libdir)\initcode_osc25.dxe
 
 ####################################################################################################################################################################################################
 
+asm_options = -proc ADSP-BF592-A -g -si-revision 0.2
+
+####################################################################################################################################################################################################
+
 compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
 	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp 
 
 ####################################################################################################################################################################################################
 
-link_options = -e -proc ADSP-BF592-A -si-revision 0.2 -MDNO_UTILITY_ROM -MD__cplusplus -MDUSE_SCRATCHPAD_STACK -MDUSE_SCRATCHPAD_HEAP -MDSTACK_SIZE=1K -MDHEAP_SIZE=0 -MDSTACKHEAP_SIZE=1K
+link_options = -T $(libdir)\BF592A.ldf -e -proc ADSP-BF592-A -si-revision 0.2 -MDNO_UTILITY_ROM #-MD__cplusplus -MDUSE_SCRATCHPAD_STACK -MDUSE_SCRATCHPAD_HEAP -MDSTACK_SIZE=1K -MDHEAP_SIZE=0 -MDSTACKHEAP_SIZE=1K
   
 ####################################################################################################################################################################################################
 
@@ -123,7 +131,7 @@ $(objdir)\$(target_name).ldr :  $(target_name).dxe $(initcode_name)
 
 ####################################################################################################################################################################################################
 
-$(target_name).dxe :  $(modules_obj) $(libname)
+$(target_name).dxe : $(startup_obj) $(modules_obj) $(libname)
 	@echo Linking ...
 	@linker	$(link_options) -Map "$(objdir)\$^&.xml" -o "$(objdir)\$^." $<
 	@rem elfloader -v -f binary -b SPI -proc ADSP-BF592-A -dmawidth 8 -width 8 -o "$(objdir)\$^&.ldr" $^@ 
@@ -137,6 +145,12 @@ $(target_name).dxe :  $(modules_obj) $(libname)
 .cpp.doj: .AUTODEPEND
 	@echo Compiling $[. ...
 	@ccblkfn $(compiler_options) -MD -Mo="$(objdir)\$^&.d" -o "$(objdir)\$^." $[@
+
+####################################################################################################################################################################################################
+
+.s.doj:
+	@echo Assembling $[. ...
+	@easmblkfn $(asm_options) -l $(objdir)\$^&.lst  -o $(objdir)\$^. $[@	
 
 ####################################################################################################################################################################################################
 

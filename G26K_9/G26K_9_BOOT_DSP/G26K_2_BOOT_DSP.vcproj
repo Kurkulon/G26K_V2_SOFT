@@ -23,8 +23,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="wmake -h version=Debug"
-				ReBuildCommandLine="wmake -h -a version=Debug"
+				BuildCommandLine="make -h version=Debug"
+				ReBuildCommandLine="make -h -a version=Debug"
 				CleanCommandLine="@del /Q .\Debug\*.*"
 				Output="$(OutDir)\g26p.dxe"
 				PreprocessorDefinitions="__DEBUG;"
@@ -45,8 +45,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="wmake -h version=Release"
-				ReBuildCommandLine="wmake -h -a version=Release"
+				BuildCommandLine="make -h version=Release"
+				ReBuildCommandLine="make -h -a version=Release"
 				CleanCommandLine="@del /Q .\Release\*.*"
 				Output="$(OutDir)\g26p.dxe"
 				PreprocessorDefinitions="_LANGUAGE_C"

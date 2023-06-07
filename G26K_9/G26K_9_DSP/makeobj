@@ -7,8 +7,7 @@ version = Release
 
 ####################################################################################################################################################################################################
 
-ADI_DSP = "C:\Program Files (x86)\Analog Devices\VisualDSP 5.1.2"
-#ADI_DSP = "c:\Analog Devices\CrossCore Embedded Studio 2.9.1"
+#ADI_DSP = "C:\Program Files (x86)\Analog Devices\VisualDSP 5.1"
 
 curdir = $+ $(%cdrive):$(%cwd) $-
 #hdir = cpp
@@ -18,7 +17,7 @@ libdir = $(curdir)\..\..\..\G_LIBS_BF592
 
 !ifeq version Debug
 
-debug_compiler_options = -O0 -D__DEBUG
+debug_compiler_options = -O0 -D __DEBUG
 debug_linker_options = 
 libsuffix=d
 
@@ -30,7 +29,7 @@ libsuffix=Win32
 
 !else
 
-debug_compiler_options = -Ov100
+debug_compiler_options = -Oa
 debug_linker_options = 
 libsuffix=r
 
@@ -40,20 +39,31 @@ libsuffix=r
 
 target_name = G26K_9_DSP
 
-####################################################################################################################################################################################################
+##################################################################################################
+
+!ifeq buildtool CCES
+
+libname = $(libdir)\G_LIBS_BF592_$(libsuffix)_CCES.dlb
+linktool = ccblkfn
+initsuffix = _CCES
+
+!else
 
 libname = $(libdir)\G_LIBS_BF592_$(libsuffix).dlb
+linktool = linker
+initsuffix =
+
+!endif
 
 ####################################################################################################################################################################################################
 
-initcode_name = $(libdir)\initcode_osc25.dxe
+initcode_name = $(libdir)\initcode$(initsuffix)_osc25.dxe
 
 ####################################################################################################################################################################################################
 
 startup_obj = $(objdir)\startup_BF592A.doj
 
 ####################################################################################################################################################################################################
-
 
 .ERASE
 .EXTENSIONS:
@@ -64,10 +74,9 @@ startup_obj = $(objdir)\startup_BF592A.doj
 .cpp:	$(cppdir)
 .doj:	$(objdir)
 .dxe:	$(objdir)
-.h:	$(hdir)
-.s: $(cppdir);$(libdir)\cpp
-.d:	$(objdir)
-
+.h:		$(hdir)
+.s: 	$(cppdir);$(libdir)\cpp
+.d:		$(objdir)
 
 ####################################################################################################################################################################################################
 
@@ -76,19 +85,36 @@ startup_obj = $(objdir)\startup_BF592A.doj
 	@call echo Building $(version) version ...
 	@call buildnum.bat
 
+####################################################################################################################################################################################################
+
+asm_options = -proc ADSP-BF592-A -g -si-revision 0.2 -DADI_$(buildtool)
 
 ####################################################################################################################################################################################################
 
-asm_options = -proc ADSP-BF592-A -g -si-revision 0.2
-
-####################################################################################################################################################################################################
+!ifeq buildtool CCES
 
 compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
-	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp 
+	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp
+#-file-attr ProjectName="$(target_name)" -flags-compiler --no_wrap_diagnostics  -DCORE0 -D_DEBUG -no-const-strings -MD  
 
+!else
+
+compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
+	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp
+
+
+!endif
 ####################################################################################################################################################################################################
 
-link_options = -T $(libdir)\BF592A.ldf -e -proc ADSP-BF592-A -si-revision 0.2 -MDNO_UTILITY_ROM #-MD__cplusplus -MDUSE_SCRATCHPAD_STACK -MDUSE_SCRATCHPAD_HEAP -MDSTACK_SIZE=1K -MDHEAP_SIZE=0 -MDSTACKHEAP_SIZE=1K
+!ifeq buildtool CCES
+
+link_options = -proc ADSP-BF592-A -si-revision 0.2 -T $(libdir)\BF592A.ldf -no-mem -flags-link -e,-MDNO_UTILITY_ROM,-MDADI_CCES -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+
+!else
+
+link_options = -T $(libdir)\BF592A.ldf -e -proc ADSP-BF592-A -si-revision 0.2 -MDNO_UTILITY_ROM @$(objdir)\link_input.txt
+
+!endif
   
 ####################################################################################################################################################################################################
 
@@ -126,15 +152,16 @@ link_options = -T $(libdir)\BF592A.ldf -e -proc ADSP-BF592-A -si-revision 0.2 -M
 #
 ####################################################################################################################################################################################################
 
-$(objdir)\$(target_name).ldr :  $(target_name).dxe $(initcode_name)
+$(objdir)\$(target_name)_$(buildtool).ldr : $(target_name).dxe $(initcode_name)
 	@elfloader -proc ADSP-BF592-A -v -init $(initcode_name) -f binary -b SPI  -si-revision 0.2 -o "$^@" -dmawidth 8 -width 8 $(objdir)\$(target_name).dxe 
 
 ####################################################################################################################################################################################################
+#-Map "$(objdir)\$^&.xml"
 
 $(target_name).dxe : $(startup_obj) $(modules_obj) $(libname)
 	@echo Linking ...
-	@linker	$(link_options) -Map "$(objdir)\$^&.xml" -o "$(objdir)\$^." $<
-	@rem elfloader -v -f binary -b SPI -proc ADSP-BF592-A -dmawidth 8 -width 8 -o "$(objdir)\$^&.ldr" $^@ 
+	@echo -Map "$(objdir)\$^&_$(buildtool).xml" > $(objdir)\link_input.txt
+	@$(linktool) $(link_options) -o "$(objdir)\$^." $< 
 
 ####################################################################################################################################################################################################
 

@@ -9,10 +9,12 @@
 #include "hw_nand.h"
 #include "hw_rtm.h"
 #include "manch.h"
+#include "spis.h"
 
 
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+extern S_SPIS	spidsp;
 
 extern void Hardware_Init();
 

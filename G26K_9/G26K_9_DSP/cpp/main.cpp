@@ -61,7 +61,6 @@ static List<RSPWAVE> processWave;
 static List<RSPWAVE> freeRspWave;
 static List<RSPWAVE> readyRspWave;
 
-static RSPWAVE *curDsc = 0;
 
 static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM];
 
@@ -85,7 +84,7 @@ static SensVars sensVars[3] = {0}; //{{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
 static u16 refAmp = 0;
 static u16 refTime = 0;
 
-static i32 avrBuf[RSPWAVE_BUF_LEN - sizeof(RspHdrCM)/2] = {0};
+static i32 avrBuf[2][RSPWAVE_BUF_LEN - sizeof(RspHdrCM)/2] = {0};
 
 
 //const i16 sin_Table[10] = {	0,	11585,	16384,	11585,	0,	-11585,	-16384,	-11585,	0,	11585 };
@@ -190,16 +189,16 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 
 	if (wb == 0) return false;
 
-	if (curDsc != 0)
-	{
-		freeRspWave.Add(curDsc);
+	//if (curDsc != 0)
+	//{
+	//	freeRspWave.Add(curDsc);
 
-		curDsc = 0;
-	};
+	//	curDsc = 0;
+	//};
 
-	curDsc = readyRspWave.Get();
+	//curDsc = readyRspWave.Get();
 
-	if (curDsc == 0)
+	//if (curDsc == 0)
 	{
 		rsp.rw = data[0];
 		rsp.len = sizeof(rsp);
@@ -210,11 +209,11 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 		wb->data = &rsp;			 
 		wb->len = sizeof(rsp);	 
 	}
-	else
-	{
-		wb->data = curDsc->data;			 
-		wb->len = curDsc->dataLen*2;	 
-	};
+	//else
+	//{
+	//	wb->data = curDsc->data;			 
+	//	wb->len = curDsc->dataLen*2;	 
+	//};
 
 	return true;
 }
@@ -289,8 +288,7 @@ static void UpdateBlackFin()
 					if (RequestFunc(&wb, &rb))
 					{
 						com.Write(&wb);
-						//spi.SetMode(CPHA|CPOL);
-						//spi.WriteAsyncDMA(wb.data, wb.len);
+
 						i++;
 					}
 					else
@@ -308,7 +306,42 @@ static void UpdateBlackFin()
 
 		case 2:
 
-			if (!com.Update() /*&& spi.CheckWriteComplete()*/)
+			if (!com.Update())
+			{
+				i = 0;
+			};
+
+			break;
+	};
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void UpdateSPI()
+{
+	static RSPWAVE *curDsc = 0;
+	static RTM32 tm;
+	static byte i = 0;
+
+	switch(i)
+	{
+		case 0:
+
+			curDsc = readyRspWave.Get();
+
+			if (curDsc != 0)
+			{
+				spi.SetMode(CPHA|CPOL);
+				spi.WriteAsyncDMA(curDsc->data, curDsc->dataLen*2);
+
+				i++;
+			};
+
+			break;
+
+		case 1:
+
+			if (spi.CheckWriteComplete())
 			{
 				if (curDsc != 0)
 				{
@@ -317,6 +350,17 @@ static void UpdateBlackFin()
 					curDsc = 0;
 				};
 
+				tm.Reset();
+
+				i++;
+			};
+
+			break;
+
+		case 2:
+
+			if (tm.Check(US2RT(200)))
+			{
 				i = 0;
 			};
 
@@ -337,9 +381,10 @@ static void Update()
 	{
 		CALL( UpdateBlackFin()	);
 		CALL( UpdateHardware()	);
+		CALL( UpdateSPI()		);
 	};
 
-	i &= 1; // i = (i > (__LINE__-S-3)) ? 0 : i;
+	i = (i > (__LINE__-S-3)) ? 0 : i;
 
 	#undef CALL
 }
@@ -353,9 +398,9 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 	RspCM &rsp = *((RspCM*)dsc.data);
 	u16 *d = rsp.data;
 
-	if (filtrType == 1)
+	if (filtrType == 1 && rsp.hdr.sensType < 2)
 	{
-		i32 *ab = avrBuf/*[rsp->sensType]*/; 
+		i32 *ab = avrBuf[rsp.hdr.sensType]; 
 
 		for (u32 i = rsp.hdr.sl; i > 0; i--)
 		{
@@ -689,7 +734,7 @@ static void ProcessSPORT()
 			}
 			else
 			{
-				HW::PIOG->BSET(13);
+				Pin_ProcessSPORT_Set();
 				state += 1;
 			};
 
@@ -757,7 +802,7 @@ static void ProcessSPORT()
 
 				FreeDscSPORT(dsc);
 
-				HW::PIOG->BCLR(13);
+				Pin_ProcessSPORT_Clr();
 
 				state = 0;
 			}
@@ -783,7 +828,7 @@ static void ProcessSPORT()
 
 				FreeDscSPORT(dsc);
 
-				HW::PIOG->BCLR(13);
+				Pin_ProcessSPORT_Clr();
 
 				state = 0;
 			};
@@ -849,7 +894,7 @@ static void ProcessSPORT()
 			FreeDscSPORT(dsc);
 			processWave.Add(rsp);
 
-			HW::PIOG->BCLR(13);
+			Pin_ProcessSPORT_Clr();
 
 			state = 0;
 
@@ -871,7 +916,7 @@ static void UpdateMode()
 
 	if (dsc != 0)
 	{
-		HW::PIOG->BSET(3);
+		Pin_UpdateMode_Set();
 
 		RspHdrCM *rsp = (RspHdrCM*)dsc->data;
 
@@ -879,14 +924,7 @@ static void UpdateMode()
 
 		const SensVars &sens = sensVars[n];
 
-		if (n != 2)
-		{
-			Filtr_Data(*dsc, sens.filtr);
-		}
-		else
-		{
-			Filtr_Data(*dsc, (sens.filtr == 1) ? 0 : sens.filtr);
-		};
+		Filtr_Data(*dsc, sens.filtr);
 
 		if (sens.fi_type != 0)
 		{
@@ -914,7 +952,7 @@ static void UpdateMode()
 		};
 
 		//idle();
-		HW::PIOG->BCLR(3);
+		Pin_UpdateMode_Clr();
 	}
 	else
 	{
@@ -943,7 +981,7 @@ int main( void )
 
 	//CheckFlash();
 
-	spi.Connect(50000000);
+	spi.Connect(25000000);
 
 	for (u16 i = 0; i < ArraySize(rspWaveBuf); i++)
 	{
@@ -952,12 +990,14 @@ int main( void )
 
 	while (1)
 	{
-		HW::PIOG->SET(PG2);
+		Pin_MainLoop_Set();
 
 		UpdateMode();
 
-		HW::PIOG->CLR(PG2);
+		Pin_MainLoop_Clr();
 	};
 
 //	return 0;
 }
+
+

@@ -88,21 +88,23 @@
 	#define UART2_LPC			1
 //	#define SERCOM_2			2
 	#define I2C_SERCOM_NUM		3
-	//#define DSP_SERCOM_NUM		4
+	//#define DSP_SERCOM_NUM	4
 	#define UART1_DSP			5
 	//#define SERCOM_6			6
-	//#define SERCOM_7			7
+	#define SPI_DSP_SERCOM_NUM	7
 
 	// ++++++++++++++	DMA	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define	NAND_DMA			DMA_CH0
 	#define	UART1_DMA			DMA_CH1
-	//#define	COM2_DMA			DMA_CH2
+	#define	DSP_SPI_DMA_RX		DMA_CH5
 	#define	UART2_DMA			DMA_CH3
 	#define	SPI_DMA_TX			DMA_CH4
 	#define	SPI_DMA_RX			DMA_CH5
 	#define	NAND_MEMCOPY_DMA	DMA_CH6
 	#define	I2C_DMA				DMA_CH7
+	#define	DSP_SPI_DMA_TX		DMA_CH8
+
 	//#define	DSP_DMA				DMA_CH30
 	#define	CRC_DMA				DMA_CH31
 
@@ -212,23 +214,23 @@
 
 	// ++++++++++++++	SPI	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define SPI				HW::SPI0
-	#define PIO_SPCK		HW::PIOA
-	#define PIO_MOSI		HW::PIOA
-	#define PIO_MISO		HW::PIOA
-	#define PIO_CS			HW::PIOB
+	//#define SPI					HW::SPI0
+	#define PIO_SPCK			HW::PIOA
+	#define PIO_MOSI			HW::PIOA
+	#define PIO_MISO			HW::PIOA
+	#define PIO_CS				HW::PIOB
 
-	#define PIN_SPCK		9
-	#define PIN_MOSI		8 
-	#define PIN_MISO		10 
-	#define PIN_CS0			10 
-	#define PIN_CS1			11
+	#define PIN_SPCK			9
+	#define PIN_MOSI			8 
+	#define PIN_MISO			10 
+	#define PIN_CS0				10 
+	#define PIN_CS1				11
 
-	#define SPCK			(1<<PIN_SPCK) 
-	#define MOSI			(1<<PIN_MOSI) 
-	#define MISO			(1<<PIN_MISO) 
-	#define CS0				(1<<PIN_CS0) 
-	#define CS1				(1<<PIN_CS1) 
+	#define SPCK				(1<<PIN_SPCK) 
+	#define MOSI				(1<<PIN_MOSI) 
+	#define MISO				(1<<PIN_MISO) 
+	#define CS0					(1<<PIN_CS0) 
+	#define CS1					(1<<PIN_CS1) 
 
 	#define SPI_PMUX_SPCK		PORT_PMUX_C 
 	#define SPI_PMUX_MOSI		PORT_PMUX_C 
@@ -245,7 +247,7 @@
 
 	// ++++++++++++++	DSP SPI	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define DSPSPI				HW::SPI7
+	//#define DSPSPI				HW::SPI7
 	#define PIO_DSP_SCK			HW::PIOB
 	#define PIO_DSP_MOSI		HW::PIOB
 	#define PIO_DSP_SS			HW::PIOB
@@ -261,14 +263,15 @@
 	#define DSP_SS				(1<<PIN_DSP_SS	) 
 	#define SS					(1<<PIN_SS		) 
 
-	#define DSPSPI_PMUX_SPCK	PORT_PMUX_C 
-	#define DSPSPI_PMUX_MOSI	PORT_PMUX_C 
-	#define DSPSPI_DIPO_BITS	SPI_DIPO(2)
+	#define DSPSPI_PMUX_SPCK	PORT_PMUX_D 
+	#define DSPSPI_PMUX_MOSI	PORT_PMUX_D 
+	#define DSPSPI_PMUX_SS		PORT_PMUX_D 
+	#define DSPSPI_DIPO_BITS	SPI_DIPO(3)
 	#define DSPSPI_DOPO_BITS	SPI_DOPO(0) 
 
 	#define DSPSPI_GEN_SRC		GEN_MCK
 	#define DSPSPI_GEN_CLK		GEN_MCK_CLK
-	#define DSPSPI_BAUDRATE		8000000
+	//#define DSPSPI_BAUDRATE		8000000
 
 	// ++++++++++++++	MANCH	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	

@@ -152,7 +152,7 @@ link_options = -T $(libdir)\BF592A.ldf -e -proc ADSP-BF592-A -si-revision 0.2 -M
 #
 ####################################################################################################################################################################################################
 
-$(objdir)\$(target_name)_$(buildtool).ldr : $(target_name).dxe $(initcode_name)
+$(objdir)\$(target_name).ldr : $(target_name).dxe $(initcode_name)
 	@elfloader -proc ADSP-BF592-A -v -init $(initcode_name) -f binary -b SPI  -si-revision 0.2 -o "$^@" -dmawidth 8 -width 8 $(objdir)\$(target_name).dxe 
 
 ####################################################################################################################################################################################################

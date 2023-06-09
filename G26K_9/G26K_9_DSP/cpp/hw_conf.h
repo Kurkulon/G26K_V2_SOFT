@@ -51,14 +51,28 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-// 5 - PF5 - 
-// 6 - PF6 - 
-// 7 - PF7 - 
-// 8 - PF8 - SpiFlashSelect - Main Loop
-// 36 - PG4 - FIRE_PPI_ISR
-// 37 - PG5
-// 38 - PG6
-// 39 - PG7
+// 17 - PF14 - DSP_MISO - DD3-2 
+// 34 - PG3  - UpdateMode
+// 37 - PG5  - SPORT0_ISR
+// 47 - PG12 - SPORT1_ISR
+// 48 - PG13 - ProcessSPORT
+// 49 - PG14 - Main Loop
+
+#define Pin_UpdateMode_Set()	HW::PIOG->BSET(3)
+#define Pin_UpdateMode_Clr()	HW::PIOG->BCLR(3)
+
+#define Pin_SPORT0_ISR_Set()	HW::PIOG->BSET(5)
+#define Pin_SPORT0_ISR_Clr()	HW::PIOG->BCLR(5)
+
+#define Pin_SPORT1_ISR_Set()	HW::PIOG->BSET(12)
+#define Pin_SPORT1_ISR_Clr()	HW::PIOG->BCLR(12)
+
+#define Pin_ProcessSPORT_Set()	HW::PIOG->BSET(13)
+#define Pin_ProcessSPORT_Clr()	HW::PIOG->BCLR(13)
+
+#define Pin_MainLoop_Set()		HW::PIOG->BSET(14)
+#define Pin_MainLoop_Clr()		HW::PIOG->BCLR(14)
+
 
 // Вектора прерываний
 // IVG7		- 

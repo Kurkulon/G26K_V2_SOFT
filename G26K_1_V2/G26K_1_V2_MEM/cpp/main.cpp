@@ -3423,6 +3423,7 @@ int main()
 
 	commoto.Connect(ComPort::ASYNC, 1562500, 0, 1);
 	comdsp.Connect(ComPort::ASYNC, 6250000, 2, 1);
+	spidsp.Connect(true, true);
 
 	EnableDSP();
 
@@ -3438,6 +3439,8 @@ int main()
 
 	while (1)
 	{
+		//PIO_SS->BTGL(PIN_SS);
+
 		Pin_MainLoop_Set();
 
 		Update();

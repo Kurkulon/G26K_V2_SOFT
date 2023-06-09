@@ -531,7 +531,7 @@ static void FireRef()
 
 EX_INTERRUPT_HANDLER(SPORT0_ISR)
 {
-	HW::PIOG->BSET(5);
+	Pin_SPORT0_ISR_Set();
 
 	if (dmaRxSp0.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
 	{
@@ -567,7 +567,7 @@ EX_INTERRUPT_HANDLER(SPORT0_ISR)
 		//ssync();
 	};
 
-	HW::PIOG->BCLR(5);
+	Pin_SPORT0_ISR_Clr();
 }
 
 #pragma optimize_as_cmd_line
@@ -576,7 +576,7 @@ EX_INTERRUPT_HANDLER(SPORT0_ISR)
 
 EX_INTERRUPT_HANDLER(SPORT1_ISR)
 {
-	HW::PIOG->BSET(12);
+	Pin_SPORT1_ISR_Set();
 
 	if (dmaRxSp1.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
 	{
@@ -611,7 +611,7 @@ EX_INTERRUPT_HANDLER(SPORT1_ISR)
 		//ssync();
 	};
 
-	HW::PIOG->BCLR(12);
+	Pin_SPORT1_ISR_Clr();	
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

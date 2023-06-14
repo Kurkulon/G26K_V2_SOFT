@@ -572,6 +572,11 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 
 static void ProcessDataCM(RSPWAVE *dsc)
 {
+	RspCM *rsp = (RspCM*)dsc->data;
+
+	rsp->data[rsp->hdr.sl] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+	dsc->dataLen += 1;
+
 	readyRspWave.Add(dsc);
 }
 
@@ -585,7 +590,7 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 {
 	RspIM *rsp = (RspIM*)dsc->data;
 
-	rsp->rw			= manReqWord|0x50;	//1. ответное слово
+	rsp->hdr.rw			= manReqWord|0x50;	//1. ответное слово
 	//rsp->mmsecTime	= dsc->mmsec;		//2. Время (0.1мс). младшие 2 байта
 	//rsp->shaftTime	= dsc->shaftTime;	//4. Время датчика Холла (0.1мс). младшие 2 байта
 	//rsp->ax			= dsc->ax;
@@ -593,12 +598,14 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	//rsp->az			= dsc->az;
 	//rsp->at			= dsc->at;
 	//rsp->gain		= dsc->gain;		//10. КУ
-	rsp->refAmp		= refAmp;
-	rsp->refTime	= refTime;
-	rsp->len		= len;				//11. Длина (макс 1024)
+	rsp->hdr.refAmp		= refAmp;
+	rsp->hdr.refTime	= refTime;
+	rsp->hdr.len		= len;				//11. Длина (макс 1024)
+
+	rsp->data[len*2]	= GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
 
 	//dsc->offset = (sizeof(*rsp) - sizeof(rsp->data)) / 2;
-	dsc->dataLen = (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2;
+	dsc->dataLen = (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2 + 1;
 
 	readyRspWave.Add(dsc);
 }
@@ -643,13 +650,13 @@ static void ProcessDataIM(RSPWAVE *dsc)
 		{
 			RspIM *ir = (RspIM*)imdsc->data;
 
-			ir->mmsecTime	= rsp.hdr.mmsecTime;
-			ir->shaftTime	= rsp.hdr.shaftTime;
-			ir->gain		= rsp.hdr.gain;
-			ir->ax			= rsp.hdr.ax;
-			ir->ay			= rsp.hdr.ay;
-			ir->az			= rsp.hdr.az;
-			ir->at			= rsp.hdr.at;
+			ir->hdr.mmsecTime	= rsp.hdr.mmsecTime;
+			ir->hdr.shaftTime	= rsp.hdr.shaftTime;
+			ir->hdr.gain		= rsp.hdr.gain;
+			ir->hdr.ax			= rsp.hdr.ax;
+			ir->hdr.ay			= rsp.hdr.ay;
+			ir->hdr.az			= rsp.hdr.az;
+			ir->hdr.at			= rsp.hdr.at;
 
 			u16 *d = ir->data;
 
@@ -698,7 +705,7 @@ static void ProcessDataIM(RSPWAVE *dsc)
 		{
 			cmCount = (wpr+4) / 8;
 
-			readyRspWave.Add(dsc);
+			ProcessDataCM(dsc);
 		}
 		else
 		{

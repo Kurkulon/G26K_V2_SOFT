@@ -97,7 +97,7 @@
 
 	#define	NAND_DMA			DMA_CH0
 	#define	UART1_DMA			DMA_CH1
-	#define	DSP_SPI_DMA_RX		DMA_CH5
+	#define	DSP_SPI_DMA_RX		DMA_CH2
 	#define	UART2_DMA			DMA_CH3
 	#define	SPI_DMA_TX			DMA_CH4
 	#define	SPI_DMA_RX			DMA_CH5

@@ -99,7 +99,7 @@ struct RspCM
 
 #pragma pack(1)
 
-struct RspIM	// 0xAD50
+struct RspHdrIM	// 0xAD50
 {
 	u16 	rw;
 	u32 	mmsecTime; 
@@ -113,6 +113,11 @@ struct RspIM	// 0xAD50
 	u16		refAmp;
 	u16		refTime;
 	u16		len;
+};
+
+struct RspIM
+{
+	RspHdrIM	hdr;
 	u16		data[16];
 };
 

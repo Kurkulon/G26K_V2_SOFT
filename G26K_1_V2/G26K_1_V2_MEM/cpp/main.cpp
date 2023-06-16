@@ -217,6 +217,8 @@ static bool cmdWriteStart_20 = false;
 static u32 dspRcv40 = 0;
 static u32 dspRcv50 = 0;
 static u16 dspRcvCount = 0;
+static u16 dspRcvErr = 0;
+static u16 dspNotRcv = 0;
 
 
 //static u32 rcvCRCER = 0;
@@ -2537,15 +2539,16 @@ static void UpdateDSP_SPI()
 
 			if (!mb.Valid())
 			{
-				mb = AllocFlashWriteBuffer(sizeof(RspDsp01));
+				mb = AllocFlashWriteBuffer(sizeof(RspDsp01)+2);
 			};
 
 			if (mb.Valid())
 			{
 				rb.data = mb->GetDataPtr();
-				rb.maxLen = mb->MaxLen();
+				rb.maxLen = sizeof(RspDsp01)+2;mb->MaxLen();
 
 				PIO_SS->BCLR(PIN_SS);
+				HW::PIOC->BSET(19);
 
 				spidsp.Read(&rb, ~0, US2SPIS(50));
 
@@ -2559,6 +2562,7 @@ static void UpdateDSP_SPI()
 			if (!spidsp.Update())
 			{
 				PIO_SS->BSET(PIN_SS);
+				HW::PIOC->BCLR(19);
 
 				bool c = false;
 
@@ -2604,6 +2608,18 @@ static void UpdateDSP_SPI()
 					readyR01.Add(mb);
 
 					mb.Free();
+				}
+				else if (rb.len != 0)
+				{
+					HW::PIOC->BSET(18);
+					dspRcvErr++;
+					HW::PIOC->BCLR(18);
+				}
+				else
+				{
+					HW::PIOC->BSET(17);
+					dspNotRcv++;
+					HW::PIOC->BCLR(17);
 				};
 
 				i = 0;
@@ -3122,7 +3138,6 @@ static void UpdateMisc()
 		CALL( SPI_Update();		);
 		CALL( UpdateParams();	);
 		CALL( I2C_Update();		); 
-		CALL( UpdateDSP_SPI();	);
 	};
 
 	i = (i > (__LINE__-S-3)) ? 0 : i;
@@ -3150,6 +3165,7 @@ static void Update()
 	if (!(IsComputerFind() && EmacIsConnected()))
 	{
 		UpdateMisc();
+		UpdateDSP_SPI();
 	}
 	else
 	{

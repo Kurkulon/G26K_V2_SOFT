@@ -283,17 +283,17 @@
         <Ww>
           <count>26</count>
           <WinNumber>1</WinNumber>
-          <ItemText>mv,0x0A</ItemText>
+          <ItemText>dspRcv40,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>27</count>
           <WinNumber>1</WinNumber>
-          <ItemText>dspRcv50</ItemText>
+          <ItemText>dspRcvErr,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>28</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DmaWRB</ItemText>
+          <ItemText>dspNotRcv,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
@@ -417,7 +417,7 @@
         <Mm>
           <WinNumber>1</WinNumber>
           <SubType>0</SubType>
-          <ItemText>rsp</ItemText>
+          <ItemText>0x2000df2C</ItemText>
           <AccSizeX>0</AccSizeX>
         </Mm>
       </MemoryWindow1>

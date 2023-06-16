@@ -62,7 +62,7 @@
 	// 52	- PA16
 	// 57	- PC17
 	// 58	- PC18
-	// 59	- PC19
+	// 59	- PC19	- SPI DSP
 	// 66	- PB18	- ManRcvIRQ sync true
 	// 74	- PA24	- ManRcvIRQ
 	// 75	- PA25	- main loop

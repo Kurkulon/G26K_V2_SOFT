@@ -684,11 +684,11 @@ static void UpdateMotor()
 					tachoCount = 0;
 
 					v *= pulsesPerHeadRoundFix4;
-					v /= 16;
+					v >>= 5;
 
 					if (v > 0)
 					{
-						HW::MRT->Channel[3].INTVAL = (((u32)MCK * 100 + v/2) / v)|(1UL<<31);
+						HW::MRT->Channel[3].INTVAL = (((u32)MCK * 50 + v/2) / v)|(1UL<<31);
 						//HW::MRT->Channel[3].CTRL = 1;
 						EnableDriver();
 

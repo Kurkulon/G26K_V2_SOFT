@@ -501,7 +501,7 @@ static void UpdateVREG()
 
 	if (tm.Check(US2CTM(1001)))
 	{
-		auxADC	= ((HW::ADC->DAT3 &0xFFF0) * 2771) >> 16;  
+		auxADC	= ((HW::ADC->DAT3 &0xFFF0) * 3994) >> 16;  
 		fb90ADC	= ((HW::ADC->DAT10&0xFFF0) * 1033) >> 16;  
 
 		fauxADC	 += auxADC	- avrAuxADC;	avrAuxADC	= fauxADC >> 4;

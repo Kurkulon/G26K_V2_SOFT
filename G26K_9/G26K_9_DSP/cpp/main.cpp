@@ -35,6 +35,7 @@ static ComPort com;
 //	byte ready; 
 //};
 
+static bool spiRsp = false;
 
 static u16 manReqWord = 0xAD00;
 static u16 manReqMask = 0xFF00;
@@ -138,6 +139,7 @@ static void PreProcessDspVars(ReqDsp01 *v, bool forced = false)
 
 static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 {
+	static RSPWAVE *curDsc = 0;
 	static RspDsp01 rsp;
 
 	ReqDsp01 *req = (ReqDsp01*)data;
@@ -189,16 +191,16 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 
 	if (wb == 0) return false;
 
-	//if (curDsc != 0)
-	//{
-	//	freeRspWave.Add(curDsc);
+	if (curDsc != 0)
+	{
+		freeRspWave.Add(curDsc);
 
-	//	curDsc = 0;
-	//};
+		curDsc = 0;
+	};
 
-	//curDsc = readyRspWave.Get();
+	if (!spiRsp) curDsc = readyRspWave.Get();
 
-	//if (curDsc == 0)
+	if (curDsc == 0)
 	{
 		rsp.rw = data[0];
 		rsp.len = sizeof(rsp);
@@ -209,11 +211,11 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 		wb->data = &rsp;			 
 		wb->len = sizeof(rsp);	 
 	}
-	//else
-	//{
-	//	wb->data = curDsc->data;			 
-	//	wb->len = curDsc->dataLen*2;	 
-	//};
+	else
+	{
+		wb->data = curDsc->data;			 
+		wb->len = curDsc->dataLen*2;	 
+	};
 
 	return true;
 }
@@ -327,7 +329,7 @@ static void UpdateSPI()
 	{
 		case 0:
 
-			curDsc = readyRspWave.Get();
+			if (spiRsp) curDsc = readyRspWave.Get();
 
 			if (curDsc != 0)
 			{
@@ -984,7 +986,7 @@ int main( void )
 
 	InitHardware();
 
-	com.Connect(6250000, 2);
+	com.Connect(12500000, 0);
 
 	//CheckFlash();
 

@@ -247,7 +247,7 @@
 
 	// ++++++++++++++	DSP SPI	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	//#define DSPSPI				HW::SPI7
+	//#define DSPSPI				
 	#define PIO_DSP_SCK			HW::PIOB
 	#define PIO_DSP_MOSI		HW::PIOB
 	#define PIO_DSP_SS			HW::PIOB

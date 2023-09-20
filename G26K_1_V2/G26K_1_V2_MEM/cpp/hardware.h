@@ -14,7 +14,10 @@
 
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#ifdef DSPSPI
 extern S_SPIS	spidsp;
+#endif
+
 
 extern void Hardware_Init();
 

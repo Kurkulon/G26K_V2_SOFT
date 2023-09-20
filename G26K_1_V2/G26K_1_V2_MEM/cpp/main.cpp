@@ -347,7 +347,7 @@ void CallBackDspReq01(Ptr<REQ> &q)
 	{
 		if (rsp.CM.hdr.rw == (dspReqWord|0x40))
 		{
-			q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)));
+			q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)+2));
 			q->rsp->len = q->rb.len;
 
 			dspStatus |= 1;
@@ -2520,7 +2520,7 @@ static void UpdateDSP_Com()
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+#ifdef DSPSPI
 
 static void UpdateDSP_SPI()
 {
@@ -2629,7 +2629,7 @@ static void UpdateDSP_SPI()
 			break;
 	};
 }
-
+#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifndef WIN32
@@ -3165,7 +3165,10 @@ static void Update()
 	if (!(IsComputerFind() && EmacIsConnected()))
 	{
 		UpdateMisc();
-		UpdateDSP_SPI();
+
+		#ifdef DSPSPI
+			UpdateDSP_SPI();
+		#endif
 	}
 	else
 	{
@@ -3536,8 +3539,11 @@ int main()
 #ifndef WIN32
 
 	commoto.Connect(ComPort::ASYNC, 1562500, 0, 1);
-	comdsp.Connect(ComPort::ASYNC, 6250000, 2, 1);
-	spidsp.Connect(true, true);
+	comdsp.Connect(ComPort::ASYNC, 12500000, 0, 1);
+
+	#ifdef DSPSPI
+		spidsp.Connect(true, true);
+	#endif
 
 	EnableDSP();
 

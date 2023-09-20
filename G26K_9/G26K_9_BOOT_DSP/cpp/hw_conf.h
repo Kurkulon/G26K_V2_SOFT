@@ -10,8 +10,8 @@
 #define CLKIN_MHz			25
 #define CLKIN_DIV			2	// 1, 2
 
-#define PLL_MUL				8	// 5...64
-#define SCLK_DIV			1	// 1...15
+#define PLL_MUL				32	// 5...64
+#define SCLK_DIV			2	// 1...15
 #define CCLK_CSEL			0	// 0...3
 #define CCLK_DIV			(1UL<<CCLK_CSEL)
 
@@ -134,8 +134,8 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //#define BOOT_NETADR
-#define BOOT_COM_SPEED			6250000
-#define BOOT_COM_PARITY			2
+#define BOOT_COM_SPEED			12500000
+#define BOOT_COM_PARITY			0
 #define BOOT_COM_PRETIMEOUT		(~0)
 #define BOOT_COM_POSTTIMEOUT	(US2COM(500))
 

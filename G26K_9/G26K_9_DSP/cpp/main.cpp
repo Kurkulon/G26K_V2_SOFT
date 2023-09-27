@@ -604,10 +604,10 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	rsp->hdr.refTime	= refTime;
 	rsp->hdr.len		= len;				//11. Длина (макс 1024)
 
-	rsp->data[len*2]	= GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+	//rsp->data[len*2]	= GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
 
 	//dsc->offset = (sizeof(*rsp) - sizeof(rsp->data)) / 2;
-	dsc->dataLen = (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2 + 1;
+	dsc->dataLen = (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2;// + 1;
 
 	readyRspWave.Add(dsc);
 }
@@ -618,39 +618,55 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 
 static void ProcessDataIM(RSPWAVE *dsc)
 {
-	static RSPWAVE *imdsc = 0;
-	static u32 count = 0;
-	static u32 cmCount = 0;
-	static u32 i = 0;
-	static u16 prevShaftCount = 0;
-	static u16 wpr = 180;
+	//static RSPWAVE *imdsc = 0;
+	//static u32 count = 0;
+	//static u32 cmCount = 0;
+	//static u32 i = 0;
+	//static u16 prevShaftCount = 0;
+	//static u16 wpr = 180;
+
+	//u32 istat = cli();
+
+	struct S_IM
+	{
+		RSPWAVE *imdsc;
+		u32 count;
+		u32 cmCount;
+		u32 i;
+		u16 prevShaftCount;
+		u16 wpr;
+	};
+
+	static S_IM simArr[SENS_NUM-1] = {{0,0,0,0,0,180},{0,0,0,0,0,180}};
 
 	const RspCM &rsp = *((RspCM*)dsc->data);
+	
+	S_IM &sim = simArr[rsp.hdr.sensType];
 
-	if (dsc->shaftCount != prevShaftCount)
+	if (dsc->shaftCount != sim.prevShaftCount)
 	{
-		prevShaftCount = dsc->shaftCount;
+		sim.prevShaftCount = dsc->shaftCount;
 
-		if (imdsc != 0)
+		if (sim.imdsc != 0)
 		{
-			SendReadyDataIM(imdsc, i);
+			SendReadyDataIM(sim.imdsc, sim.i);
 
-			imdsc = 0;
+			sim.imdsc = 0;
 		};
 	};
 
-	if (imdsc == 0)
+	if (sim.imdsc == 0)
 	{
-		wpr = wavesPerRoundIM;
-		count = wpr*9/8; if (count > 512) count = 512;
-		cmCount = (wpr+8) / 16;
-		i = 0;
+		sim.wpr = wavesPerRoundIM;
+		sim.count = sim.wpr*9/8; if (sim.count > 512) sim.count = 512;
+		sim.cmCount = (sim.wpr+8) / 16;
+		sim.i = 0;
 
-		imdsc = freeRspWave.Get();
+		sim.imdsc = freeRspWave.Get();
 
-		if (imdsc != 0)
+		if (sim.imdsc != 0)
 		{
-			RspIM *ir = (RspIM*)imdsc->data;
+			RspIM *ir = (RspIM*)sim.imdsc->data;
 
 			ir->hdr.mmsecTime	= rsp.hdr.mmsecTime;
 			ir->hdr.shaftTime	= rsp.hdr.shaftTime;
@@ -659,6 +675,7 @@ static void ProcessDataIM(RSPWAVE *dsc)
 			ir->hdr.ay			= rsp.hdr.ay;
 			ir->hdr.az			= rsp.hdr.az;
 			ir->hdr.at			= rsp.hdr.at;
+			ir->hdr.sensType	= rsp.hdr.sensType;
 
 			u16 *d = ir->data;
 
@@ -666,56 +683,51 @@ static void ProcessDataIM(RSPWAVE *dsc)
 		};
 	};
 
-	if (rsp.hdr.sensType == 2)
+	if (sim.imdsc != 0)
 	{
+		RspIM *ir = (RspIM*)sim.imdsc->data;
+
+		u16 *data = ir->data + sim.i*2;
+
+		if (dsc->fireIndex < sim.count)
+		{
+			while (sim.i < dsc->fireIndex)
+			{
+				*(data++) = 0;
+				*(data++) = 0;
+				sim.i++;
+			};
+		};
+
+		if (sim.i < sim.count)
+		{
+			*(data++) = rsp.hdr.fi_amp;
+			*(data++) = rsp.hdr.fi_time;
+			sim.i++;
+		};
+
+		if (sim.i >= sim.count)
+		{
+			SendReadyDataIM(sim.imdsc, sim.count);
+
+			sim.imdsc = 0;
+		};
+	};
+
+	if (sim.cmCount == 0)
+	{
+		sim.cmCount = (sim.wpr+4) / 8;
+
 		ProcessDataCM(dsc);
 	}
-	else 
+	else
 	{
-		if (imdsc != 0)
-		{
-			RspIM *ir = (RspIM*)imdsc->data;
-
-			u16 *data = ir->data + i*2;
-
-			if (dsc->fireIndex < count)
-			{
-				while (i < dsc->fireIndex)
-				{
-					*(data++) = 0;
-					*(data++) = 0;
-					i++;
-				};
-			};
-
-			if (i < count)
-			{
-				*(data++) = rsp.hdr.fi_amp;
-				*(data++) = rsp.hdr.fi_time;
-				i++;
-			};
-
-			if (i >= count)
-			{
-				SendReadyDataIM(imdsc, count);
-
-				imdsc = 0;
-			};
-		};
-
-		if (cmCount == 0)
-		{
-			cmCount = (wpr+4) / 8;
-
-			ProcessDataCM(dsc);
-		}
-		else
-		{
-			freeRspWave.Add(dsc);
-		};
-
-		cmCount -= 1;
+		freeRspWave.Add(dsc);
 	};
+
+	sim.cmCount -= 1;
+
+	//sti(istat);
 }
 
 #pragma optimize_as_cmd_line

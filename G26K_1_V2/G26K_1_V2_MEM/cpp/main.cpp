@@ -128,7 +128,7 @@ static RequestQuery qdsp(&comdsp);
 static Ptr<MB> manVec40[SENS_NUM];
 
 static Ptr<MB> curManVec40;
-static Ptr<MB> manVec50;
+static Ptr<MB> manVec50[SENS_NUM-1];
 static Ptr<MB> curManVec50;
 
 //static RspMan60 rspMan60;
@@ -348,7 +348,7 @@ void CallBackDspReq01(Ptr<REQ> &q)
 		if (rsp.CM.hdr.rw == (dspReqWord|0x40))
 		{
 			q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)+2));
-			q->rsp->len = q->rb.len;
+			q->rsp->len = q->rb.len -=2;
 
 			dspStatus |= 1;
 			dspRcv40++;
@@ -1262,7 +1262,7 @@ static bool RequestMan_40(u16 *data, u16 reqlen, MTB* mtb)
 		{
 			RspDsp01 &rsp = *((RspDsp01*)(curManVec40->GetDataPtr()));
 
-			u16 sz = 21 + rsp.CM.hdr.sl;
+			u16 sz = (sizeof(rsp.CM.hdr)-sizeof(rsp.CM.hdr.rw))/2 + rsp.CM.hdr.sl;
 
 			mtb->data2 = ((u16*)&rsp)+1;
 
@@ -1306,7 +1306,7 @@ static bool RequestMan_40(u16 *data, u16 reqlen, MTB* mtb)
 			len = data[2];
 		};
 
-		u16 sz = 21 + rsp.CM.hdr.sl;
+		u16 sz = (sizeof(rsp.CM.hdr)-sizeof(rsp.CM.hdr.rw))/2 + rsp.CM.hdr.sl;
 
 		if (sz >= off)
 		{
@@ -1369,6 +1369,8 @@ static bool RequestMan_50(u16 *data, u16 reqlen, MTB* mtb)
 	static u16 prevLen = 0;
 	static u16 maxLen = 200;
 
+	static byte sensInd = 0;
+
 	SetModeIM();
 
 	rsp.rw = req.rw;
@@ -1380,9 +1382,18 @@ static bool RequestMan_50(u16 *data, u16 reqlen, MTB* mtb)
 
 	if (reqlen == 1 || (reqlen >= 2 && data[1] == 0))
 	{
-		curManVec50 = manVec50;
+		curManVec50 = manVec50[sensInd];
 
-		manVec50.Free();
+		manVec50[sensInd].Free();
+
+		if (!curManVec50.Valid())
+		{
+			sensInd += 1; if (sensInd >= (SENS_NUM-1)) sensInd = 0;
+
+			curManVec50 = manVec50[sensInd];
+
+			manVec50[sensInd].Free();
+		};
 
 		if (curManVec50.Valid())
 		{
@@ -1392,7 +1403,7 @@ static bool RequestMan_50(u16 *data, u16 reqlen, MTB* mtb)
 
 			prevOff = 0;
 
-			u16 sz = 12 + rsp.IM.hdr.dataLen*2;
+			u16 sz = (sizeof(rsp.IM.hdr)-sizeof(rsp.IM.hdr.rw))/2 + rsp.IM.hdr.dataLen*2;
 
 			if (reqlen == 1)
 			{
@@ -1412,6 +1423,8 @@ static bool RequestMan_50(u16 *data, u16 reqlen, MTB* mtb)
 				prevLen = len;
 			};
 		};
+
+		sensInd += 1; if (sensInd >= (SENS_NUM-1)) sensInd = 0;
 	}
 	else if (curManVec50.Valid())
 	{
@@ -1419,7 +1432,7 @@ static bool RequestMan_50(u16 *data, u16 reqlen, MTB* mtb)
 
 		u16 off = prevOff + prevLen;
 		u16 len = prevLen;
-		u16 sz = 12 + rsp.IM.hdr.dataLen*2;
+		u16 sz = (sizeof(rsp.IM.hdr)-sizeof(rsp.IM.hdr.rw))/2 + rsp.IM.hdr.dataLen*2;
 
 		if (reqlen == 3)
 		{
@@ -1957,7 +1970,12 @@ static void MainMode()
 			}
 			else if ((rsp->IM.hdr.rw & 0xFF) == 0x50)
 			{
-				manVec50 = mb;
+				byte n = rsp->IM.hdr.sensType;
+
+				if (n < (SENS_NUM-1))
+				{
+					manVec50[n] = mb;
+				};
 			};
 
 			if (imModeTimeout.Check(10000))

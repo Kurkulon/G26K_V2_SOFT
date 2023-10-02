@@ -78,6 +78,7 @@ struct SensVars
 	u16 delay;
 	u16 filtr;
 	u16 fi_type;
+	u16 pack;
 };
 
 static SensVars sensVars[3] = {0}; //{{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
@@ -163,6 +164,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 		sv.thr		= rs.thr;
 		sv.filtr	= rs.filtr;
 		sv.fi_type	= rs.fi_Type;
+		sv.pack		= rs.pack;
 
 		if (sv.descr != rs.descr || sv.delay != rs.sd || forced)
 		{
@@ -572,12 +574,69 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static void Pack_1_BitPack(RSPWAVE *dsc)
+{
+	RspCM &rsp = *((RspCM*)dsc->data);
+
+	rsp.hdr.packType = 1;
+	rsp.hdr.packLen = ((rsp.hdr.sl+3)/4)*3;
+
+	u16 *s = rsp.data;
+	u16 *d = rsp.data;
+
+	for (u32 i = (rsp.hdr.sl+3)/4; i > 0; i--)
+	{
+		*(d++) = (s[0]&0xFFF)|(s[1]<<12);
+		*(d++) = ((s[1]>>4)&0xFF)|(s[2]<<8);
+		*(d++) = ((s[2]>>8)&0xF)|(s[3]<<4);
+		s += 4;
+	};
+
+	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Pack_2_8Bit(RSPWAVE *dsc)
+{
+	RspCM &rsp = *((RspCM*)dsc->data);
+
+	rsp.hdr.packType = 2;
+	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
+
+	u16 *s = rsp.data;
+	byte *d = (byte*)rsp.data;
+
+	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
+	{
+		*(d++) = (*(s++)+8)>>4;
+	};
+
+	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void PackDataCM(RSPWAVE *dsc, u16 pack)
+{
+	switch (pack)
+	{
+		case 0:							break;
+		case 1:	Pack_1_BitPack(dsc);	break;
+		case 2:	Pack_2_8Bit(dsc);		break;
+	};
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void ProcessDataCM(RSPWAVE *dsc)
 {
-	RspCM *rsp = (RspCM*)dsc->data;
+	RspCM *rsp = (RspCM*)dsc->data; 
+	
+	PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
 
-	rsp->data[rsp->hdr.sl] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
-	dsc->dataLen += 1;
+	//rsp->data[rsp->hdr.sl] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+	//dsc->dataLen += 1;
 
 	readyRspWave.Add(dsc);
 }

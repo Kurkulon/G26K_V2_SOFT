@@ -347,8 +347,16 @@ void CallBackDspReq01(Ptr<REQ> &q)
 	{
 		if (rsp.CM.hdr.rw == (dspReqWord|0x40))
 		{
-			q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)+2));
-			q->rsp->len = q->rb.len -=2;
+			if (rsp.CM.hdr.packType == 0)
+			{
+				q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)));
+			}
+			else
+			{
+				q->crcOK = (q->rb.len == (rsp.CM.hdr.packLen*2 + sizeof(rsp.CM.hdr)));
+			};
+
+			q->rsp->len = q->rb.len;
 
 			dspStatus |= 1;
 			dspRcv40++;
@@ -1262,7 +1270,7 @@ static bool RequestMan_40(u16 *data, u16 reqlen, MTB* mtb)
 		{
 			RspDsp01 &rsp = *((RspDsp01*)(curManVec40->GetDataPtr()));
 
-			u16 sz = (sizeof(rsp.CM.hdr)-sizeof(rsp.CM.hdr.rw))/2 + rsp.CM.hdr.sl;
+			u16 sz = (sizeof(rsp.CM.hdr)-sizeof(rsp.CM.hdr.rw))/2 + ((rsp.CM.hdr.packType == 0) ? rsp.CM.hdr.sl : rsp.CM.hdr.packLen);
 
 			mtb->data2 = ((u16*)&rsp)+1;
 
@@ -1306,7 +1314,7 @@ static bool RequestMan_40(u16 *data, u16 reqlen, MTB* mtb)
 			len = data[2];
 		};
 
-		u16 sz = (sizeof(rsp.CM.hdr)-sizeof(rsp.CM.hdr.rw))/2 + rsp.CM.hdr.sl;
+		u16 sz = (sizeof(rsp.CM.hdr)-sizeof(rsp.CM.hdr.rw))/2 + ((rsp.CM.hdr.packType == 0) ? rsp.CM.hdr.sl : rsp.CM.hdr.packLen);
 
 		if (sz >= off)
 		{

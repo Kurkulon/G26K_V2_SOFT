@@ -7,7 +7,7 @@
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define RSPWAVE_BUF_NUM 8
+#define RSPWAVE_BUF_NUM 10
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -635,8 +635,8 @@ static void ProcessDataCM(RSPWAVE *dsc)
 	
 	PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
 
-	//rsp->data[rsp->hdr.sl] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
-	//dsc->dataLen += 1;
+	dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+	dsc->dataLen += 1;
 
 	readyRspWave.Add(dsc);
 }
@@ -663,10 +663,11 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	rsp->hdr.refTime	= refTime;
 	rsp->hdr.len		= len;				//11. Длина (макс 1024)
 
-	//rsp->data[len*2]	= GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+	dsc->dataLen		= (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2;
+	dsc->data[dsc->dataLen]	= GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+	dsc->dataLen += 1;
 
 	//dsc->offset = (sizeof(*rsp) - sizeof(rsp->data)) / 2;
-	dsc->dataLen = (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2;// + 1;
 
 	readyRspWave.Add(dsc);
 }
@@ -833,7 +834,8 @@ static void ProcessSPORT()
 				rsp->fireIndex = dsc->fireIndex;
 				rsp->shaftCount = dsc->shaftCount;
 
-				u32 t = (72000 * dsc->rotCount + 74) / 147;
+				//u32 t = (72000 * dsc->rotCount + 74) / 147;
+				u32 t = (501551 * dsc->rotCount + 512) >> 10;
 
 				if (t >= 36000) t -= 36000;
 

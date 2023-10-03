@@ -349,11 +349,11 @@ void CallBackDspReq01(Ptr<REQ> &q)
 		{
 			if (rsp.CM.hdr.packType == 0)
 			{
-				q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)));
+				q->crcOK = (q->rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr)+2)) && (GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)) == rsp.CM.data[rsp.CM.hdr.sl]);
 			}
 			else
 			{
-				q->crcOK = (q->rb.len == (rsp.CM.hdr.packLen*2 + sizeof(rsp.CM.hdr)));
+				q->crcOK = (q->rb.len == (rsp.CM.hdr.packLen*2 + sizeof(rsp.CM.hdr) + 2)) && (GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)) == rsp.CM.data[rsp.CM.hdr.packLen]);
 			};
 
 			q->rsp->len = q->rb.len;
@@ -367,7 +367,7 @@ void CallBackDspReq01(Ptr<REQ> &q)
 		}
 		else if (rsp.IM.hdr.rw == (dspReqWord|0x50))
 		{
-			q->crcOK = (q->rb.len == (rsp.IM.hdr.dataLen*4 + sizeof(rsp.IM.hdr)));
+			q->crcOK = (q->rb.len == (rsp.IM.hdr.dataLen*4 + sizeof(rsp.IM.hdr) + 2)) && (GetCRC16(&rsp.IM.hdr, sizeof(rsp.IM.hdr)) == rsp.IM.data[rsp.IM.hdr.dataLen*2]);
 			q->rsp->len = q->rb.len;
 
 			dspStatus |= 1;

@@ -61,6 +61,7 @@ static u16 wavesPerRoundIM = 100;
 static List<RSPWAVE> processWave;
 static List<RSPWAVE> freeRspWave;
 static List<RSPWAVE> readyRspWave;
+static List<RSPWAVE> cmWave;
 
 
 static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM];
@@ -79,6 +80,7 @@ struct SensVars
 	u16 filtr;
 	u16 fi_type;
 	u16 pack;
+	u16 fragLen;
 };
 
 static SensVars sensVars[3] = {0}; //{{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
@@ -198,6 +200,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 		sv.filtr	= rs.filtr;
 		sv.fi_type	= rs.fi_Type;
 		sv.pack		= rs.pack;
+		sv.fragLen	= rs.fragLen;
 
 		if (sv.descr != rs.descr || sv.delay != rs.sd || forced)
 		{
@@ -483,7 +486,6 @@ static void Filtr_Wavelet(RSPWAVE &dsc, u16 descrIndx)
 
 	rsp.hdr.packLen = descrIndx;
 
-
 	i16 *d = (i16*)rsp.data;
 
 	i32 max = -32768;
@@ -523,12 +525,14 @@ static void Filtr_Wavelet(RSPWAVE &dsc, u16 descrIndx)
 		rsp.hdr.fi_time  = (t < 0xFFFF) ? t : 0xFFFF;
 		rsp.hdr.fi_amp = max;
 		rsp.hdr.maxAmp = max;
+		dsc.fi_index = imax;
 	}
 	else
 	{
-		rsp.hdr.fi_time  = ~0;
-		rsp.hdr.fi_amp = 0;
-		rsp.hdr.maxAmp = 0;
+		rsp.hdr.fi_time	= ~0;
+		rsp.hdr.fi_amp	= 0;
+		rsp.hdr.maxAmp	= 0;
+		dsc.fi_index	= ~0;
 	};
 }
 
@@ -544,6 +548,7 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 	rsp.hdr.fi_amp = 0;
 	rsp.hdr.fi_time = ~0;
 	rsp.hdr.packLen = ind;
+	dsc.fi_index = ~0;
 
 	u16 *data = rsp.data;
 	
@@ -587,6 +592,7 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 		rsp.hdr.fi_amp = max;
 		u32 t = rsp.hdr.sd + imax * rsp.hdr.st;
 		rsp.hdr.fi_time = (t < 0xFFFF) ? t : 0xFFFF;
+		dsc.fi_index = (imax>8) ? (imax-8) : 0;
 	};
 
 	if (rsp.hdr.sl > ind)
@@ -762,68 +768,66 @@ static void Pack_4_ADPCMIMA_old(RSPWAVE *dsc)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#pragma optimize_for_speed
+
 static void Pack_4_ADPCMIMA(RSPWAVE *dsc)
 {
 	RspCM &rsp = *((RspCM*)dsc->data);
 
 	rsp.hdr.packType = 4;
-	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
+	rsp.hdr.packLen = (rsp.hdr.sl+3)/4;
 
 	u16 *s = rsp.data;
 	byte *d = (byte*)rsp.data;
 
     u16 stepsize = 7;     		/* Quantizer step size */
-    i32 predictedSample = 0;	/* Output of ADPCM predictor */
+    i16 predictedSample = 0;	/* Output of ADPCM predictor */
     i8  index = 0;			/* Index into step size table */
     u8	newSample;			/* Result of encoding */
 
-	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
+	byte bits = 0;
+
+	for (u32 i = rsp.hdr.packLen*4; i > 0; i--)
 	{
-		u16 originalSample = *(s++);
+		i16 originalSample = *(s++);
 
-		i32 diff = (i16)originalSample - predictedSample;
-		if (diff >= 0) newSample = 0; else { newSample = 8; diff = -diff;}
+		i16 dq = originalSample - predictedSample;
+		if (dq >= 0) newSample = 0; else { newSample = 8; dq = -dq;}
 
-		byte mask = 4;
-		u16 tempStepsize = stepsize;
+		//newSample = (dq >> 13) & 8;
+		//dq *= (((~dq) >> 14) & 2)-1;
 
-		for (u32 n = 0; n < 3; n++)
-		{
-			if (diff >= tempStepsize)
-			{
-				newSample |= mask; 
-				diff -= tempStepsize; 
-			};
+		//byte mask = 4;
+		//u16 tempStepsize = stepsize;
+		i16 diff = 0;
 
-			tempStepsize >>= 1;
-			mask >>= 1;
-		};
+		if (dq >= stepsize) { newSample |= 4; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
+		if (dq >= stepsize) { newSample |= 2; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
+		if (dq >= stepsize) { newSample |= 1; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
 
-		diff = 0;
-
-		if (newSample & 4) diff += stepsize;
-		if (newSample & 2) diff += stepsize >> 1;
-		if (newSample & 1) diff += stepsize >> 2;
-
-		diff += stepsize >> 3;
+		diff += stepsize;
 
 		if (newSample & 8) diff = -diff;
 
 		predictedSample += diff;
 
-		if (predictedSample > 32767) predictedSample = 32767; else if (predictedSample < -32767) predictedSample = -32767;
+		if (predictedSample > 2047) predictedSample = 2047; else if (predictedSample < -2047) predictedSample = -2047;
 
 		index += adpcmima_0416_index_tab[newSample];
 
-		if (index < 0) index = 0; else if (index > 88) index = 88;
+		if (index < 0) index = 0; else if (index > 67) index = 67;
 
 		stepsize = adpcmima_0416_stepsize_tab[index];
 
-		*(d++) = newSample;
+		bits |= newSample << ((i&1)*4);
+
+		if (i&1) *(d++) = bits, bits = 0;
 	};
 
 	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
 }
+
+#pragma optimize_as_cmd_line
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -845,14 +849,44 @@ static void PackDataCM(RSPWAVE *dsc, u16 pack)
 
 static void ProcessDataCM(RSPWAVE *dsc)
 {
-	RspCM *rsp = (RspCM*)dsc->data; 
+	cmWave.Add(dsc);
+}
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void FragDataCM(RSPWAVE *dsc)
+{
+	RspCM &rsp = *((RspCM*)dsc->data);
+
+	u16 fragLen = sensVars[rsp.hdr.sensType].fragLen;
+
+	u16 stind = dsc->fi_index;
+
+	if (fragLen == 0 || stind >= rsp.hdr.sl) return;
+
+	if (fragLen > rsp.hdr.sl)
+	{
+		fragLen = rsp.hdr.sl;
+		stind = 0;
+	}
+	else if ((stind + fragLen) > rsp.hdr.sl)
+	{
+		stind = rsp.hdr.sl - fragLen;
+	};
+
+	if (stind > 0)
+	{
+		u16 *s = rsp.data + stind;
+		u16 *d = rsp.data;
+
+		for (u32 i = fragLen; i > 0; i--) *(d++) = *(s++);
+
+		rsp.hdr.sd += stind * rsp.hdr.st;
+	};
+
+	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + fragLen;
 	
-	PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
-
-	dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
-	dsc->dataLen += 1;
-
-	readyRspWave.Add(dsc);
+	rsp.hdr.sl = fragLen;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -866,13 +900,7 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	RspIM *rsp = (RspIM*)dsc->data;
 
 	rsp->hdr.rw			= manReqWord|0x50;	//1. ответное слово
-	//rsp->mmsecTime	= dsc->mmsec;		//2. Время (0.1мс). младшие 2 байта
-	//rsp->shaftTime	= dsc->shaftTime;	//4. Время датчика Холла (0.1мс). младшие 2 байта
-	//rsp->ax			= dsc->ax;
-	//rsp->ay			= dsc->ay;
-	//rsp->az			= dsc->az;
-	//rsp->at			= dsc->at;
-	//rsp->gain		= dsc->gain;		//10. КУ
+
 	rsp->hdr.refAmp		= refAmp;
 	rsp->hdr.refTime	= refTime;
 	rsp->hdr.len		= len;				//11. Длина (макс 1024)
@@ -1206,53 +1234,133 @@ static void ProcessSPORT()
 
 static void UpdateMode()
 {
+	static byte i = 0;
+	static RSPWAVE *dsc = 0;
+
 	ProcessSPORT();
 
-	RSPWAVE *dsc = processWave.Get();
-
-	if (dsc != 0)
+	switch(i)
 	{
-		Pin_UpdateMode_Set();
+		case 0:
+		
+			dsc = processWave.Get();
 
-		RspHdrCM *rsp = (RspHdrCM*)dsc->data;
-
-		u16 n = rsp->sensType;
-
-		const SensVars &sens = sensVars[n];
-
-		Filtr_Data(*dsc, sens.filtr);
-
-		if (sens.fi_type != 0)
-		{
-			Filtr_Wavelet(*dsc, sens.descrIndx);
-		}
-		else
-		{
-			GetAmpTimeIM_3(*dsc, sens.descrIndx, sens.thr);
-		};
-			
-		if (n != 2)
-		{
-			switch (mode)
+			if (dsc != 0)
 			{
-				case 0: ProcessDataCM(dsc); break;
-				case 1: ProcessDataIM(dsc); break;
+				Pin_UpdateMode_Set();
+				
+				i++;
+			}
+			else
+			{
+				Update();
+
+				i = 4;
 			};
-		}
-		else
+
+			break;
+
+		case 1: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{
-			refAmp	= rsp->fi_amp;
-			refTime = rsp->fi_time;
-			
-			ProcessDataCM(dsc);
+			RspHdrCM *rsp = (RspHdrCM*)dsc->data;
+
+			Filtr_Data(*dsc, sensVars[rsp->sensType].filtr);
+
+			i++;
+
+			break;
 		};
 
-		//idle();
-		Pin_UpdateMode_Clr();
-	}
-	else
-	{
-		Update();
+		case 2: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{
+			RspHdrCM *rsp = (RspHdrCM*)dsc->data;
+
+			const SensVars &sens = sensVars[rsp->sensType];
+
+			if (sens.fi_type != 0)
+			{
+				Filtr_Wavelet(*dsc, sens.descrIndx);
+			}
+			else
+			{
+				GetAmpTimeIM_3(*dsc, sens.descrIndx, sens.thr);
+			};
+
+			i++;
+
+			break;
+		};
+
+		case 3: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{		
+
+			RspHdrCM *rsp = (RspHdrCM*)dsc->data;
+
+			if (rsp->sensType != 2)
+			{
+				switch (mode)
+				{
+					case 0: ProcessDataCM(dsc); break;
+					case 1: ProcessDataIM(dsc); break;
+				};
+			}
+			else
+			{
+				refAmp	= rsp->fi_amp;
+				refTime = rsp->fi_time;
+				
+				ProcessDataCM(dsc);
+			};
+
+			Pin_UpdateMode_Clr();
+
+			i++;
+
+			break;
+		};
+
+		case 4: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+			
+			dsc = cmWave.Get();
+
+			if (dsc != 0)
+			{
+				Pin_UpdateMode_Set();
+
+				FragDataCM(dsc);
+
+				i++;
+			}
+			else
+			{
+				Update();
+
+				i = 0; 
+			};
+
+			break;
+
+		case 5: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{
+			RspCM *rsp = (RspCM*)dsc->data; 
+	
+			PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
+
+			dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+			dsc->dataLen += 1;
+
+			readyRspWave.Add(dsc);
+
+			Pin_UpdateMode_Clr();
+
+			i++;
+
+			break;
+		};
+
+		case 6: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+			
+			Update(); i = 0; break;
 	};
 }
 

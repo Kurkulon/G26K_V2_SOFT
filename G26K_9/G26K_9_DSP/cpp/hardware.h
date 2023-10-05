@@ -57,6 +57,7 @@ struct SENS
 	u16 	filtr;
 	u16 	pack;
 	u16 	fi_Type;
+	u16 	fragLen;
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -133,6 +134,7 @@ struct RSPWAVE
 	u32			fireIndex;
 	u16			mode;
 	u16			shaftCount;
+	u16			fi_index;
 	u16			dataLen;
 
 	u16			data[RSPWAVE_BUF_LEN];

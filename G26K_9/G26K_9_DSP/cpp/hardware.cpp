@@ -213,6 +213,8 @@ static void SetPPI(PPI &ppi, SENS &sens, u16 sensType, u16 chMask, bool forced)
 	}
 	else if (ppi.freq != sens.freq || forced)
 	{
+		ppi.freq = sens.freq;
+
 		if (sens.freq > 900)
 		{
 			ppi.fireDiv = sens.freq - 900;

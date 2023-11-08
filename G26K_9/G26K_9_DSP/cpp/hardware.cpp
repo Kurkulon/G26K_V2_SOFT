@@ -19,7 +19,7 @@
 #pragma diag(push)
 #pragma diag(suppress: 1970)
 
-#define SPORT_BUF_NUM 6
+#define SPORT_BUF_NUM 5
 
 
 #define Start_SPORT()	{ HW::SPORT0->TCR1 = sp0TCR1; HW::SPORT1->TCR1 = sp1TCR1; }
@@ -184,7 +184,7 @@ static void SetPPI(PPI &ppi, SENS &sens, u16 sensType, u16 chMask, bool forced)
 	ppi.len = sens.sl;
 
 	if (ppi.len < 16) ppi.len = 16;
-	if (ppi.len > 512) ppi.len = 512;
+	if (ppi.len > WAVE_MAXLEN) ppi.len = WAVE_MAXLEN;
 
 	if (c || ppi.sd != sens.sd)
 	{

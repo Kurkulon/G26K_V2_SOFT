@@ -11,7 +11,9 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORT_BUF_LEN	(1024+64)
+#define WAVE_MAXLEN		(512)
+#define WAVE_OVRLEN		(32)
+#define SPORT_BUF_LEN	(WAVE_MAXLEN*2+WAVE_OVRLEN*2)
 #define SENS_NUM	3
 #define NS2DSP(v) (((v)+10)/20)
 #define US2DSP(v) ((((v)*1000)+10)/20)
@@ -126,7 +128,7 @@ struct RspIM
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define RSPWAVE_BUF_LEN	(512+(sizeof(RspHdrCM)+1)/2+16)
+#define RSPWAVE_BUF_LEN	(WAVE_MAXLEN+(sizeof(RspHdrCM)+1)/2+WAVE_OVRLEN)
 
 struct RSPWAVE
 {

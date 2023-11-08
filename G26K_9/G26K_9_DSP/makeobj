@@ -108,7 +108,7 @@ compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap 
 
 !ifeq buildtool CCES
 
-link_options = -proc ADSP-BF592-A -si-revision 0.2 -T $(libdir)\BF592A.ldf -no-mem -flags-link -e,-MDNO_UTILITY_ROM,-MDADI_CCES -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+link_options = -proc ADSP-BF592-A -si-revision 0.2 -T $(libdir)\BF592A.ldf -no-mem -flags-link -e,-MDADI_CCES -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
 
 !else
 

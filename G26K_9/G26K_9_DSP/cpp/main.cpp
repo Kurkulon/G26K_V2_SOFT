@@ -4,6 +4,8 @@
 //#include "at25df021.h"
 #include "list.h"
 #include "spi.h"
+#include "fdct.h"
+#include "pack.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -88,7 +90,7 @@ static SensVars sensVars[3] = {0}; //{{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
 static u16 refAmp = 0;
 static u16 refTime = 0;
 
-static i32 avrBuf[2][RSPWAVE_BUF_LEN - sizeof(RspHdrCM)/2] = {0};
+static i32 avrBuf[2][WAVE_MAXLEN+WAVE_OVRLEN] = {0};
 
 
 //const i16 sin_Table[10] = {	0,	11585,	16384,	11585,	0,	-11585,	-16384,	-11585,	0,	11585 };
@@ -106,39 +108,39 @@ const i16 wavelet_Table[32] = {0,-498,-1182,-1320,0,2826,5464,5065,0,-7725,-1274
 #define K_DEC (1<<2)
 #define K_DEC_MASK (K_DEC-1)
 
-static const byte ulaw_0816_expenc[256] = {
-	0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,
-	4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
-};
+//static const byte ulaw_0816_expenc[256] = {
+//	0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,
+//	4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+//	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+//	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
+//};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static const i8  adpcmima_0416_index_tab[16] = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
-static const u16 adpcmima_0416_stepsize_tab[89] = {
-		 7,     8,     9,    10,    11,    12,    13,    14,    16,    17,
-		19,    21,    23,    25,    28,    31,    34,    37,    41,    45,
-		50,    55,    60,    66,    73,    80,    88,    97,   107,   118,
-	   130,   143,   157,   173,   190,   209,   230,   253,   279,   307,
-	   337,   371,   408,   449,   494,   544,   598,   658,   724,   796,
-	   876,   963,  1060,  1166,  1282,  1411,  1552,  1707,  1878,  2066,
-	  2272,  2499,  2749,  3024,  3327,  3660,  4026,  4428,  4871,  5358,
-	  5894,  6484,  7132,  7845,  8630,  9493, 10442, 11487, 12635, 13899,
-	 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
-};
+//static const i8  adpcmima_0416_index_tab[16] = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
+//static const u16 adpcmima_0416_stepsize_tab[89] = {
+//		 7,     8,     9,    10,    11,    12,    13,    14,    16,    17,
+//		19,    21,    23,    25,    28,    31,    34,    37,    41,    45,
+//		50,    55,    60,    66,    73,    80,    88,    97,   107,   118,
+//	   130,   143,   157,   173,   190,   209,   230,   253,   279,   307,
+//	   337,   371,   408,   449,   494,   544,   598,   658,   724,   796,
+//	   876,   963,  1060,  1166,  1282,  1411,  1552,  1707,  1878,  2066,
+//	  2272,  2499,  2749,  3024,  3327,  3660,  4026,  4428,  4871,  5358,
+//	  5894,  6484,  7132,  7845,  8630,  9493, 10442, 11487, 12635, 13899,
+//	 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
+//};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -420,8 +422,7 @@ static void Update()
 	switch(i++)
 	{
 		CALL( UpdateBlackFin()	);
-		CALL( UpdateHardware()	);
-		CALL( UpdateSPI()		);
+		CALL( UpdateHardware()	);	//		CALL( UpdateSPI()		);
 	};
 
 	i = (i > (__LINE__-S-3)) ? 0 : i;
@@ -442,7 +443,7 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 	{
 		i32 *ab = avrBuf[rsp.hdr.sensType]; 
 
-		for (u32 i = rsp.hdr.sl; i > 0; i--)
+		for (u32 i = rsp.hdr.sl+WAVE_OVRLEN; i > 0; i--)
 		{
 			i16 v = d[0];
 
@@ -455,7 +456,7 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 	{
 		//i32 av = 0;
 
-		for (u32 i = rsp.hdr.sl; i > 0; i--)
+		for (u32 i = rsp.hdr.sl+WAVE_OVRLEN-1; i > 0; i--)
 		{
 			i16 v = (d[0] + d[1])/2;
 			*(d++) = v;
@@ -466,7 +467,7 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 		i32 av = 0;
 		//i32 *ab = avrBuf;
 
-		for (u32 i = rsp.hdr.sl; i > 0; i--)
+		for (u32 i = rsp.hdr.sl+WAVE_OVRLEN-3; i > 0; i--)
 		{
 			i16 v = (d[2] - d[0] + d[3] - d[1])/4;
 			*(d++) = v;
@@ -493,9 +494,9 @@ static void Filtr_Wavelet(RSPWAVE &dsc, u16 descrIndx)
 
 	if (expected_true(descrIndx < rsp.hdr.sl))
 	{
-		i16 *p = d+rsp.hdr.sl;
+		//i16 *p = d+rsp.hdr.sl;
 
-		for (i32 i = ArraySize(wavelet_Table); i > 0; i--) *(p++) = 0;
+		//for (i32 i = ArraySize(wavelet_Table); i > 0; i--) *(p++) = 0;
 
 		d += descrIndx;
 
@@ -503,7 +504,7 @@ static void Filtr_Wavelet(RSPWAVE &dsc, u16 descrIndx)
 		{
 			i32 sum = 0;
 
-			for (i32 j = 0; j < ArraySize(wavelet_Table); j += 2)
+			for (i32 j = 1; j < ArraySize(wavelet_Table); j += 2)
 			{
 				sum += (i32)d[j] * wavelet_Table[j]; //sin_Table[j&7];
 			};
@@ -613,219 +614,219 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void Pack_1_BitPack(RSPWAVE *dsc)
-{
-	RspCM &rsp = *((RspCM*)dsc->data);
-
-	rsp.hdr.packType = 1;
-	rsp.hdr.packLen = ((rsp.hdr.sl+3)/4)*3;
-
-	u16 *s = rsp.data;
-	u16 *d = rsp.data;
-
-	for (u32 i = (rsp.hdr.sl+3)/4; i > 0; i--)
-	{
-		*(d++) = (s[0]&0xFFF)|(s[1]<<12);
-		*(d++) = ((s[1]>>4)&0xFF)|(s[2]<<8);
-		*(d++) = ((s[2]>>8)&0xF)|(s[3]<<4);
-		s += 4;
-	};
-
-	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-static void Pack_2_8Bit(RSPWAVE *dsc)
-{
-	RspCM &rsp = *((RspCM*)dsc->data);
-
-	rsp.hdr.packType = 2;
-	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
-
-	u16 *s = rsp.data;
-	byte *d = (byte*)rsp.data;
-
-	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
-	{
-		*(d++) = (*(s++)+8)>>4;
-	};
-
-	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-}
+//static void Pack_1_BitPack(RSPWAVE *dsc)
+//{
+//	RspCM &rsp = *((RspCM*)dsc->data);
+//
+//	rsp.hdr.packType = 1;
+//	rsp.hdr.packLen = ((rsp.hdr.sl+3)/4)*3;
+//
+//	u16 *s = rsp.data;
+//	u16 *d = rsp.data;
+//
+//	for (u32 i = (rsp.hdr.sl+3)/4; i > 0; i--)
+//	{
+//		*(d++) = (s[0]&0xFFF)|(s[1]<<12);
+//		*(d++) = ((s[1]>>4)&0xFF)|(s[2]<<8);
+//		*(d++) = ((s[2]>>8)&0xF)|(s[3]<<4);
+//		s += 4;
+//	};
+//
+//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void Pack_3_uLaw(RSPWAVE *dsc)
-{
-	RspCM &rsp = *((RspCM*)dsc->data);
-
-	rsp.hdr.packType = 3;
-	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
-
-	u16 *s = rsp.data;
-	byte *d = (byte*)rsp.data;
-
-    byte sign, exponent, mantissa, sample_out;
-
-	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
-	{
-		u16 sample_in = *(s++);
-
-		sign = 0;
-
-		if ((i16)sample_in < 0)
-		{
-			sign = 0x80;
-			sample_in = -sample_in;
-		};
-
-		//if (sample_in > ulaw_0816_clip) sample_in = ulaw_0816_clip;
-
-		sample_in += 0x10;//ulaw_0816_bias;
-
-		exponent = ulaw_0816_expenc[(sample_in >> 4) & 0xff];
-
-		mantissa = (sample_in >> (exponent + 0)) & 0xf;
-
-		sample_out = (sign | (exponent << 4) | mantissa);
-
-		//if (sample_out == 0) sample_out = 2;
-
-		*(d++) = sample_out;
-	};
-
-	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-}
+//static void Pack_2_8Bit(RSPWAVE *dsc)
+//{
+//	RspCM &rsp = *((RspCM*)dsc->data);
+//
+//	rsp.hdr.packType = 2;
+//	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
+//
+//	u16 *s = rsp.data;
+//	byte *d = (byte*)rsp.data;
+//
+//	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
+//	{
+//		*(d++) = (*(s++)+8)>>4;
+//	};
+//
+//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void Pack_4_ADPCMIMA_old(RSPWAVE *dsc)
-{
-	RspCM &rsp = *((RspCM*)dsc->data);
+//static void Pack_3_uLaw(RSPWAVE *dsc)
+//{
+//	RspCM &rsp = *((RspCM*)dsc->data);
+//
+//	rsp.hdr.packType = 3;
+//	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
+//
+//	u16 *s = rsp.data;
+//	byte *d = (byte*)rsp.data;
+//
+//    byte sign, exponent, mantissa, sample_out;
+//
+//	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
+//	{
+//		u16 sample_in = *(s++);
+//
+//		sign = 0;
+//
+//		if ((i16)sample_in < 0)
+//		{
+//			sign = 0x80;
+//			sample_in = -sample_in;
+//		};
+//
+//		//if (sample_in > ulaw_0816_clip) sample_in = ulaw_0816_clip;
+//
+//		sample_in += 0x10;//ulaw_0816_bias;
+//
+//		exponent = ulaw_0816_expenc[(sample_in >> 4) & 0xff];
+//
+//		mantissa = (sample_in >> (exponent + 0)) & 0xf;
+//
+//		sample_out = (sign | (exponent << 4) | mantissa);
+//
+//		//if (sample_out == 0) sample_out = 2;
+//
+//		*(d++) = sample_out;
+//	};
+//
+//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+//}
 
-	rsp.hdr.packType = 4;
-	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	u16 *s = rsp.data;
-	byte *d = (byte*)rsp.data;
-
-    i32 diff;        		/* Difference between sample and the predicted sample */
-    u16 step;        		/* Quantizer step size */
-    i32 sample_pred = 0;	/* Output of ADPCM predictor */
-    i32 diffq;				/* Dequantized predicted difference */
-    i8  index = 4;			/* Index into step size table */
-    u8	sample_out;			/* Result of encoding */
-	//u16 sample_prev = 0;
-	//i8  index_prev = 0;
-
-	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
-	{
-		u16 sample_in = *(s++);
-
-		/*restore previous values of predicted sample and quantizer step size index*/
-		//sample_pred = *sample_prev; /*convert predicted sample to unsigned format*/
-		//index = *index_prev;
-
-        step = adpcmima_0416_stepsize_tab[index];
-
-		/*compute the difference between the input sample (sample_in) and the the predicted sample (sample_pred)*/
-		diff = (i16)sample_in - sample_pred;
-		if (diff >= 0) sample_out = 0; else {sample_out = 8; diff = -diff;}
-
-		/* Quantize the difference into the 4-bit ADPCM code using the the quantizer step size      */
-		/* Inverse quantize the ADPCM code into a predicted difference using the quantizer step size */
-		diffq = 0;
-		if (diff >= step) {sample_out |= 4; diff -= step; diffq += step;}
-		step >>= 1;
-		if (diff >= step) {sample_out |= 2; diff -= step; diffq += step;}
-		step >>= 1;
-		if (diff >= step) {sample_out |= 1; diffq += step;}
-		step >>= 1;
-		diffq += step;
-
-		/* Fixed predictor computes new predicted sample by adding the old predicted sample to predicted difference */
-		if (sample_out & 8) sample_pred -= diffq; else sample_pred += diffq;
-
-		/* Check for overflow of the new predicted sample */
-		if (sample_pred > 32767) sample_pred = 32767; else if (sample_pred < -32767) sample_pred = -32767;
-
-		/* Find new quantizer stepsize index by adding the old index to a table lookup using the ADPCM code */
-		index += adpcmima_0416_index_tab[sample_out];
-
-		/* Check for overflow of the new quantizer step size index */
-		if (index < 0) index = 0; else if (index > 88) index = 88;
-
-		/* Save the predicted sample and quantizer step size index for next iteration */
-		//sample_prev = sample_pred;
-		//index_prev = index;
-
-		*(d++) = sample_out;
-	};
-
-	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-}
+//static void Pack_4_ADPCMIMA_old(RSPWAVE *dsc)
+//{
+//	RspCM &rsp = *((RspCM*)dsc->data);
+//
+//	rsp.hdr.packType = 4;
+//	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
+//
+//	u16 *s = rsp.data;
+//	byte *d = (byte*)rsp.data;
+//
+//    i32 diff;        		/* Difference between sample and the predicted sample */
+//    u16 step;        		/* Quantizer step size */
+//    i32 sample_pred = 0;	/* Output of ADPCM predictor */
+//    i32 diffq;				/* Dequantized predicted difference */
+//    i8  index = 4;			/* Index into step size table */
+//    u8	sample_out;			/* Result of encoding */
+//	//u16 sample_prev = 0;
+//	//i8  index_prev = 0;
+//
+//	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
+//	{
+//		u16 sample_in = *(s++);
+//
+//		/*restore previous values of predicted sample and quantizer step size index*/
+//		//sample_pred = *sample_prev; /*convert predicted sample to unsigned format*/
+//		//index = *index_prev;
+//
+//        step = adpcmima_0416_stepsize_tab[index];
+//
+//		/*compute the difference between the input sample (sample_in) and the the predicted sample (sample_pred)*/
+//		diff = (i16)sample_in - sample_pred;
+//		if (diff >= 0) sample_out = 0; else {sample_out = 8; diff = -diff;}
+//
+//		/* Quantize the difference into the 4-bit ADPCM code using the the quantizer step size      */
+//		/* Inverse quantize the ADPCM code into a predicted difference using the quantizer step size */
+//		diffq = 0;
+//		if (diff >= step) {sample_out |= 4; diff -= step; diffq += step;}
+//		step >>= 1;
+//		if (diff >= step) {sample_out |= 2; diff -= step; diffq += step;}
+//		step >>= 1;
+//		if (diff >= step) {sample_out |= 1; diffq += step;}
+//		step >>= 1;
+//		diffq += step;
+//
+//		/* Fixed predictor computes new predicted sample by adding the old predicted sample to predicted difference */
+//		if (sample_out & 8) sample_pred -= diffq; else sample_pred += diffq;
+//
+//		/* Check for overflow of the new predicted sample */
+//		if (sample_pred > 32767) sample_pred = 32767; else if (sample_pred < -32767) sample_pred = -32767;
+//
+//		/* Find new quantizer stepsize index by adding the old index to a table lookup using the ADPCM code */
+//		index += adpcmima_0416_index_tab[sample_out];
+//
+//		/* Check for overflow of the new quantizer step size index */
+//		if (index < 0) index = 0; else if (index > 88) index = 88;
+//
+//		/* Save the predicted sample and quantizer step size index for next iteration */
+//		//sample_prev = sample_pred;
+//		//index_prev = index;
+//
+//		*(d++) = sample_out;
+//	};
+//
+//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+//}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #pragma optimize_for_speed
 
-static void Pack_4_ADPCMIMA(RSPWAVE *dsc)
-{
-	RspCM &rsp = *((RspCM*)dsc->data);
-
-	rsp.hdr.packType = 4;
-	rsp.hdr.packLen = (rsp.hdr.sl+3)/4;
-
-	u16 *s = rsp.data;
-	byte *d = (byte*)rsp.data;
-
-    u16 stepsize = 7;     		/* Quantizer step size */
-    i16 predictedSample = 0;	/* Output of ADPCM predictor */
-    i8  index = 0;			/* Index into step size table */
-    u8	newSample;			/* Result of encoding */
-
-	byte bits = 0;
-
-	for (u32 i = rsp.hdr.packLen*4; i > 0; i--)
-	{
-		i16 originalSample = *(s++);
-
-		i16 dq = originalSample - predictedSample;
-		if (dq >= 0) newSample = 0; else { newSample = 8; dq = -dq;}
-
-		//newSample = (dq >> 13) & 8;
-		//dq *= (((~dq) >> 14) & 2)-1;
-
-		//byte mask = 4;
-		//u16 tempStepsize = stepsize;
-		i16 diff = 0;
-
-		if (dq >= stepsize) { newSample |= 4; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
-		if (dq >= stepsize) { newSample |= 2; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
-		if (dq >= stepsize) { newSample |= 1; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
-
-		diff += stepsize;
-
-		if (newSample & 8) diff = -diff;
-
-		predictedSample += diff;
-
-		if (predictedSample > 2047) predictedSample = 2047; else if (predictedSample < -2047) predictedSample = -2047;
-
-		index += adpcmima_0416_index_tab[newSample];
-
-		if (index < 0) index = 0; else if (index > 67) index = 67;
-
-		stepsize = adpcmima_0416_stepsize_tab[index];
-
-		bits |= newSample << ((i&1)*4);
-
-		if (i&1) *(d++) = bits, bits = 0;
-	};
-
-	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-}
+//static void Pack_4_ADPCMIMA(RSPWAVE *dsc)
+//{
+//	RspCM &rsp = *((RspCM*)dsc->data);
+//
+//	rsp.hdr.packType = 4;
+//	rsp.hdr.packLen = (rsp.hdr.sl+3)/4;
+//
+//	u16 *s = rsp.data;
+//	byte *d = (byte*)rsp.data;
+//
+//    u16 stepsize = 7;     		/* Quantizer step size */
+//    i16 predictedSample = 0;	/* Output of ADPCM predictor */
+//    i8  index = 0;			/* Index into step size table */
+//    u8	newSample;			/* Result of encoding */
+//
+//	byte bits = 0;
+//
+//	for (u32 i = rsp.hdr.packLen*4; i > 0; i--)
+//	{
+//		i16 originalSample = *(s++);
+//
+//		i16 dq = originalSample - predictedSample;
+//		if (dq >= 0) newSample = 0; else { newSample = 8; dq = -dq;}
+//
+//		//newSample = (dq >> 13) & 8;
+//		//dq *= (((~dq) >> 14) & 2)-1;
+//
+//		//byte mask = 4;
+//		//u16 tempStepsize = stepsize;
+//		i16 diff = 0;
+//
+//		if (dq >= stepsize) { newSample |= 4; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
+//		if (dq >= stepsize) { newSample |= 2; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
+//		if (dq >= stepsize) { newSample |= 1; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
+//
+//		diff += stepsize;
+//
+//		if (newSample & 8) diff = -diff;
+//
+//		predictedSample += diff;
+//
+//		if (predictedSample > 2047) predictedSample = 2047; else if (predictedSample < -2047) predictedSample = -2047;
+//
+//		index += adpcmima_0416_index_tab[newSample];
+//
+//		if (index < 0) index = 0; else if (index > 67) index = 67;
+//
+//		stepsize = adpcmima_0416_stepsize_tab[index];
+//
+//		bits |= newSample << ((i&1)*4);
+//
+//		if (i&1) *(d++) = bits, bits = 0;
+//	};
+//
+//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
+//}
 
 #pragma optimize_as_cmd_line
 
@@ -1119,7 +1120,7 @@ static void ProcessSPORT()
 			{
 				u16 *s = dsc->data+1;
 
-				for (u32 i = dsc->len+4; i > 0; i--)
+				for (u32 i = dsc->len+WAVE_OVRLEN; i > 0; i--)
 				{
 					*(d++) = s[0] - 2048; s++;
 				};
@@ -1134,7 +1135,7 @@ static void ProcessSPORT()
 			{
 				u16 *s = dsc->data+1;
 
-				for (u32 i = dsc->len+4; i > 0; i--)
+				for (u32 i = dsc->len+WAVE_OVRLEN; i > 0; i--)
 				{
 					*(d++) = s[0] - 2048; s += 2;
 				};
@@ -1145,7 +1146,7 @@ static void ProcessSPORT()
 			{
 				u16 *s = dsc->data+3;
 
-				for (u32 i = dsc->len+4; i > 0; i--)
+				for (u32 i = dsc->len+WAVE_OVRLEN; i > 0; i--)
 				{
 					*(d++) = s[0] - 2048; s += 2;
 				};
@@ -1210,7 +1211,7 @@ static void ProcessSPORT()
 			u16 *d = r.data;
 			u16 *s = dsc->data+3;
 
-			for (u32 i = dsc->len+4; i > 0; i--)
+			for (u32 i = dsc->len+WAVE_OVRLEN; i > 0; i--)
 			{
 				*(d++) = s[0] - 2048; s += 2;
 			};
@@ -1380,6 +1381,8 @@ int main( void )
 	static RTM32 tm;
 
 	InitHardware();
+
+	FDCT_Init();
 
 	com.Connect(12500000, 0);
 

@@ -4,24 +4,23 @@
 //#include "at25df021.h"
 #include "list.h"
 #include "spi.h"
-#include "fdct.h"
 #include "pack.h"
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define RSPWAVE_BUF_NUM 8
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n";
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static u16 SPI_CS_MASK[] = { PF8 };
 
 static S_SPIM	spi(0, HW::PIOF, SPI_CS_MASK, ArraySize(SPI_CS_MASK), SCLK);
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static ComPort com;
 
@@ -83,6 +82,9 @@ struct SensVars
 	u16 fi_type;
 	u16 pack;
 	u16 fragLen;
+	u16 freq;
+	u16 st;
+	u16 packLen;
 };
 
 static SensVars sensVars[3] = {0}; //{{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
@@ -105,44 +107,7 @@ static i32 avrBuf[2][WAVE_MAXLEN+WAVE_OVRLEN] = {0};
 const i16 wavelet_Table[32] = {0,-498,-1182,-1320,0,2826,5464,5065,0,-7725,-12741,-10126,0,11476,16381,11290,0,-9669,-12020,-7223,0,4713,5120,2690,0,-1344,-1279,-588,0,226,188,76};
 //const i16 wavelet_Table[32] = {-498,-1182,-1320,0,2826,5464,5065,0,-7725,-12741,-10126,0,11476,16381,11290,0,-9669,-12020,-7223,0,4713,5120,2690,0,-1344,-1279,-588,0,226,188,76,0};
 
-#define K_DEC (1<<2)
-#define K_DEC_MASK (K_DEC-1)
-
-//static const byte ulaw_0816_expenc[256] = {
-//	0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,
-//	4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-//	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-//	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-//	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-//	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
-//};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//static const i8  adpcmima_0416_index_tab[16] = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
-//static const u16 adpcmima_0416_stepsize_tab[89] = {
-//		 7,     8,     9,    10,    11,    12,    13,    14,    16,    17,
-//		19,    21,    23,    25,    28,    31,    34,    37,    41,    45,
-//		50,    55,    60,    66,    73,    80,    88,    97,   107,   118,
-//	   130,   143,   157,   173,   190,   209,   230,   253,   279,   307,
-//	   337,   371,   408,   449,   494,   544,   598,   658,   724,   796,
-//	   876,   963,  1060,  1166,  1282,  1411,  1552,  1707,  1878,  2066,
-//	  2272,  2499,  2749,  3024,  3327,  3660,  4026,  4428,  4871,  5358,
-//	  5894,  6484,  7132,  7845,  8630,  9493, 10442, 11487, 12635, 13899,
-//	 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
-//};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void PreProcessDspVars(ReqDsp01 *v, bool forced = false)
 {
@@ -152,28 +117,40 @@ static void PreProcessDspVars(ReqDsp01 *v, bool forced = false)
 	for (byte n = 0; n < SENS_NUM; n++)
 	{
 		SENS &sens = v->sens[n];
-		u16 &fr = freq[n];
-		u16 &s = st[n];
+		SensVars &sv = sensVars[n];
 
-		if (sens.fi_Type != 0)
+		if (sens.st == 0) sens.st = 1;
+
+		if (sens.pack >= PACK_DCT0)
 		{
-			if (fr != sens.freq || forced)
-			{
-				u16 f = fr = sens.freq;
-
-				f = (f > 430) ? 430 : f;
-
-				s = (50000/8 + f/2) / f;
-			};
-
-			sens.st = s;
+			u16 n = (sens.sl + FDCT_N - 1) / FDCT_N;
+			sens.sl = (sens.sl + FDCT_N*3/4 + (n-1)*7) & ~(FDCT_N-1);
 		};
+
+		if (sv.freq != sens.freq || forced)
+		{
+			sv.freq = sens.freq;
+
+			u16 f = (sv.freq > 430) ? 430 : sv.freq;
+
+			sv.st = (50000/8 + f/2) / f;
+		};
+
+		if (sv.packLen == 0) sv.packLen = FDCT_N;
+
+		if (sens.fi_Type == 1) sens.st = sv.st;
+
+		if (sens.st == 0) sens.st = 1;
+
+		sv.packLen = sv.freq*sens.st*21/(65536*4/FDCT_N);
+
+		if (sv.packLen > FDCT_N) sv.packLen = FDCT_N;
 	};
 
 	SetDspVars(v, forced);
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 {
@@ -213,14 +190,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 
 			t = (t > sv.delay) ? (t - sv.delay) : 0;
 
-			if (t != 0)
-			{
-				sv.descrIndx = (t + rs.st/2) / rs.st;
-			}
-			else
-			{
-				sv.descrIndx = 0;
-			};
+			sv.descrIndx = (t != 0) ? ((t + rs.st/2) / rs.st) : 0;
 		};
 	};
 
@@ -231,12 +201,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 
 	if (wb == 0) return false;
 
-	if (curDsc != 0)
-	{
-		freeRspWave.Add(curDsc);
-
-		curDsc = 0;
-	};
+	if (curDsc != 0) freeRspWave.Add(curDsc), curDsc = 0;
 
 	if (!spiRsp) curDsc = readyRspWave.Get();
 
@@ -260,14 +225,14 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	return true;
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void RequestFunc_07(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 {
 	while(1) { };
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static bool RequestFunc(ComPort::WriteBuffer *wb, ComPort::ReadBuffer *rb)
 {
@@ -299,7 +264,7 @@ static bool RequestFunc(ComPort::WriteBuffer *wb, ComPort::ReadBuffer *rb)
 	return r;
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void UpdateBlackFin()
 {
@@ -357,7 +322,7 @@ static void UpdateBlackFin()
 	};
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void UpdateSPI()
 {
@@ -410,7 +375,7 @@ static void UpdateSPI()
 	};
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void Update()
 {
@@ -430,7 +395,7 @@ static void Update()
 	#undef CALL
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #pragma optimize_for_speed
 
@@ -477,7 +442,7 @@ static void Filtr_Data(RSPWAVE &dsc, u32 filtrType)
 
 #pragma optimize_as_cmd_line
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #pragma optimize_for_speed
 
@@ -539,7 +504,7 @@ static void Filtr_Wavelet(RSPWAVE &dsc, u16 descrIndx)
 
 #pragma optimize_as_cmd_line
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #pragma optimize_for_speed
 
@@ -612,248 +577,27 @@ static void GetAmpTimeIM_3(RSPWAVE &dsc, u16 ind, u16 imThr)
 
 #pragma optimize_as_cmd_line
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//static void Pack_1_BitPack(RSPWAVE *dsc)
-//{
-//	RspCM &rsp = *((RspCM*)dsc->data);
-//
-//	rsp.hdr.packType = 1;
-//	rsp.hdr.packLen = ((rsp.hdr.sl+3)/4)*3;
-//
-//	u16 *s = rsp.data;
-//	u16 *d = rsp.data;
-//
-//	for (u32 i = (rsp.hdr.sl+3)/4; i > 0; i--)
-//	{
-//		*(d++) = (s[0]&0xFFF)|(s[1]<<12);
-//		*(d++) = ((s[1]>>4)&0xFF)|(s[2]<<8);
-//		*(d++) = ((s[2]>>8)&0xF)|(s[3]<<4);
-//		s += 4;
-//	};
-//
-//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-//}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//static void Pack_2_8Bit(RSPWAVE *dsc)
-//{
-//	RspCM &rsp = *((RspCM*)dsc->data);
-//
-//	rsp.hdr.packType = 2;
-//	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
-//
-//	u16 *s = rsp.data;
-//	byte *d = (byte*)rsp.data;
-//
-//	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
-//	{
-//		*(d++) = (*(s++)+8)>>4;
-//	};
-//
-//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-//}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//static void Pack_3_uLaw(RSPWAVE *dsc)
-//{
-//	RspCM &rsp = *((RspCM*)dsc->data);
-//
-//	rsp.hdr.packType = 3;
-//	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
-//
-//	u16 *s = rsp.data;
-//	byte *d = (byte*)rsp.data;
-//
-//    byte sign, exponent, mantissa, sample_out;
-//
-//	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
-//	{
-//		u16 sample_in = *(s++);
-//
-//		sign = 0;
-//
-//		if ((i16)sample_in < 0)
-//		{
-//			sign = 0x80;
-//			sample_in = -sample_in;
-//		};
-//
-//		//if (sample_in > ulaw_0816_clip) sample_in = ulaw_0816_clip;
-//
-//		sample_in += 0x10;//ulaw_0816_bias;
-//
-//		exponent = ulaw_0816_expenc[(sample_in >> 4) & 0xff];
-//
-//		mantissa = (sample_in >> (exponent + 0)) & 0xf;
-//
-//		sample_out = (sign | (exponent << 4) | mantissa);
-//
-//		//if (sample_out == 0) sample_out = 2;
-//
-//		*(d++) = sample_out;
-//	};
-//
-//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-//}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//static void Pack_4_ADPCMIMA_old(RSPWAVE *dsc)
-//{
-//	RspCM &rsp = *((RspCM*)dsc->data);
-//
-//	rsp.hdr.packType = 4;
-//	rsp.hdr.packLen = (rsp.hdr.sl+1)/2;
-//
-//	u16 *s = rsp.data;
-//	byte *d = (byte*)rsp.data;
-//
-//    i32 diff;        		/* Difference between sample and the predicted sample */
-//    u16 step;        		/* Quantizer step size */
-//    i32 sample_pred = 0;	/* Output of ADPCM predictor */
-//    i32 diffq;				/* Dequantized predicted difference */
-//    i8  index = 4;			/* Index into step size table */
-//    u8	sample_out;			/* Result of encoding */
-//	//u16 sample_prev = 0;
-//	//i8  index_prev = 0;
-//
-//	for (u32 i = rsp.hdr.packLen*2; i > 0; i--)
-//	{
-//		u16 sample_in = *(s++);
-//
-//		/*restore previous values of predicted sample and quantizer step size index*/
-//		//sample_pred = *sample_prev; /*convert predicted sample to unsigned format*/
-//		//index = *index_prev;
-//
-//        step = adpcmima_0416_stepsize_tab[index];
-//
-//		/*compute the difference between the input sample (sample_in) and the the predicted sample (sample_pred)*/
-//		diff = (i16)sample_in - sample_pred;
-//		if (diff >= 0) sample_out = 0; else {sample_out = 8; diff = -diff;}
-//
-//		/* Quantize the difference into the 4-bit ADPCM code using the the quantizer step size      */
-//		/* Inverse quantize the ADPCM code into a predicted difference using the quantizer step size */
-//		diffq = 0;
-//		if (diff >= step) {sample_out |= 4; diff -= step; diffq += step;}
-//		step >>= 1;
-//		if (diff >= step) {sample_out |= 2; diff -= step; diffq += step;}
-//		step >>= 1;
-//		if (diff >= step) {sample_out |= 1; diffq += step;}
-//		step >>= 1;
-//		diffq += step;
-//
-//		/* Fixed predictor computes new predicted sample by adding the old predicted sample to predicted difference */
-//		if (sample_out & 8) sample_pred -= diffq; else sample_pred += diffq;
-//
-//		/* Check for overflow of the new predicted sample */
-//		if (sample_pred > 32767) sample_pred = 32767; else if (sample_pred < -32767) sample_pred = -32767;
-//
-//		/* Find new quantizer stepsize index by adding the old index to a table lookup using the ADPCM code */
-//		index += adpcmima_0416_index_tab[sample_out];
-//
-//		/* Check for overflow of the new quantizer step size index */
-//		if (index < 0) index = 0; else if (index > 88) index = 88;
-//
-//		/* Save the predicted sample and quantizer step size index for next iteration */
-//		//sample_prev = sample_pred;
-//		//index_prev = index;
-//
-//		*(d++) = sample_out;
-//	};
-//
-//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-//}
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-#pragma optimize_for_speed
-
-//static void Pack_4_ADPCMIMA(RSPWAVE *dsc)
-//{
-//	RspCM &rsp = *((RspCM*)dsc->data);
-//
-//	rsp.hdr.packType = 4;
-//	rsp.hdr.packLen = (rsp.hdr.sl+3)/4;
-//
-//	u16 *s = rsp.data;
-//	byte *d = (byte*)rsp.data;
-//
-//    u16 stepsize = 7;     		/* Quantizer step size */
-//    i16 predictedSample = 0;	/* Output of ADPCM predictor */
-//    i8  index = 0;			/* Index into step size table */
-//    u8	newSample;			/* Result of encoding */
-//
-//	byte bits = 0;
-//
-//	for (u32 i = rsp.hdr.packLen*4; i > 0; i--)
-//	{
-//		i16 originalSample = *(s++);
-//
-//		i16 dq = originalSample - predictedSample;
-//		if (dq >= 0) newSample = 0; else { newSample = 8; dq = -dq;}
-//
-//		//newSample = (dq >> 13) & 8;
-//		//dq *= (((~dq) >> 14) & 2)-1;
-//
-//		//byte mask = 4;
-//		//u16 tempStepsize = stepsize;
-//		i16 diff = 0;
-//
-//		if (dq >= stepsize) { newSample |= 4; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
-//		if (dq >= stepsize) { newSample |= 2; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
-//		if (dq >= stepsize) { newSample |= 1; dq -= stepsize; diff += stepsize; }; stepsize >>= 1;
-//
-//		diff += stepsize;
-//
-//		if (newSample & 8) diff = -diff;
-//
-//		predictedSample += diff;
-//
-//		if (predictedSample > 2047) predictedSample = 2047; else if (predictedSample < -2047) predictedSample = -2047;
-//
-//		index += adpcmima_0416_index_tab[newSample];
-//
-//		if (index < 0) index = 0; else if (index > 67) index = 67;
-//
-//		stepsize = adpcmima_0416_stepsize_tab[index];
-//
-//		bits |= newSample << ((i&1)*4);
-//
-//		if (i&1) *(d++) = bits, bits = 0;
-//	};
-//
-//	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + rsp.hdr.packLen;
-//}
-
-#pragma optimize_as_cmd_line
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void PackDataCM(RSPWAVE *dsc, u16 pack)
 {
 	switch (pack)
 	{
-		case 0:							break;
-		case 1:	Pack_1_BitPack(dsc);	break;
-		case 2:	Pack_2_8Bit(dsc);		break;
-		case 3:	Pack_3_uLaw(dsc);		break;
-		case 4:	Pack_4_ADPCMIMA(dsc);	break;
+		case PACK_NO:								break;
+		case PACK_BIT12:	Pack_1_Bit12(dsc);		break;
+		case PACK_ULAW:		Pack_2_uLaw(dsc);		break;
+		case PACK_ADPCM:	Pack_3_ADPCMIMA(dsc);	break;
 	};
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void ProcessDataCM(RSPWAVE *dsc)
 {
 	cmWave.Add(dsc);
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void FragDataCM(RSPWAVE *dsc)
 {
@@ -890,11 +634,7 @@ static void FragDataCM(RSPWAVE *dsc)
 	rsp.hdr.sl = fragLen;
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//#pragma optimize_for_speed
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 {
@@ -915,9 +655,7 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	readyRspWave.Add(dsc);
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//#pragma optimize_for_speed
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void ProcessDataIM(RSPWAVE *dsc)
 {
@@ -1035,9 +773,9 @@ static void ProcessDataIM(RSPWAVE *dsc)
 
 #pragma optimize_as_cmd_line
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#pragma optimize_for_speed
+//#pragma optimize_for_speed
 
 static void ProcessSPORT()
 {
@@ -1230,8 +968,130 @@ static void ProcessSPORT()
 
 #pragma optimize_as_cmd_line
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static void UpdateCM()
+{
+	static byte state = 0;
+	static RSPWAVE *dsc = 0;
+	static u16 packLen = 0;
+	static u16 index = 0;
+	static byte OVRLAP = 3;
+	static u16 scale = 0;
+
+	switch (state)
+	{
+		case 0: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+			
+			dsc = cmWave.Get();
+
+			if (dsc != 0)
+			{
+				RspCM *rsp = (RspCM*)dsc->data;
+
+				FragDataCM(dsc);
+
+				state++;
+			};
+
+			break;
+
+		case 1: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{
+			RspCM *rsp = (RspCM*)dsc->data; 
+	
+			u16 pack = sensVars[rsp->hdr.sensType].pack;
+
+			if (pack < PACK_DCT0)
+			{
+				PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
+
+				dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+				dsc->dataLen += 1;
+
+				readyRspWave.Add(dsc);
+
+				state = 0;
+			}
+			else
+			{
+				index = 0;
+				rsp->hdr.packType = pack;
+				rsp->hdr.packLen = 0;
+				OVRLAP = (rsp->hdr.packType > PACK_DCT0) ? 7 : 3;
+				dsc->dataLen -= rsp->hdr.sl;
+				rsp->hdr.sl += WAVE_OVRLEN;
+				state++;
+			};
+
+			break;
+		};
+
+		case 2: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+		{
+			RspCM *rsp = (RspCM*)dsc->data; 
+
+			Pack_FDCT_Transform((i16*)(rsp->data + index));
+
+			state++;
+
+			break;
+		};
+
+		case 3: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+		{
+			RspCM *rsp = (RspCM*)dsc->data; 
+
+			byte shift = 3 - (sensVars[rsp->hdr.sensType].pack - PACK_DCT0);
+
+			packLen = Pack_FDCT_Quant(sensVars[rsp->hdr.sensType].packLen, shift, &scale);
+
+			state++;
+
+			break;
+		};
+
+		case 4: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+		{
+			RspCM *rsp = (RspCM*)dsc->data; 
+
+			PackDCT *pdct = (PackDCT*)(rsp->data+rsp->hdr.packLen);
+
+			Pack_FDCT_uLaw(pdct->data, packLen, scale);
+
+			pdct->len = packLen;
+			pdct->scale = scale;
+
+			rsp->hdr.packLen += 1 + packLen/2;
+
+			index += FDCT_N - OVRLAP;
+
+			if ((index+FDCT_N) <= rsp->hdr.sl)
+			{
+				state = 2;
+			}
+			else
+			{
+				dsc->dataLen += rsp->hdr.packLen;
+
+				rsp->hdr.sl = index + OVRLAP;
+
+				readyRspWave.Add(dsc);
+
+				dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
+				dsc->dataLen += 1;
+
+				state = 0;
+			};
+
+			break;
+		};
+
+	}; // switch (i);
+};
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void UpdateMode()
 {
@@ -1255,8 +1115,6 @@ static void UpdateMode()
 			else
 			{
 				Update();
-
-				i = 4;
 			};
 
 			break;
@@ -1315,57 +1173,18 @@ static void UpdateMode()
 
 			Pin_UpdateMode_Clr();
 
-			i++;
+			i = 0;
 
 			break;
 		};
-
-		case 4: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
-			
-			dsc = cmWave.Get();
-
-			if (dsc != 0)
-			{
-				Pin_UpdateMode_Set();
-
-				FragDataCM(dsc);
-
-				i++;
-			}
-			else
-			{
-				Update();
-
-				i = 0; 
-			};
-
-			break;
-
-		case 5: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		{
-			RspCM *rsp = (RspCM*)dsc->data; 
-	
-			PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
-
-			dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
-			dsc->dataLen += 1;
-
-			readyRspWave.Add(dsc);
-
-			Pin_UpdateMode_Clr();
-
-			i++;
-
-			break;
-		};
-
-		case 6: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
-			
-			Update(); i = 0; break;
 	};
+
+	UpdateCM();
+
+	if ((i&1) == 0) Update();
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //i16 index_max = 0;
 
@@ -1382,7 +1201,7 @@ int main( void )
 
 	InitHardware();
 
-	FDCT_Init();
+	Pack_Init();
 
 	com.Connect(12500000, 0);
 
@@ -1407,4 +1226,5 @@ int main( void )
 //	return 0;
 }
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

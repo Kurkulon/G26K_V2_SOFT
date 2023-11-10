@@ -332,11 +332,11 @@ static void Read_SPORT0(PPI &ppi)
 
 		if (ppi.delay != 0)
 		{
-			dmaRxSp0.Read16(curDscSPORT0->data, ppi.delay*n, (ppi.len + 32)*n);
+			dmaRxSp0.Read16(curDscSPORT0->data, ppi.delay*n, (ppi.len + WAVE_OVRLEN)*n);
 		}
 		else
 		{
-			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.len + 32)*n); 
+			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.len + WAVE_OVRLEN)*n); 
 		};
 
 		//ssync();
@@ -379,11 +379,11 @@ static void Read_SPORT1(PPI &ppi)
 
 		if (ppi.delay != 0)
 		{
-			dmaRxSp1.Read16(curDscSPORT1->data, ppi.delay*n, (ppi.len + 32)*n);
+			dmaRxSp1.Read16(curDscSPORT1->data, ppi.delay*n, (ppi.len + WAVE_OVRLEN)*n);
 		}
 		else
 		{
-			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.len + 32)*n); 
+			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.len + WAVE_OVRLEN)*n); 
 		};
 
 		//ssync();
@@ -401,18 +401,6 @@ static void Fire()
 		if (!curDscSPORT0->busy)
 		{
 			curDscSPORT0->busy = true;
-
-			//if (curDscSPORT0->ppidelay == 0)
-			//{ 
-			//	*pTCNTL = 0;
-			//	Start_SPORT0();
-			//}
-			//else
-			//{
-			//	*pTSCALE = 0;
-			//	*pTCOUNT = curDscSPORT0->ppidelay;
-			//	*pTCNTL = TINT|TMPWR|TMREN;
-			//};
 
 			curDscSPORT0->fireIndex = fireSyncCount;
 
@@ -442,18 +430,6 @@ static void Fire()
 		if (!curDscSPORT1->busy)
 		{
 			curDscSPORT1->busy = true;
-
-			//if (curDscSPORT0->ppidelay == 0)
-			//{ 
-			//	*pTCNTL = 0;
-			//	Start_SPORT0();
-			//}
-			//else
-			//{
-			//	*pTSCALE = 0;
-			//	*pTCOUNT = curDscSPORT0->ppidelay;
-			//	*pTCNTL = TINT|TMPWR|TMREN;
-			//};
 
 			curDscSPORT1->fireIndex = fireSyncCount;
 
@@ -492,18 +468,6 @@ static void FireRef()
 		if (!curDscSPORT1->busy)
 		{
 			curDscSPORT1->busy = true;
-
-			//if (curDscSPORT0->ppidelay == 0)
-			//{ 
-			//	*pTCNTL = 0;
-			//	Start_SPORT0();
-			//}
-			//else
-			//{
-			//	*pTSCALE = 0;
-			//	*pTCOUNT = curDscSPORT0->ppidelay;
-			//	*pTCNTL = TINT|TMPWR|TMREN;
-			//};
 
 			curDscSPORT1->fireIndex = fireSyncCount;
 

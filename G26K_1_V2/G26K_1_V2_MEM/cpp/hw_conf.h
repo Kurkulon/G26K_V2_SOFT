@@ -526,7 +526,7 @@
 
 	// ++++++++++++++	EMAC	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define EMAC_PHYA 0
+	#define EMAC_PHYA		0
 
 	#define PIO_RESET_PHY	HW::PIOC
 	#define PIN_RESET_PHY	15
@@ -543,14 +543,19 @@
 	#define PIOA_INIT_DIR		(PA11|PA16|PA24|PA25|PA27)
 	#define PIOA_INIT_SET		(0)
 	#define PIOA_INIT_CLR		(PA11|PA16|PA24|PA25|PA27)
+	#define PIOA_TEST_MASK		(~(PA12|PA13|PA14|PA15|PA26|PA28|PA29|PA30|PA31))
 
 	#define PIOB_INIT_DIR		(PB06|PB07|PB08|PB09|PB14|PB15|PB21)
 	#define PIOB_INIT_SET		(0)
 	#define PIOB_INIT_CLR		(PB06|PB07|PB08|PB09|PB14|PB15|PB21)
+	#define PIOB_TEST_MASK		(~(PB17|PB19|PB20|PB22|PB23|PB26|PB27|PB28|PB29))
 
 	#define PIOC_INIT_DIR		(RTS1|RTS2|L1|L2|RESET|ENVCORE|PC12|PC17|PC18|PC19|PC25|PC26)
 	#define PIOC_INIT_SET		(ENVCORE)
 	#define PIOC_INIT_CLR		(RTS1|RTS2|L1|L2|RESET|PC12|PC17|PC18|PC19|PC25|PC26)
+	#define PIOC_TEST_MASK		(~(PC04|PC08|PC09|PC20|PC21|PC22|PC23|PC28|PC29|PC30|PC31))
+
+	//#define TEST_PIN_DELAY		(MCK_MHz*10)
 
 	#define Pin_MainLoop_Set()	HW::PIOA->BSET(25)
 	#define Pin_MainLoop_Clr()	HW::PIOA->BCLR(25)

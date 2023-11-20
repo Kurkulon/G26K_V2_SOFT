@@ -90,8 +90,7 @@ __forceinline 	void DisableVCORE()	{ PIO_ENVCORE->SET(ENVCORE); 	}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-
+#include <Clock_imp.h>
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -102,6 +101,7 @@ __forceinline 	void DisableVCORE()	{ PIO_ENVCORE->SET(ENVCORE); 	}
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+/*
 void SetClock(const RTC &t)
 {
 	static DSCI2C dsc;
@@ -135,9 +135,9 @@ void SetClock(const RTC &t)
 		I2C_AddRequest(&dsc);
 	};
 }
-
+*/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+/*
 static __irq void Clock_IRQ()
 {
 #ifdef CPU_SAME53
@@ -161,10 +161,10 @@ static __irq void Clock_IRQ()
 
 #endif
 }
-
+*/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef WIN32
-
+/*
 static void InitClock()
 {
 	DSCI2C dsc;
@@ -257,7 +257,7 @@ static void InitClock()
 
 	SEGGER_RTT_WriteString(0, "OK\n");
 }
-
+*/
 #endif
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

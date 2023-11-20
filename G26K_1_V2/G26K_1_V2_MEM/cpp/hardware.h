@@ -10,8 +10,7 @@
 #include "hw_rtm.h"
 #include "manch.h"
 #include "spis.h"
-
-
+#include "clock.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifdef DSPSPI
@@ -35,7 +34,6 @@ extern bool CRC_CCITT_DMA_CheckComplete(u16* crc);
 
 extern void InitHardware();
 extern void UpdateHardware();
-extern void SetClock(const RTC &t);
 
 extern void EnableDSP();	
 extern void DisableDSP();	

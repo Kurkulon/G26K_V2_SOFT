@@ -13,7 +13,7 @@ curdir = $+ $(%cdrive):$(%cwd) $-
 #hdir = cpp
 libdir = $(curdir)\..\..\..\G_LIBS_BF592
 #bindir = $(ADI_DSP)
-#incdir = $(ADI_DSP)\Blackfin\include
+ghdir = $(curdir)\..\..\Include
 
 !ifeq version Debug
 
@@ -94,13 +94,13 @@ asm_options = -proc ADSP-BF592-A -g -si-revision 0.2 -DADI_$(buildtool)
 !ifeq buildtool CCES
 
 compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
-	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp
+	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp,$(ghdir)
 #-file-attr ProjectName="$(target_name)" -flags-compiler --no_wrap_diagnostics  -DCORE0 -D_DEBUG -no-const-strings -MD  
 
 !else
 
 compiler_options = $(debug_compiler_options) -c -c++ -g -structs-do-not-overlap -no-multiline &
-	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp
+	-double-size-32 -decls-strong -warn-protos -si-revision 0.2 -proc ADSP-BF592-A -Wterse -I$(libdir)\cpp,$(ghdir)
 
 
 !endif

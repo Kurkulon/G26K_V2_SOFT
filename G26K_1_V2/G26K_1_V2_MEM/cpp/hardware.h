@@ -51,7 +51,7 @@ extern void DisableDSP();
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__forceinline u32 Push_IRQ()
+__forceinline u32 Push_IRQ_()
 {
 #ifndef WIN32
 
@@ -74,7 +74,7 @@ __forceinline u32 Push_IRQ()
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__forceinline void Pop_IRQ(u32 t)
+__forceinline void Pop_IRQ_(u32 t)
 {
 #ifndef WIN32
 

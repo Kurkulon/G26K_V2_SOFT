@@ -472,11 +472,11 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 	req.ay				= ay;
 	req.az				= az;
 	req.at				= at;
-	req.sens1 			= mv.sens1;
-	req.sens2 			= mv.sens2;
-	req.refSens			= mv.refSens;
-	req.vavesPerRoundCM = mv.cmSPR;
-	req.vavesPerRoundIM = mv.imSPR;
+	req.sens[0]			= mv.sens1;
+	req.sens[1]			= mv.sens2;
+	req.sens[2]			= mv.refSens;
+	req.wavesPerRoundCM = mv.cmSPR;
+	req.wavesPerRoundIM = mv.imSPR;
 	req.fireVoltage		= mv.fireVoltage;
 	req.sensMask		= mv.sensMask;
 
@@ -1481,9 +1481,9 @@ static bool RequestMan_90(u16 *data, u16 len, MTB* mtb)
 	switch(data[1])
 	{
 		case 0x1:	mv.sens1.gain			= data[2];			break;
-		case 0x2:	mv.sens1.sampleTime		= data[2];			break;
-		case 0x3:	mv.sens1.sampleLen		= data[2];			break;
-		case 0x4:	mv.sens1.sampleDelay 	= data[2];			break;
+		case 0x2:	mv.sens1.st				= data[2];			break;
+		case 0x3:	mv.sens1.sl				= data[2];			break;
+		case 0x4:	mv.sens1.sd			 	= data[2];			break;
 		case 0x5:	mv.sens1.deadTime		= data[2];			break;
 		case 0x6:	mv.sens1.descriminant	= data[2];			break;
 		case 0x7:	mv.sens1.freq			= data[2];			break;
@@ -1494,9 +1494,9 @@ static bool RequestMan_90(u16 *data, u16 len, MTB* mtb)
 
 
 		case 0x11:	mv.sens2.gain			= data[2];			break;
-		case 0x12:	mv.sens2.sampleTime		= data[2];			break;
-		case 0x13:	mv.sens2.sampleLen		= data[2];			break;
-		case 0x14:	mv.sens2.sampleDelay 	= data[2];			break;
+		case 0x12:	mv.sens2.st				= data[2];			break;
+		case 0x13:	mv.sens2.sl				= data[2];			break;
+		case 0x14:	mv.sens2.sd 			= data[2];			break;
 		case 0x15:	mv.sens2.deadTime		= data[2];			break;
 		case 0x16:	mv.sens2.descriminant	= data[2];			break;
 		case 0x17:	mv.sens2.freq			= data[2];			break;
@@ -1506,9 +1506,9 @@ static bool RequestMan_90(u16 *data, u16 len, MTB* mtb)
 		case 0x1B:	mv.sens2.fragLen		= data[2];			break;
 
 		case 0x21:	mv.refSens.gain			= data[2];			break;
-		case 0x22:	mv.refSens.sampleTime	= data[2];			break;
-		case 0x23:	mv.refSens.sampleLen	= data[2];			break;
-		case 0x24:	mv.refSens.sampleDelay 	= data[2];			break;
+		case 0x22:	mv.refSens.st			= data[2];			break;
+		case 0x23:	mv.refSens.sl			= data[2];			break;
+		case 0x24:	mv.refSens.sd 			= data[2];			break;
 		case 0x25:	mv.refSens.deadTime		= data[2];			break;
 		case 0x26:	mv.refSens.descriminant	= data[2];			break;
 		case 0x27:	mv.refSens.freq			= data[2];			break;
@@ -2732,8 +2732,6 @@ static const u32 motoFlashPages[] = {
 u16 motoFlashLen = 0;
 u16 motoFlashCRC = 0;
 
-#define SGUID	0x0A89D55DD5274785 
-#define MGUID	0x9119CC18AC79DE35
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -2843,9 +2841,9 @@ static void InitMainVars()
 	mv.numMemDevice		= 11111;
 
 	mv.sens1.gain			= 0; 
-	mv.sens1.sampleTime		= NS2DSP(400); 
-	mv.sens1.sampleLen		= 500; 
-	mv.sens1.sampleDelay 	= US2DSP(50); 
+	mv.sens1.st				= NS2DSP(400); 
+	mv.sens1.sl				= 500; 
+	mv.sens1.sd 			= US2DSP(50); 
 	mv.sens1.deadTime		= US2DSP(50); 
 	mv.sens1.descriminant	= 400; 
 	mv.sens1.freq			= 500;
@@ -2855,9 +2853,9 @@ static void InitMainVars()
 	mv.sens1.fragLen		= 0;
 
 	mv.sens2.gain			= 0; 
-	mv.sens2.sampleTime		= NS2DSP(400); 
-	mv.sens2.sampleLen		= 500; 
-	mv.sens2.sampleDelay 	= US2DSP(50); 
+	mv.sens2.st				= NS2DSP(400); 
+	mv.sens2.sl				= 500; 
+	mv.sens2.sd 			= US2DSP(50); 
 	mv.sens2.deadTime		= US2DSP(50); 
 	mv.sens2.descriminant	= 400; 
 	mv.sens2.freq			= 500; 
@@ -2867,9 +2865,9 @@ static void InitMainVars()
 	mv.sens2.fragLen		= 0;
 
 	mv.refSens.gain			= 0; 
-	mv.refSens.sampleTime	= NS2DSP(400); 
-	mv.refSens.sampleLen	= 500; 
-	mv.refSens.sampleDelay 	= US2DSP(50); 
+	mv.refSens.st			= NS2DSP(400); 
+	mv.refSens.sl			= 500; 
+	mv.refSens.sd 			= US2DSP(50); 
 	mv.refSens.deadTime		= US2DSP(50); 
 	mv.refSens.descriminant	= 400; 
 	mv.refSens.freq			= 500; 

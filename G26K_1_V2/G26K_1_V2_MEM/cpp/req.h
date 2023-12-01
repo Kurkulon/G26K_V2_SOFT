@@ -6,6 +6,9 @@
 #include "list.h"
 #include "flash.h"
 
+#include "g_moto.h"
+#include "g_dsp.h"
+
 //struct Request
 //{
 //	byte adr;
@@ -20,7 +23,7 @@
 //};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+/*
 __packed struct ReqMoto
 {
 	u16 	rw;
@@ -74,9 +77,9 @@ struct RspBootMoto
 		struct { u32 func; u32 padr;	u32 status; u16 align;	u16 crc; } 	F3; // Programm page
 	};
 };
-
+*/
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+/*
 __packed struct SENS
 {
 	u16 gain;
@@ -217,7 +220,7 @@ __packed struct  ReqDsp07	// перезагрузить блэкфин
 	u16		rw; 
 	word 	crc; 
 };  
-
+*/
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 union ReqUnion

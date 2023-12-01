@@ -28,7 +28,7 @@
 				CleanCommandLine="@del /Q .\Debug\*.*"
 				Output="$(OutDir)\g26p.dxe"
 				PreprocessorDefinitions="__DEBUG;"
-				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;..\..\..\G_LIBS_BF592\cpp;"
+				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;..\..\..\G_LIBS_BF592\cpp;..\..\Include;"
 				ForcedIncludes=""
 				AssemblySearchPath=""
 				ForcedUsingAssemblies=""
@@ -50,7 +50,7 @@
 				CleanCommandLine="@del /Q .\Release\*.*"
 				Output="$(OutDir)\g26p.dxe"
 				PreprocessorDefinitions=""
-				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;..\..\..\G_LIBS_BF592\cpp;"
+				IncludeSearchPath="$(ADI_CCES)\Blackfin\include;..\..\..\G_LIBS_BF592\cpp;..\..\Include;"
 				ForcedIncludes=""
 				AssemblySearchPath=""
 				ForcedUsingAssemblies=""
@@ -88,6 +88,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\Include\g_dsp.h"
+				>
+			</File>
 			<File
 				RelativePath=".\cpp\hardware.h"
 				>

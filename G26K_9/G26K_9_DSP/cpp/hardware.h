@@ -8,13 +8,15 @@
 #include <windows.h>
 #endif
 
+#include "g_dsp.h"
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define WAVE_MAXLEN		(512)
 #define WAVE_OVRLEN		(32)
 #define SPORT_BUF_LEN	(WAVE_MAXLEN*2+WAVE_OVRLEN*2)
-#define SENS_NUM	3
+//#define SENS_NUM	3
 #define NS2DSP(v) (((v)+10)/20)
 #define US2DSP(v) ((((v)*1000)+10)/20)
 
@@ -47,48 +49,48 @@ struct DSCSPORT
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-struct SENS
-{
-	u16 	gain; 
-	u16 	st;	 
-	u16 	sl; 
-	u16 	sd; 
-	u16		descr;
-	u16		thr;
-	u16		freq;
-	u16 	filtr;
-	u16 	pack;
-	u16 	fi_Type;
-	u16 	fragLen;
-};
+//struct SENS
+//{
+//	u16 	gain; 
+//	u16 	st;	 
+//	u16 	sl; 
+//	u16 	sd; 
+//	u16		descr;
+//	u16		thr;
+//	u16		freq;
+//	u16 	filtr;
+//	u16 	pack;
+//	u16 	fi_Type;
+//	u16 	fragLen;
+//};
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #pragma pack(1)
 
-struct RspHdrCM	// 0xAD40
-{
-	u16 	rw;
-	u32 	mmsecTime; 
-	u32		shaftTime; 
-	u16		motoCount; 
-	u16		headCount;
-	u16		ax; 
-	u16		ay; 
-	u16		az; 
-	u16		at;
-	u16		sensType; 
-	u16		angle;
-	u16		maxAmp;
-	u16		fi_amp;
-	u16		fi_time;
-	u16 	gain; 
-	u16 	st;	 
-	u16 	sl; 
-	u16 	sd; 
-	u16		packType;
-	u16		packLen;
-};
+//struct RspHdrCM	// 0xAD40
+//{
+//	u16 	rw;
+//	u32 	mmsecTime; 
+//	u32		shaftTime; 
+//	u16		motoCount; 
+//	u16		headCount;
+//	u16		ax; 
+//	u16		ay; 
+//	u16		az; 
+//	u16		at;
+//	u16		sensType; 
+//	u16		angle;
+//	u16		maxAmp;
+//	u16		fi_amp;
+//	u16		fi_time;
+//	u16 	gain; 
+//	u16 	st;	 
+//	u16 	sl; 
+//	u16 	sd; 
+//	u16		packType;
+//	u16		packLen;
+//};
 
 struct RspCM
 {
@@ -109,21 +111,21 @@ struct PackDCT
 
 #pragma pack(1)
 
-struct RspHdrIM	// 0xAD50
-{
-	u16 	rw;
-	u32 	mmsecTime; 
-	u32		shaftTime; 
-	u16		ax; 
-	u16		ay; 
-	u16		az; 
-	u16		at;
-	u16		sensType; 
-	u16 	gain; 
-	u16		refAmp;
-	u16		refTime;
-	u16		len;
-};
+//struct RspHdrIM	// 0xAD50
+//{
+//	u16 	rw;
+//	u32 	mmsecTime; 
+//	u32		shaftTime; 
+//	u16		ax; 
+//	u16		ay; 
+//	u16		az; 
+//	u16		at;
+//	u16		sensType; 
+//	u16 	gain; 
+//	u16		refAmp;
+//	u16		refTime;
+//	u16		len;
+//};
 
 struct RspIM
 {
@@ -155,32 +157,32 @@ struct RSPWAVE
 
 //#pragma pack(1)
 
-struct ReqDsp01_old	// чтение вектора
-{
-	u16 	rw;
-	u16 	mode; 
-	u32 	mmsecTime; 
-	u32		hallTime; 
-	u16		motoCount; 
-	u16		headCount;
-	u16		ax; 
-	u16		ay; 
-	u16		az; 
-	u16		at;
-	u16		sensType; 
-	u16		angle;
-
-	SENS	mainSens;
-	SENS	refSens;
-
-	u16		vavesPerRoundCM;
-	u16		vavesPerRoundIM;
-
-	u16		filtrType;
-	u16		packType;
-
-	u16 	crc;  
-};
+//struct ReqDsp01_old	// чтение вектора
+//{
+//	u16 	rw;
+//	u16 	mode; 
+//	u32 	mmsecTime; 
+//	u32		hallTime; 
+//	u16		motoCount; 
+//	u16		headCount;
+//	u16		ax; 
+//	u16		ay; 
+//	u16		az; 
+//	u16		at;
+//	u16		sensType; 
+//	u16		angle;
+//
+//	SENS	mainSens;
+//	SENS	refSens;
+//
+//	u16		vavesPerRoundCM;
+//	u16		vavesPerRoundIM;
+//
+//	u16		filtrType;
+//	u16		packType;
+//
+//	u16 	crc;  
+//};
 
 //#pragma pack()
 
@@ -188,7 +190,7 @@ struct ReqDsp01_old	// чтение вектора
 
 //#pragma pack(1)
 
-struct ReqDsp01	// чтение вектора
+struct _ReqDsp01	// чтение вектора
 {
 	enum { VERSION = 1 };
 
@@ -221,7 +223,7 @@ struct ReqDsp01	// чтение вектора
 
 //#pragma pack(1)
 
-struct RspDsp01	// чтение вектора
+struct _RspDsp01	// чтение вектора
 {
 	enum { VERSION = 1 };
 
@@ -237,11 +239,11 @@ struct RspDsp01	// чтение вектора
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-struct  ReqDsp05 { u16 rw; u16 crc; };										// запрос контрольной суммы и длины программы во флэш-памяти
-struct  ReqDsp06 { u16 rw; u16 stAdr; u16 len; byte data[256]; u16 crc; }; // запись страницы во флэш
-struct  ReqDsp07 { u16 rw; word crc; };										// перезагрузить блэкфин
-struct  RspDsp05 { u16 rw; u16 flashLen; u16 flashCRC; u16 crc; };					// запрос контрольной суммы и длины программы во флэш-памяти
-struct  RspDsp06 { u16 rw; u16 res; u16 crc; };									// запись страницы во флэш
+//struct  ReqDsp05 { u16 rw; u16 crc; };										// запрос контрольной суммы и длины программы во флэш-памяти
+//struct  ReqDsp06 { u16 rw; u16 stAdr; u16 len; byte data[256]; u16 crc; }; // запись страницы во флэш
+//struct  ReqDsp07 { u16 rw; word crc; };										// перезагрузить блэкфин
+//struct  RspDsp05 { u16 rw; u16 flashLen; u16 flashCRC; u16 crc; };					// запрос контрольной суммы и длины программы во флэш-памяти
+//struct  RspDsp06 { u16 rw; u16 res; u16 crc; };									// запись страницы во флэш
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

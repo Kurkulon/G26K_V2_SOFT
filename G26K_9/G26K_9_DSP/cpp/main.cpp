@@ -74,13 +74,13 @@ static u16 mode = 0; // 0 - CM, 1 - IM
 
 struct SensVars
 {
-	u16 thr;
-	u16 descrIndx;
-	u16 descr;
+	u16 descriminant;
+	u16 deadTimeIndx;
+	u16 deadTime;
 	u16 delay;
-	u16 filtr;
+	u16 filtrType;
 	u16 fi_type;
-	u16 pack;
+	u16 packType;
 	u16 fragLen;
 	u16 freq;
 	u16 st;
@@ -121,7 +121,7 @@ static void PreProcessDspVars(ReqDsp01 *v, bool forced = false)
 
 		if (sens.st == 0) sens.st = 1;
 
-		if (sens.pack >= PACK_DCT0)
+		if (sens.packType >= PACK_DCT0)
 		{
 			u16 n = (sens.sl + FDCT_N - 1) / FDCT_N;
 			sens.sl = (sens.sl + FDCT_N*3/4 + (n-1)*7) & ~(FDCT_N-1);
@@ -175,22 +175,22 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 		SensVars &sv = sensVars[n];
 		SENS &rs = req->sens[n];
 
-		sv.thr		= rs.thr;
-		sv.filtr	= rs.filtr;
-		sv.fi_type	= rs.fi_Type;
-		sv.pack		= rs.pack;
-		sv.fragLen	= rs.fragLen;
+		sv.descriminant	= rs.descriminant;
+		sv.filtrType	= rs.filtrType;
+		sv.fi_type		= rs.fi_Type;
+		sv.packType		= rs.packType;
+		sv.fragLen		= rs.fragLen;
 
-		if (sv.descr != rs.descr || sv.delay != rs.sd || forced)
+		if (sv.deadTime != rs.deadTime || sv.delay != rs.sd || forced)
 		{
-			sv.descr = rs.descr;
+			sv.deadTime = rs.deadTime;
 			sv.delay = rs.sd;
 
-			u16 t = sv.descr;
+			u16 t = sv.deadTime;
 
 			t = (t > sv.delay) ? (t - sv.delay) : 0;
 
-			sv.descrIndx = (t != 0) ? ((t + rs.st/2) / rs.st) : 0;
+			sv.deadTimeIndx = (t != 0) ? ((t + rs.st/2) / rs.st) : 0;
 		};
 	};
 
@@ -207,11 +207,11 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 
 	if (curDsc == 0)
 	{
-		rsp.rw = data[0];
-		rsp.len = sizeof(rsp);
-		rsp.version = rsp.VERSION;
-		rsp.fireVoltage = GetFireVoltage();
-		rsp.crc = GetCRC16(&rsp, sizeof(rsp)-2);
+		rsp.v01.rw = data[0];
+		rsp.v01.len = sizeof(rsp);
+		rsp.v01.version = ReqDsp01::VERSION;
+		rsp.v01.fireVoltage = GetFireVoltage();
+		rsp.v01.crc = GetCRC16(&rsp, sizeof(rsp)-2);
 
 		wb->data = &rsp;			 
 		wb->len = sizeof(rsp);	 
@@ -644,7 +644,7 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 
 	rsp->hdr.refAmp		= refAmp;
 	rsp->hdr.refTime	= refTime;
-	rsp->hdr.len		= len;				//11. Длина (макс 1024)
+	rsp->hdr.dataLen	= len;				//11. Длина (макс 1024)
 
 	dsc->dataLen		= (sizeof(RspIM)-sizeof(rsp->data))/2 + len*2;
 	dsc->data[dsc->dataLen]	= GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
@@ -709,8 +709,8 @@ static void ProcessDataIM(RSPWAVE *dsc)
 		{
 			RspIM *ir = (RspIM*)sim.imdsc->data;
 
-			ir->hdr.mmsecTime	= rsp.hdr.mmsecTime;
-			ir->hdr.shaftTime	= rsp.hdr.shaftTime;
+			ir->hdr.time		= rsp.hdr.time;
+			ir->hdr.hallTime	= rsp.hdr.hallTime;
 			ir->hdr.gain		= rsp.hdr.gain;
 			ir->hdr.ax			= rsp.hdr.ax;
 			ir->hdr.ay			= rsp.hdr.ay;
@@ -826,8 +826,8 @@ static void ProcessSPORT()
 				//RspHdrCM *r = (RspHdrCM*)rsp->data;
 
 				r.hdr.rw		= manReqWord|0x40;			//1. ответное слово
-				r.hdr.mmsecTime	= dsc->mmsec;
-				r.hdr.shaftTime	= dsc->shaftTime;
+				r.hdr.time		= dsc->mmsec;
+				r.hdr.hallTime	= dsc->shaftTime;
 				r.hdr.motoCount	= dsc->motoCount;
 				r.hdr.headCount	= dsc->shaftCount;
 				r.hdr.ax		= dsc->ax;
@@ -920,8 +920,8 @@ static void ProcessSPORT()
 				//RspHdrCM *r = (RspHdrCM*)rsp->data;
 
 				r.hdr.rw		= manReqWord|0x40;			//1. ответное слово
-				r.hdr.mmsecTime	= dsc->mmsec;
-				r.hdr.shaftTime	= dsc->shaftTime;
+				r.hdr.time		= dsc->mmsec;
+				r.hdr.hallTime	= dsc->shaftTime;
 				r.hdr.motoCount	= dsc->motoCount;
 				r.hdr.headCount	= dsc->shaftCount;
 				r.hdr.ax		= dsc->ax;
@@ -1000,11 +1000,11 @@ static void UpdateCM()
 		{
 			RspCM *rsp = (RspCM*)dsc->data; 
 	
-			u16 pack = sensVars[rsp->hdr.sensType].pack;
+			u16 pack = sensVars[rsp->hdr.sensType].packType;
 
 			if (pack < PACK_DCT0)
 			{
-				PackDataCM(dsc, sensVars[rsp->hdr.sensType].pack);
+				PackDataCM(dsc, sensVars[rsp->hdr.sensType].packType);
 
 				dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
 				dsc->dataLen += 1;
@@ -1042,7 +1042,7 @@ static void UpdateCM()
 		{
 			RspCM *rsp = (RspCM*)dsc->data; 
 
-			byte shift = 3 - (sensVars[rsp->hdr.sensType].pack - PACK_DCT0);
+			byte shift = 3 - (sensVars[rsp->hdr.sensType].packType - PACK_DCT0);
 
 			packLen = Pack_FDCT_Quant(sensVars[rsp->hdr.sensType].packLen, shift, &scale);
 
@@ -1123,7 +1123,7 @@ static void UpdateMode()
 		{
 			RspHdrCM *rsp = (RspHdrCM*)dsc->data;
 
-			Filtr_Data(*dsc, sensVars[rsp->sensType].filtr);
+			Filtr_Data(*dsc, sensVars[rsp->sensType].filtrType);
 
 			i++;
 
@@ -1138,11 +1138,11 @@ static void UpdateMode()
 
 			if (sens.fi_type != 0)
 			{
-				Filtr_Wavelet(*dsc, sens.descrIndx);
+				Filtr_Wavelet(*dsc, sens.deadTimeIndx);
 			}
 			else
 			{
-				GetAmpTimeIM_3(*dsc, sens.descrIndx, sens.thr);
+				GetAmpTimeIM_3(*dsc, sens.deadTimeIndx, sens.descriminant);
 			};
 
 			i++;

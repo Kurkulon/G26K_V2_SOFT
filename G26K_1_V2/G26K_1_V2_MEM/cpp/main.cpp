@@ -217,7 +217,7 @@ static bool cmdWriteStart_20 = false;
 static u32 dspRcv40 = 0;
 static u32 dspRcv50 = 0;
 static u16 dspRcvCount = 0;
-static u16 dspRcvErr = 0;
+static u32 dspRcvErr = 0;
 static u16 dspNotRcv = 0;
 
 
@@ -431,7 +431,7 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 		return rq;
 	};
 
-	rq->rsp = AllocFlashWriteBuffer(sizeof(RspDsp01));
+	rq->rsp = AllocFlashWriteBuffer(sizeof(RspDsp01::v01));
 
 	if (!rq->rsp.Valid())
 	{ 
@@ -1641,7 +1641,7 @@ static bool RequestMem_20(u16 *data, u16 len, MTB* mtb)
 	rsp.device = GetDeviceID();  
 	rsp.session = FLASH_Session_Get();	  
 	rsp.rcvVec =  FLASH_Vectors_Recieved_Get();
-	rsp.rejVec = FLASH_Vectors_Rejected_Get();
+	rsp.rejVec = dspRcvErr; //FLASH_Vectors_Rejected_Get();
 	rsp.wrVec = FLASH_Vectors_Saved_Get();
 	rsp.errVec = FLASH_Vectors_Errors_Get();
 	*((__packed u64*)rsp.wrAdr) = FLASH_Current_Adress_Get();
@@ -2535,7 +2535,11 @@ static void UpdateDSP_SPI()
 	//static RspDsp01 rsp;
 
 	static byte i = 0;
-//	static TM32 tm;
+	static u32 pt = 0;
+	static u32 dt = 0;
+	static u16 len = 0;
+	static bool crc = false;
+	static u32 ptime = 0;
 
 	static S_SPIS::RBUF rb;
 
@@ -2551,12 +2555,14 @@ static void UpdateDSP_SPI()
 			if (mb.Valid())
 			{
 				rb.data = mb->GetDataPtr();
-				rb.maxLen = sizeof(RspDsp01)+2;mb->MaxLen();
+				rb.maxLen = /*sizeof(RspDsp01)+2;*/ mb->GetDataMaxLen();
 
 				PIO_SS->BCLR(PIN_SS);
 				HW::PIOC->BSET(19);
 
 				spidsp.Read(&rb, ~0, US2SPIS(50));
+
+				pt = GetCYCCNT();
 
 				i++;
 			};
@@ -2570,25 +2576,35 @@ static void UpdateDSP_SPI()
 				PIO_SS->BSET(PIN_SS);
 				HW::PIOC->BCLR(19);
 
+				u32 t = GetCYCCNT();
+
+				dt = t - pt;
+
 				bool c = false;
 
 				RspDsp01 &rsp = *((RspDsp01*)rb.data);
 
 				if (rsp.CM.hdr.rw == (dspReqWord|0x40))
 				{
-					if (rb.len == (rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr) + 2))
+					if (rsp.CM.hdr.packType == 0)
 					{
-						if (rsp.CM.data[rsp.CM.hdr.sl] == GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)))
-						{
-							mb->len = rb.len - 2;
+						len = rsp.CM.hdr.sl*2 + sizeof(rsp.CM.hdr) + 2;
+						crc = (GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)) == rsp.CM.data[rsp.CM.hdr.sl]);
+					}
+					else
+					{
+						len = rsp.CM.hdr.packLen*2 + sizeof(rsp.CM.hdr) + 2;
+						crc = (GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)) == rsp.CM.data[rsp.CM.hdr.packLen]);
+					};
 
-							dspRcv40++;
-							
-							//dspMMSEC	= rsp.CM.hdr.time;
-							//shaftMMSEC	= rsp.CM.hdr.hallTime;
+					c = /*(rb.len == len) &&*/ crc;
 
-							c = true;
-						};
+					if (c)
+					{
+						mb->len = rb.len - 2;
+
+						dspRcv40++;
+						//dspRcvCount++;
 					};
 				}
 				else if (rsp.IM.hdr.rw == (dspReqWord|0x50))
@@ -2600,6 +2616,7 @@ static void UpdateDSP_SPI()
 							mb->len = rb.len - 2;
 							
 							dspRcv50++;
+							//dspRcvCount++;
 
 							//dspMMSEC = rsp.IM.hdr.time;
 							//shaftMMSEC = rsp.IM.hdr.hallTime;
@@ -2611,6 +2628,7 @@ static void UpdateDSP_SPI()
 
 				if (c)
 				{
+					ptime = rsp.CM.hdr.time;
 					readyR01.Add(mb);
 
 					mb.Free();

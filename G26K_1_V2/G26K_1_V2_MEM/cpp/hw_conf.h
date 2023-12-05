@@ -95,17 +95,17 @@
 
 	// ++++++++++++++	DMA	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define	NAND_DMA			DMA_CH0
-	#define	UART1_DMA			DMA_CH1
-	#define	DSP_SPI_DMA_RX		DMA_CH2
+	#define	DSP_SPI_DMA_RX		DMA_CH0
+	#define	NAND_DMA			DMA_CH1
+	#define	UART1_DMA			DMA_CH2
 	#define	UART2_DMA			DMA_CH3
 	#define	SPI_DMA_TX			DMA_CH4
 	#define	SPI_DMA_RX			DMA_CH5
 	#define	NAND_MEMCOPY_DMA	DMA_CH6
 	#define	I2C_DMA				DMA_CH7
-	#define	DSP_SPI_DMA_TX		DMA_CH8
+	//#define	DSP_SPI_DMA_RX		DMA_CH8
 
-	//#define	DSP_DMA				DMA_CH30
+	#define	DSP_SPI_DMA_TX		DMA_CH30
 	#define	CRC_DMA				DMA_CH31
 
 	// ++++++++++++++	EVENT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -247,7 +247,7 @@
 
 	// ++++++++++++++	DSP SPI	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	//#define DSPSPI				
+	#define DSPSPI				
 	#define PIO_DSP_SCK			HW::PIOB
 	#define PIO_DSP_MOSI		HW::PIOB
 	#define PIO_DSP_SS			HW::PIOB

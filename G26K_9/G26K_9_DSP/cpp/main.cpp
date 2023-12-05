@@ -36,7 +36,7 @@ static ComPort com;
 //	byte ready; 
 //};
 
-static bool spiRsp = false;
+static bool spiRsp = true;
 
 static u16 manReqWord = 0xAD00;
 static u16 manReqMask = 0xFF00;
@@ -208,13 +208,13 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	if (curDsc == 0)
 	{
 		rsp.v01.rw = data[0];
-		rsp.v01.len = sizeof(rsp);
+		rsp.v01.len = sizeof(rsp.v01);
 		rsp.v01.version = ReqDsp01::VERSION;
 		rsp.v01.fireVoltage = GetFireVoltage();
-		rsp.v01.crc = GetCRC16(&rsp, sizeof(rsp)-2);
+		rsp.v01.crc = GetCRC16(&rsp, sizeof(rsp.v01)-2);
 
 		wb->data = &rsp;			 
-		wb->len = sizeof(rsp);	 
+		wb->len = sizeof(rsp.v01);	 
 	}
 	else
 	{
@@ -387,7 +387,8 @@ static void Update()
 	switch(i++)
 	{
 		CALL( UpdateBlackFin()	);
-		CALL( UpdateHardware()	);	//		CALL( UpdateSPI()		);
+		CALL( UpdateHardware()	);	
+		CALL( UpdateSPI()		);
 	};
 
 	i = (i > (__LINE__-S-3)) ? 0 : i;
@@ -1207,7 +1208,7 @@ int main( void )
 
 	//CheckFlash();
 
-	spi.Connect(25000000);
+	spi.Connect(50000000);
 
 	for (u16 i = 0; i < ArraySize(rspWaveBuf); i++)
 	{

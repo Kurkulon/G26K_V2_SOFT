@@ -431,7 +431,7 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 		return rq;
 	};
 
-	rq->rsp = AllocFlashWriteBuffer(sizeof(RspDsp01::v01));
+	rq->rsp = AllocFlashWriteBuffer(sizeof(RspDsp01)+2);
 
 	if (!rq->rsp.Valid())
 	{ 
@@ -461,7 +461,7 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 	q.wb.len = sizeof(req);
 
 	q.rb.data = &rsp;
-	q.rb.maxLen = sizeof(rsp);
+	q.rb.maxLen = rq->rsp->GetDataMaxLen();
 	q.rb.recieved = false;
 	
 	req.rw				= dspReqWord|1;
@@ -2535,11 +2535,9 @@ static void UpdateDSP_SPI()
 	//static RspDsp01 rsp;
 
 	static byte i = 0;
-	static u32 pt = 0;
-	static u32 dt = 0;
 	static u16 len = 0;
 	static bool crc = false;
-	static u32 ptime = 0;
+	//static u32 ptime = 0;
 
 	static S_SPIS::RBUF rb;
 
@@ -2549,20 +2547,20 @@ static void UpdateDSP_SPI()
 
 			if (!mb.Valid())
 			{
-				mb = AllocFlashWriteBuffer(sizeof(RspDsp01)+2);
+				mb = AllocFlashWriteBuffer(sizeof(RspDsp01)+6);
 			};
 
 			if (mb.Valid())
 			{
-				rb.data = mb->GetDataPtr();
-				rb.maxLen = /*sizeof(RspDsp01)+2;*/ mb->GetDataMaxLen();
+				mb->dataOffset = (mb->dataOffset + 3) & ~3;
 
-				PIO_SS->BCLR(PIN_SS);
-				HW::PIOC->BSET(19);
+				rb.data = mb->GetDataPtr();
+				rb.maxLen = mb->GetDataMaxLen() & ~3;
 
 				spidsp.Read(&rb, ~0, US2SPIS(50));
 
-				pt = GetCYCCNT();
+				HW::PIOC->BSET(19);
+				PIO_SS->BCLR(PIN_SS);
 
 				i++;
 			};
@@ -2575,10 +2573,6 @@ static void UpdateDSP_SPI()
 			{
 				PIO_SS->BSET(PIN_SS);
 				HW::PIOC->BCLR(19);
-
-				u32 t = GetCYCCNT();
-
-				dt = t - pt;
 
 				bool c = false;
 
@@ -2597,7 +2591,7 @@ static void UpdateDSP_SPI()
 						crc = (GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)) == rsp.CM.data[rsp.CM.hdr.packLen]);
 					};
 
-					c = /*(rb.len == len) &&*/ crc;
+					c = /*(rb.len >= len) &&*/ crc;
 
 					if (c)
 					{
@@ -2628,7 +2622,6 @@ static void UpdateDSP_SPI()
 
 				if (c)
 				{
-					ptime = rsp.CM.hdr.time;
 					readyR01.Add(mb);
 
 					mb.Free();

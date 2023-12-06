@@ -203,7 +203,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 
 	if (curDsc != 0) freeRspWave.Add(curDsc), curDsc = 0;
 
-	if (!spiRsp) curDsc = readyRspWave.Get();
+	/*if (!spiRsp)*/ curDsc = readyRspWave.Get();
 
 	if (curDsc == 0)
 	{
@@ -339,7 +339,7 @@ static void UpdateSPI()
 			if (curDsc != 0)
 			{
 				spi.SetMode(CPHA|CPOL);
-				spi.WriteAsyncDMA(curDsc->data, curDsc->dataLen*2);
+				spi.WriteAsyncDMA(curDsc->data, (curDsc->dataLen*2+3) & ~3);
 
 				i++;
 			};
@@ -366,7 +366,7 @@ static void UpdateSPI()
 
 		case 2:
 
-			if (tm.Check(US2RT(200)))
+			if (tm.Check(US2RT(1000)))
 			{
 				i = 0;
 			};
@@ -1208,7 +1208,7 @@ int main( void )
 
 	//CheckFlash();
 
-	spi.Connect(50000000);
+	spi.Connect(25000000);
 
 	for (u16 i = 0; i < ArraySize(rspWaveBuf); i++)
 	{

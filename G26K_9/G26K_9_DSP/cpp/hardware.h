@@ -98,12 +98,12 @@ struct RspCM
 	u16			data[16];
 };
 
-struct PackDCT
-{
-	byte	len;
-	byte	scale;
-	byte	data[16];
-};
+//struct PackDCT
+//{
+//	byte	len;
+//	byte	scale;
+//	byte	data[16];
+//};
 
 #pragma pack()
 

@@ -2,6 +2,7 @@
 #define PACK_H__08_11_2023__17_20
   
 #include "hardware.h"
+#include "fdct.h"
 
 #define FDCT_LOG2N 6
 #define FDCT_N (1UL<<FDCT_LOG2N)

@@ -2,7 +2,7 @@
 #include "time.h"
 #include "spi.h"
 #include "spis.h"
-#include "SEGGER_RTT.h"
+#include "SEGGER_RTT\SEGGER_RTT.h"
 #include "hw_conf.h"
 
 

@@ -8,7 +8,7 @@
 #include "spi.h"
 #include "hw_nand.h"
 #include "hw_rtm.h"
-#include "manch.h"
+#include "MANCH\manch.h"
 #include "spis.h"
 #include "clock.h"
 
@@ -46,6 +46,8 @@ extern void Set_Sync_Rot(u16 RPS, u16 samplePerRound);
 
 extern void EnableDSP();	
 extern void DisableDSP();	
+extern void UpdateShaft();
+
 //extern void DSP_CopyDataDMA(volatile void *src, volatile void *dst, u16 len);
 //extern bool DSP_CheckDataComplete();
 

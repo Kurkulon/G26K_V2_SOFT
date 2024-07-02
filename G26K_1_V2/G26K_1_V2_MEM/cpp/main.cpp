@@ -1,15 +1,16 @@
 #include "hardware.h"
 //#include "options.h"
 //#include "hw_emac.h"
-#include "xtrap.h"
-#include "flash.h"
-#include "CRC16.h"
-#include "CRC16_CCIT.h"
+#include "EMAC\xtrap.h"
+#include "FLASH\NandFlash.h"
+#include "CRC\CRC16.h"
+#include "CRC\CRC16_CCIT.h"
 #include "req.h"
 #include "list.h"
 #include "PointerCRC.h"
-#include "SEGGER_RTT.h"
+#include "SEGGER_RTT\SEGGER_RTT.h"
 #include "hw_com.h"
+#include "TaskList.h"
 
 #ifdef WIN32
 
@@ -431,7 +432,7 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 		return rq;
 	};
 
-	rq->rsp = AllocFlashWriteBuffer(sizeof(RspDsp01)+2);
+	rq->rsp = NandFlash_AllocWB(sizeof(RspDsp01)+2);
 
 	if (!rq->rsp.Valid())
 	{ 
@@ -491,7 +492,7 @@ Ptr<MB> CreateTestDspReq01()
 {
 	Ptr<MB> rq;
 	
-	rq = AllocFlashWriteBuffer(sizeof(RspDsp01));
+	rq = NandFlash_AllocWB(sizeof(RspDsp01));
 
 	if (!rq.Valid()) { return rq; };
 
@@ -1033,7 +1034,7 @@ static void RequestFlashWrite_00(Ptr<MB> &flwb)
 
 	flwb->len = InitRspMan_00(data) * 2;
 
-	RequestFlashWrite(flwb, data[0], true);
+	NandFlash_RequestWrite(flwb, data[0], true);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1084,7 +1085,7 @@ static void RequestFlashWrite_10(Ptr<MB> &flwb)
 
 	flwb->len = InitRspMan_10(data) * 2;
 
-	RequestFlashWrite(flwb, data[0], true);
+	NandFlash_RequestWrite(flwb, data[0], true);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1151,7 +1152,7 @@ static void RequestFlashWrite_20(Ptr<MB> &flwb)
 
 	flwb->len = InitRspMan_20(data) * 2;
 
-	RequestFlashWrite(flwb, data[0], true);
+	NandFlash_RequestWrite(flwb, data[0], true);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1638,15 +1639,15 @@ static bool RequestMem_20(u16 *data, u16 len, MTB* mtb)
 	Rsp &rsp = *((Rsp*)&manTrmData);
 
 	rsp.rw = (memReqWord & memReqMask)|0x20;
-	rsp.device = GetDeviceID();  
-	rsp.session = FLASH_Session_Get();	  
-	rsp.rcvVec =  FLASH_Vectors_Recieved_Get();
+	rsp.device = NandFlash_GetDeviceID();  
+	rsp.session = NandFlash_Session_Get();	  
+	rsp.rcvVec =  NandFlash_Vectors_Recieved_Get();
 	rsp.rejVec = dspRcvErr; //FLASH_Vectors_Rejected_Get();
-	rsp.wrVec = FLASH_Vectors_Saved_Get();
-	rsp.errVec = FLASH_Vectors_Errors_Get();
-	*((__packed u64*)rsp.wrAdr) = FLASH_Current_Adress_Get();
+	rsp.wrVec = NandFlash_Vectors_Saved_Get();
+	rsp.errVec = NandFlash_Vectors_Errors_Get();
+	*((__packed u64*)rsp.wrAdr) = NandFlash_Current_Adress_Get();
 	rsp.temp = (temp+5)/10;
-	rsp.status = FLASH_Status();
+	rsp.status = NandFlash_Status();
 
 	GetTime(&rsp.rtc);
 
@@ -1682,7 +1683,7 @@ static bool RequestMem_31(u16 *data, u16 len, MTB* mtb)
 {
 	if (len != 1) return false;
 
-	cmdWriteStart_00 = cmdWriteStart_10 = FLASH_WriteEnable();
+	cmdWriteStart_00 = cmdWriteStart_10 = NandFlash_WriteEnable();
 
 	manTrmData[0] = (memReqWord & memReqMask)|0x31;
 
@@ -1700,7 +1701,7 @@ static bool RequestMem_32(u16 *data, u16 len, MTB* mtb)
 {
 	if (len != 1) return false;
 
-	FLASH_WriteDisable();
+	NandFlash_WriteDisable();
 
 	manTrmData[0] = (memReqWord & memReqMask)|0x32;
 
@@ -1926,7 +1927,7 @@ static void MainMode()
 			{
 				rsp = (RspDsp01*)(mb->GetDataPtr());
 
-				RequestFlashWrite(mb, rsp->CM.hdr.rw, true);
+				NandFlash_RequestWrite(mb, rsp->CM.hdr.rw, true);
 
 				mainModeState++;
 			};
@@ -1981,7 +1982,7 @@ static void MainMode()
 
 			if (cmdWriteStart_00)
 			{
-				Ptr<MB> b; b = AllocFlashWriteBuffer(6);
+				Ptr<MB> b; b = NandFlash_AllocWB(6);
 
 				if (b.Valid())
 				{
@@ -1992,7 +1993,7 @@ static void MainMode()
 			}
 			else if (cmdWriteStart_10)
 			{
-				Ptr<MB> b; b = AllocFlashWriteBuffer(44);
+				Ptr<MB> b; b = NandFlash_AllocWB(44);
 
 				if (b.Valid())
 				{
@@ -2003,7 +2004,7 @@ static void MainMode()
 			}
 			else if (cmdWriteStart_20)
 			{
-				Ptr<MB> b; b = AllocFlashWriteBuffer(60);
+				Ptr<MB> b; b = NandFlash_AllocWB(60);
 
 				if (b.Valid())
 				{
@@ -2473,7 +2474,7 @@ static void UpdateTestFlashWrite()
 			count--;
 
 			RspDsp01 *rsp = (RspDsp01*)(ptr->GetDataPtr());
-			RequestFlashWrite(ptr, rsp->CM.hdr.rw, true);
+			NandFlash_RequestWrite(ptr, rsp->CM.hdr.rw, true);
 
 		};
 	};
@@ -2494,7 +2495,7 @@ static void UpdateDSP_Com()
 
 			if ((mv.fireVoltage == 0 && motoTargetRPS == 1500) || __WIN32__)
 			{
-				if (FLASH_Status() != 0) UpdateTestFlashWrite();
+				if (NandFlash_Status() != 0) UpdateTestFlashWrite();
 			}
 			else
 			{
@@ -2547,7 +2548,7 @@ static void UpdateDSP_SPI()
 
 			if (!mb.Valid())
 			{
-				mb = AllocFlashWriteBuffer(sizeof(RspDsp01)+6);
+				mb = NandFlash_AllocWB(sizeof(RspDsp01)+6);
 			};
 
 			if (mb.Valid())
@@ -3115,6 +3116,38 @@ static void SaveVars()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static void UpdateSPI()
+{
+	SPI_Update();
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static TaskList taskList;
+
+static void InitTaskList()
+{
+	static Task tsk[] =
+	{
+		Task(MainMode,				US2CTM(100)	),
+		Task(UpdateDSP_Com,			US2CTM(1)	),
+		Task(UpdateMoto,			US2CTM(20)	),
+		Task(UpdateMan,				US2CTM(100)	),
+		Task(UpdateI2C,				US2CTM(20)	),
+		Task(UpdateSPI,				US2CTM(20)	),
+		Task(UpdateTemp,			MS2CTM(1)	),
+		Task(NandFlash_Update,		MS2CTM(1)	),
+		Task(UpdateAccel,			MS2CTM(1)	),
+		Task(UpdateEMAC,			MS2CTM(1)	),
+		Task(SaveVars,				MS2CTM(1)	),
+		Task(UpdateShaft,			MS2CTM(1)	)
+	};
+
+	for (u16 i = 0; i < ArraySize(tsk); i++) taskList.Add(tsk+i);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void UpdateParams()
 {
 	static byte i = 0;
@@ -3128,7 +3161,7 @@ static void UpdateParams()
 		CALL( UpdateMoto()				);
 		CALL( UpdateTemp()				);
 		CALL( UpdateMan(); 				);
-		CALL( FLASH_Update();			);
+		CALL( NandFlash_Update();		);
 		CALL( UpdateHardware();			);
 		CALL( UpdateAccel();			);
 		CALL( UpdateI2C();				);
@@ -3182,7 +3215,7 @@ static void Update()
 	
 	if (!(IsComputerFind() && EmacIsConnected()))
 	{
-		UpdateMisc();
+		taskList.Update();
 
 		#ifdef DSPSPI
 			UpdateDSP_SPI();
@@ -3550,7 +3583,7 @@ int main()
 
 	InitEMAC();
 
-	FLASH_Init();
+	NandFlash_Init();
  
 	Update_RPS_SPR();
 
@@ -3572,6 +3605,8 @@ int main()
 	FlashDSP();
 
 #endif
+
+	InitTaskList();
 
 	u32 fc = 0;
 

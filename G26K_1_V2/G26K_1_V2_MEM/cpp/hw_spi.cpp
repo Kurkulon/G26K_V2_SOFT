@@ -20,7 +20,7 @@ static byte SPI_CS_PIN[] = { PIN_CS0, PIN_CS1 };
 #include <stdarg.h>
 #include <stdio.h>
 #include <intrin.h>
-#include "CRC16_CCIT.h"
+#include "CRC\CRC16_CCIT.h"
 #include "list.h"
 
 //static HANDLE handleNandFile;

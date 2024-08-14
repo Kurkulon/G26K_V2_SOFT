@@ -1,16 +1,44 @@
 #ifndef G_DSP_H__01_12_2023__12_16
 #define G_DSP_H__01_12_2023__12_16
 
+//#pragma once
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include "types.h"
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef __CC_ARM
 
 #else
 	#pragma pack(1)
-	#ifndef __packed
-		#define __packed
-	#endif
 #endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define DSP_COM_BAUDRATE		12500000
+#define DSP_COM_PARITY			2
+
+#define DSP_BOOT_SGUID			0X66C41909FA7C4F91 
+#define DSP_BOOT_REQ_WORD		((~(DSP_MAN_REQ_WORD)) & DSP_MAN_REQ_MASK)
+#define DSP_BOOT_REQ_MASK		DSP_MAN_REQ_MASK
+#define DSP_BOOT_COM_BAUDRATE	12500000
+#define DSP_BOOT_COM_PARITY		2
+#define DSP_BOOT_NET_ADR		1
+
+#define DSP_MAN_REQ_WORD 		0xAA00
+#define DSP_MAN_REQ_MASK 		0xFF00
+
+//#define RCV_FltResist(v)	(((v) * 941 + 2048) / 4096)
+//#define RCV_NetResist(v)	(((v) * 941 + 128) / 256)
+//#define RCV_NetAdr(v)		(1 + (v)/1024)
+
+//#define RCV_TEST_WAVEPACK 16
+
+//#define RCV_WAVEPACK
+
+//#define RCV_SAMPLE_LEN 1024
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -168,7 +196,6 @@ __packed struct  ReqDsp07	// перезагрузить блэкфин
 
 #else
 #pragma pack()
-#undef __packed
 #endif
 
 

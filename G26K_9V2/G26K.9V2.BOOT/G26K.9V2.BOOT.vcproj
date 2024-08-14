@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="G26K.9V2.BOOT"
+	ProjectGUID="{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}"
+	RootNamespace="G26K.9V2.BOOT"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="BF592_Debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="make -h version=Debug targetcpu=BF592"
+				ReBuildCommandLine="make -h -a version=Debug targetcpu=BF592"
+				CleanCommandLine="@del /Q .\Debug\*.*"
+				Output="$(OutDir)\G26K.9V2.BOOT.dxe"
+				PreprocessorDefinitions="__DEBUG,CPU_BF592,_ADI_COMPILER,BOOTLOADER"
+				IncludeSearchPath="..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="BF592_Release|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			CharacterSet="2"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="make -h version=Release targetcpu=BF592"
+				ReBuildCommandLine="make -h -a version=Release targetcpu=BF592"
+				CleanCommandLine="@del /Q .\Release\*.*"
+				Output="$(OutDir)\G26K.9V2.BOOT.dxe"
+				PreprocessorDefinitions="CPU_BF592,_ADI_COMPILER,BOOTLOADER"
+				IncludeSearchPath="..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="BF706_Debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="make -h version=Debug targetcpu=BF706"
+				ReBuildCommandLine="make -h -a version=Debug targetcpu=BF706"
+				CleanCommandLine="@del /Q .\Debug\*.*"
+				Output="$(OutDir)\G26K.9V2.BOOT.dxe"
+				PreprocessorDefinitions="__DEBUG,CPU_BF706,_ADI_COMPILER,BOOTLOADER"
+				IncludeSearchPath="..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="BF706_Release|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(OutDir)"
+			ConfigurationType="0"
+			CharacterSet="2"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="make -h version=Release targetcpu=BF706"
+				ReBuildCommandLine="make -h -a version=Release targetcpu=BF706"
+				CleanCommandLine="@del /Q .\Release\*.*"
+				Output="$(OutDir)\G26K.9V2.BOOT.dxe"
+				PreprocessorDefinitions="CPU_BF706,_ADI_COMPILER,BOOTLOADER"
+				IncludeSearchPath="..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
+			<File
+				RelativePath=".\cpp\com.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\cpp\flash.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\cpp\hardware.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\cpp\main.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
+			<File
+				RelativePath=".\cpp\hardware.h"
+				>
+			</File>
+			<File
+				RelativePath=".\cpp\hw_conf.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Global Include"
+			>
+			<File
+				RelativePath="..\Include\g26k_9_hw_conf.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Include\G_DSP.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Include\g_moto.h"
+				>
+			</File>
+		</Filter>
+		<File
+			RelativePath=".\makeobj"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

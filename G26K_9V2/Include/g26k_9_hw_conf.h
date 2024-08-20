@@ -132,9 +132,9 @@
 #define US2CCLK(x) ((u64)((x)*CCLK_MHz))
 #define NS2CCLK(x) ((u64)(((x)*CCLK_MHz+500)/1000))
 
-#define MS2CLK(x) MS2CCLK(x)
-#define US2CLK(x) US2CCLK(x)
-#define NS2CLK(x) NS2CCLK(x)
+#define MS2CLK(x) MS2SCLK(x)
+#define US2CLK(x) US2SCLK(x)
+#define NS2CLK(x) NS2SCLK(x)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -145,36 +145,35 @@
 #define IVG_HW_ERROR		5
 #define IVG_CORETIMER		6
 #define IVG_PORTF_SYNC		7
-//#define IVG_PORTF_SHAFT		8
-//#define IVG_GPTIMER2_RTT	9
+#define IVG_PORTF_SHAFT		8
+#define IVG_GPTIMER2_RTT	9
 #define IVG_SPORT0_DMA		10
 #define IVG_SPORT1_DMA		11
-//#define IVG_PORTG_ROT		12
+#define IVG_PORTG_ROT		12
 #define IVG_TWI				13
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef __ADSPBF59x__ //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-// 4  - PF4  - Main Loop
-// 5  - PF5  - 
-// 6  - PF6  - 
-// 7  - PF7  - 
-// 37 - PG5  -
-// 38 - PG6  -
-// 39 - PG7  -
-// 39 - PG8  -
-// 39 - PG9  -
-// 39 - PG10 -
-// 39 - PG11 -
-// 39 - PG12 -
-// 39 - PG13 -
-// 39 - PG14 -
-// 39 - PG15 -
+// 17 - PF14 - DSP_MISO - DD3-2 
+// 34 - PG3  - UpdateMode
+// 37 - PG5  - SPORT0_ISR
+// 47 - PG12 - SPORT1_ISR
+// 48 - PG13 - ProcessSPORT
+// 49 - PG14 - Main Loop
 
+#define Pin_UpdateMode_Set()	HW::PIOG->BSET(3)
+#define Pin_UpdateMode_Clr()	HW::PIOG->BCLR(3)
 
-//#define Pin_MainLoop_Set()		HW::PIOF->BSET(4)
-//#define Pin_MainLoop_Clr()		HW::PIOF->BCLR(4)
+#define Pin_SPORT0_ISR_Set()	HW::PIOG->BSET(5)
+#define Pin_SPORT0_ISR_Clr()	HW::PIOG->BCLR(5)
+
+#define Pin_SPORT1_ISR_Set()	HW::PIOG->BSET(12)
+#define Pin_SPORT1_ISR_Clr()	HW::PIOG->BCLR(12)
+
+#define Pin_ProcessSPORT_Set()	HW::PIOG->BSET(13)
+#define Pin_ProcessSPORT_Clr()	HW::PIOG->BCLR(13)
 
 
 
@@ -192,21 +191,57 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define PIO_SYNC			HW::PIOF
-#define PIN_SYNC			12
-#define BM_SYNC				(1UL << PIN_SYNC)
+#define PIO_FIRE			HW::PIOF
+
+#define PIN_FIRE1			9
+#define PIN_FIRE2			10
+
+#define BM_FIRE1			(1UL << PIN_FIRE1)
+#define BM_FIRE2			(1UL << PIN_FIRE2)
+
+#define FIRE1_TIMER			HW::TIMER1
+#define FIRE2_TIMER			HW::TIMER0
+
+#define FIRE1_TIMEN			TIMEN1
+#define FIRE2_TIMEN			TIMEN0
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define PIO_GAIN			HW::PIOG
-#define PIN_GAIN			4
-#define BM_GAIN				(1U << PIN_GAIN)	
+#define PIO_DSHAFT			HW::PIOF
+#define PIO_SYNC			HW::PIOF
+#define PIO_ROT				HW::PIOG
+#define PIO_RST_SW_ARR		HW::PIOG
+
+#define PIN_DSHAFT			3
+#define PIN_SYNC			4
+#define PIN_ROT				15
+#define PIN_RST_SW_ARR		4
+
+#define BM_DSHAFT			(1U << PIN_DSHAFT)	
+#define BM_SYNC				(1U << PIN_SYNC)
+#define BM_ROT				(1U << PIN_ROT)
+#define BM_RST_SW_ARR		(1U << PIN_RST_SW_ARR)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define PIO_RTS					HW::PIOF
 #define PIN_RTS					10
 #define MASK_RTS				(1UL<<PIN_RTS)
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define PIO_MUX_SYNC			HW::PIOG
+#define PIO_MUX_RESET			HW::PIOG
+
+#define PIN_MUX_SCK				8
+#define PIN_MUX_DIN				9
+#define PIN_MUX_RESET			10
+#define PIN_MUX_SYNC			11
+
+#define BM_MUX_SCK				(1UL<<PIN_MUX_SCK	)
+#define BM_MUX_DIN				(1UL<<PIN_MUX_DIN	)
+#define BM_MUX_RESET			(1UL<<PIN_MUX_RESET	)
+#define BM_MUX_SYNC				(1UL<<PIN_MUX_SYNC	)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

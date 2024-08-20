@@ -51,7 +51,7 @@ startup_obj = $(objdir)\startup_BF592A.doj
 
 !else ifeq targetcpu BF706
 
-cpu_opt		= -proc ADSP-BF706 -si-revision 1.1
+cpu_opt		= -proc ADSP-BF706 -si-revision 1.1 
 loader_opt	= -bcode 14
 link_opt	= -T $(libdir)\LDF\BF706.ldf 
 startup_obj = $(objdir)\startup_BF706.doj
@@ -98,7 +98,7 @@ asm_options = $(cpu_opt) -g -Wno-info -DADI_CCES
 ####################################################################################################################################################################################################
 
 compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline -save-temps -path-output $(objdir) &
-	-double-size-32 -decls-strong -warn-protos $(cpu_opt) -DCPU_$(targetcpu) -DBOOTLOADER -Wterse -I$(incdir)
+	-double-size-32 -decls-strong -ipa -warn-protos $(cpu_opt) -DCPU_$(targetcpu) -DBOOTLOADER -Wterse -I$(incdir)
 
 ####################################################################################################################################################################################################,-MDUSE_CACHE_C_A_B
 

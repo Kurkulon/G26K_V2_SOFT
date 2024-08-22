@@ -61,7 +61,7 @@
 		#define CLKIN_DIV			1	// 1, 2
 
 		#define PLL_MUL				16	// 1...128
-		#define CCLK_DIV			2   // 1...32
+		#define CCLK_DIV			1   // 1...32
 		#define SCLK_DIV			2	// 1...32
 		#define SCLK0_DIV			1	// 1...8
 		#define SCLK1_DIV			1	// 1...8
@@ -287,6 +287,12 @@
 
 #elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#define Pin_UpdateMode_Set()	HW::PIOA->BSET(3)
+#define Pin_UpdateMode_Clr()	HW::PIOA->BCLR(3)
+
+#define Pin_ProcessSPORT_Set()	HW::PIOA->BSET(13)
+#define Pin_ProcessSPORT_Clr()	HW::PIOA->BCLR(13)
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define PIO_FIRE			HW::PIOA
@@ -297,11 +303,11 @@
 #define BM_FIRE1			(1UL << PIN_FIRE1)
 #define BM_FIRE2			(1UL << PIN_FIRE2)
 
-#define FIRE1_TIMER			HW::TIMER1
-#define FIRE2_TIMER			HW::TIMER0
+#define FIRE1_TIMER			HW::TIMER->TMR[0]
+#define FIRE2_TIMER			HW::TIMER->TMR[1]
 
-#define FIRE1_TIMEN			TIMEN1
-#define FIRE2_TIMEN			TIMEN0
+#define FIRE1_TIMEN			TIMER_TMR0
+#define FIRE2_TIMEN			TIMER_TMR1
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -355,23 +361,23 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define INIT_PORTA_MUX			0x0000		//  0000 0000 0000 0000
-#define INIT_PORTB_MUX			0x0000		//  0000 0000 0000 0000
-#define INIT_PORTC_MUX			0x0000		//  0000 0000 0000 0000
+#define INIT_PORTA_MUX			0x0000						
+#define INIT_PORTB_MUX			0x0000						
+#define INIT_PORTC_MUX			0x0000						
 
-#define INIT_PORTA_FER 			0x000F		//  0000 0000 0000 1111
-#define INIT_PORTB_FER 			0x000F		//  0000 0000 0000 1111
-#define INIT_PORTC_FER 			0x000F		//  0000 0000 0000 1111
+#define INIT_PORTA_FER 			0x0000						
+#define INIT_PORTB_FER 			0x0000						
+#define INIT_PORTC_FER 			0x0000						
 
-#define INIT_PORTA_DIR 			0x05F0		//  0000 0101 1111 0000
-#define INIT_PORTB_DIR 			0xFFF0		//  1111 1111 1111 0000
-#define INIT_PORTC_DIR 			0xFFF0		//  1111 1111 1111 0000
+#define INIT_PORTA_DIR 			(PA13)
+#define INIT_PORTB_DIR 			(PB4|PB5)
+#define INIT_PORTC_DIR 			(MASK_RTS|PC4|PC5|PC6|PC7|PC8|PC9|PC10)
 
-#define INIT_PORTA_INEN 		0x0000		//  0000 0000 0000 0000
-#define INIT_PORTB_INEN 		0x0000		//  0000 0000 0000 0000
-#define INIT_PORTC_INEN 		0x0000		//  0000 0000 0000 0000
+#define INIT_PORTA_INEN 		0x0000		
+#define INIT_PORTB_INEN 		0x0000		
+#define INIT_PORTC_INEN 		0x0000		
 
-#define INIT_PORTA_DATA 		MASK_RTS
+#define INIT_PORTA_DATA 		0
 #define INIT_PORTB_DATA 		0
 #define INIT_PORTC_DATA 		0
 
@@ -384,8 +390,8 @@
 #define INIT_WDOG_CTL			WDOG_WDDIS
 #endif
 
-#define PIO_MAINLOOP			HW::PIOA
-#define PIN_MAINLOOP			1
+#define PIO_MAINLOOP			HW::PIOB
+#define PIN_MAINLOOP			5
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

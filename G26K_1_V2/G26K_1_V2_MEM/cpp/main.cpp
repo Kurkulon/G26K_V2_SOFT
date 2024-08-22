@@ -3602,7 +3602,7 @@ int main()
 
 	//FlashMoto();
 
-	FlashDSP();
+	//FlashDSP();
 
 #endif
 

@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "G26K.9V2.DSP", "G26K.9V2.DSP.vcproj", "{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "G_LIBS", "..\..\..\G_LIBS\G_LIBS.vcproj", "{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		BF592_Debug|Win32 = BF592_Debug|Win32
+		BF592_Release|Win32 = BF592_Release|Win32
+		BF706_Debug|Win32 = BF706_Debug|Win32
+		BF706_Release|Win32 = BF706_Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF592_Debug|Win32.ActiveCfg = BF592_Debug|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF592_Debug|Win32.Build.0 = BF592_Debug|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF592_Release|Win32.ActiveCfg = BF592_Release|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF592_Release|Win32.Build.0 = BF592_Release|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF706_Debug|Win32.ActiveCfg = BF706_Debug|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF706_Debug|Win32.Build.0 = BF706_Debug|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF706_Release|Win32.ActiveCfg = BF706_Release|Win32
+		{78AB4CA0-E665-4E3C-98EB-BB35E12CD5F9}.BF706_Release|Win32.Build.0 = BF706_Release|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF592_Debug|Win32.ActiveCfg = BF592_Debug|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF592_Debug|Win32.Build.0 = BF592_Debug|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF592_Release|Win32.ActiveCfg = BF592_Release|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF592_Release|Win32.Build.0 = BF592_Release|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF706_Debug|Win32.ActiveCfg = BF706_Debug|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF706_Debug|Win32.Build.0 = BF706_Debug|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF706_Release|Win32.ActiveCfg = BF706_Release|Win32
+		{0EB74A34-94BC-4E8E-8F38-A0122D0B88D4}.BF706_Release|Win32.Build.0 = BF706_Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

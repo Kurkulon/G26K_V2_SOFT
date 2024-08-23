@@ -100,9 +100,9 @@ asm_options = $(cpu_opt) -g -Wno-info -DADI_CCES
 compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-overlap -no-multiline -save-temps -path-output $(objdir) &
 	-double-size-32 -decls-strong -ipa -warn-protos $(cpu_opt) -DCPU_$(targetcpu) -Wterse -I$(incdir)
 
-####################################################################################################################################################################################################,-MDUSE_CACHE_C_A_B
+####################################################################################################################################################################################################
 
-link_options = $(cpu_opt) $(link_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+link_options = $(cpu_opt) $(link_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE,-MDUSE_CACHE_C_A_B -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
   
 ####################################################################################################################################################################################################
 

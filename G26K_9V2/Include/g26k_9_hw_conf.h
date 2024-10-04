@@ -144,6 +144,9 @@
 #define IVG_EXEPTIONS		3
 #define IVG_HW_ERROR		5
 #define IVG_CORETIMER		6
+
+#ifdef __ADSPBF59x__
+
 #define IVG_PORTF_SYNC		7
 #define IVG_PORTF_SHAFT		8
 #define IVG_GPTIMER2_RTT	9
@@ -151,6 +154,8 @@
 #define IVG_SPORT1_DMA		11
 #define IVG_PORTG_ROT		12
 #define IVG_TWI				13
+
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

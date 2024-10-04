@@ -25,7 +25,7 @@ static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n"
 #ifdef CPU_BF592
 	static ComPort com;
 #elif defined(CPU_BF706)
-	static ComPort com(0, PIO_RTS, PIN_RTS);
+	static ComPort com(1, PIO_RTS, PIN_RTS);
 #endif	
 
 //struct Cmd
@@ -1221,12 +1221,13 @@ int main( void )
 
 	while (1)
 	{
-		MAIN_LOOP_PIN_SET();
+		MAIN_LOOP_PIN_TGL();
 
 		UpdateMode();
-		//UpdateHardware();
+		
+		UpdateHardware();
 
-		MAIN_LOOP_PIN_CLR();
+		//MAIN_LOOP_PIN_CLR();
 	};
 
 //	return 0;

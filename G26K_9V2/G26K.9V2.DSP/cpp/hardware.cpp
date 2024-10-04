@@ -320,28 +320,20 @@ static void InitRTT()
 
 EX_INTERRUPT_HANDLER(RTT_ISR)
 {
-	//if (*pTIMER_STATUS & TIMIL2)
-	//{
-	//	*pTIMER_STATUS = TIMIL2; 
-
-	//	//*pPORTGIO_TOGGLE = 1<<6;
-
-	//	mmsec++;
-
-	//	ssync();
-	//};
+	mmsec++;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void InitRTT()
 {
-	//*pTIMER2_CONFIG = PERIOD_CNT|PWM_OUT|OUT_DIS|IRQ_ENA;
-	//*pTIMER2_PERIOD = US2CLK(100);
+	HW::TMR->CNTL	= TMR_PWR;
+	HW::TMR->PERIOD = US2CCLK(100);
+	HW::TMR->SCALE	= 0;
 
 	InitIVG(IVG_CORETIMER, RTT_ISR);
 
-	//*pTIMER_ENABLE = TIMEN2;
+	HW::TMR->CNTL	= TMR_AUTORLD|TMR_EN|TMR_PWR;
 }
 
 #endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -483,15 +475,11 @@ static void Fire()
 
 			curDscSPORT0->fireIndex = fireSyncCount;
 
-			curDscSPORT0->mmsec = mmsec;
-			curDscSPORT0->shaftTime = shaftMMSEC;
-			//curDscSPORT0->shaftPrev = shaftPrevMMSEC;
-
-			curDscSPORT0->rotCount = rotCount;
-			//curDscSPORT0->rotMMSEC = rotMMSEC;
-
-			curDscSPORT0->motoCount = motoCount; //dspVars.motoCount;
-			curDscSPORT0->shaftCount = shaftCount;
+			curDscSPORT0->mmsec			= mmsec;
+			curDscSPORT0->shaftTime		= shaftMMSEC;
+			curDscSPORT0->rotCount		= rotCount;
+			curDscSPORT0->motoCount		= motoCount; //dspVars.motoCount;
+			curDscSPORT0->shaftCount	= shaftCount;
 
 			curDscSPORT0->ax = dspVars.ax;
 			curDscSPORT0->ay = dspVars.ay;
@@ -512,15 +500,11 @@ static void Fire()
 
 			curDscSPORT1->fireIndex = fireSyncCount;
 
-			curDscSPORT1->mmsec = mmsec;
-			curDscSPORT1->shaftTime = shaftMMSEC;
-			//curDscSPORT1->shaftPrev = shaftPrevMMSEC;
-
-			curDscSPORT1->rotCount = rotCount;
-			//curDscSPORT1->rotMMSEC = rotMMSEC;
-
-			curDscSPORT1->motoCount = motoCount; //dspVars.motoCount;
-			curDscSPORT1->shaftCount = shaftCount;
+			curDscSPORT1->mmsec			= mmsec;
+			curDscSPORT1->shaftTime		= shaftMMSEC;
+			curDscSPORT1->rotCount		= rotCount;
+			curDscSPORT1->motoCount		= motoCount; //dspVars.motoCount;
+			curDscSPORT1->shaftCount	= shaftCount;
 
 			curDscSPORT1->ax = dspVars.ax;
 			curDscSPORT1->ay = dspVars.ay;
@@ -550,15 +534,11 @@ static void FireRef()
 
 			curDscSPORT1->fireIndex = fireSyncCount;
 
-			curDscSPORT1->mmsec = mmsec;
-			curDscSPORT1->shaftTime = shaftMMSEC;
-			//curDscSPORT1->shaftPrev = shaftPrevMMSEC;
-
-			curDscSPORT1->rotCount = rotCount;
-			//curDscSPORT1->rotMMSEC = rotMMSEC;
-
-			curDscSPORT1->motoCount = motoCount; //dspVars.motoCount;
-			curDscSPORT1->shaftCount = shaftCount;
+			curDscSPORT1->mmsec			= mmsec;
+			curDscSPORT1->shaftTime		= shaftMMSEC;
+			curDscSPORT1->rotCount		= rotCount;
+			curDscSPORT1->motoCount		= motoCount; //dspVars.motoCount;
+			curDscSPORT1->shaftCount	= shaftCount;
 
 			curDscSPORT1->ax = dspVars.ax;
 			curDscSPORT1->ay = dspVars.ay;

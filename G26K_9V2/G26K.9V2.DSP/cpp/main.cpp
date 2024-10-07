@@ -275,7 +275,7 @@ static void UpdateBlackFin()
 	static byte i = 0;
 	static ComPort::WriteBuffer wb;
 	static ComPort::ReadBuffer rb;
-	//static u16 buf[256];
+	static u16 buf[256];
 
 	HW::ResetWDT();
 
@@ -283,8 +283,8 @@ static void UpdateBlackFin()
 	{
 		case 0:
 
-			rb.data = build_date;
-			rb.maxLen = sizeof(build_date);
+			rb.data = buf;
+			rb.maxLen = 127;//sizeof(buf);
 			com.Read(&rb, ~0, US2COM(50));
 			i++;
 
@@ -294,9 +294,23 @@ static void UpdateBlackFin()
 
 			if (!com.Update())
 			{
-				if (rb.recieved && rb.len > 0 && GetCRC16(rb.data, rb.len) == 0)
+				if (rb.recieved && rb.len > 0)
 				{
-					if (RequestFunc(&wb, &rb))
+					u16 crc = GetCRC16(rb.data, rb.len);
+
+					if (rb.len != sizeof(ReqDsp01))
+					{
+						HW::PIOC->SET(PC4);
+						i = 0;
+						HW::PIOC->CLR(PC4);
+					}
+					else if (crc != 0)
+					{
+						HW::PIOC->SET(PC5);
+						i = 0;
+						HW::PIOC->CLR(PC5);
+					}
+					else if (RequestFunc(&wb, &rb))
 					{
 						com.Write(&wb);
 
@@ -304,12 +318,16 @@ static void UpdateBlackFin()
 					}
 					else
 					{
+						HW::PIOC->SET(PC6);
 						i = 0;
+						HW::PIOC->CLR(PC6);
 					};
 				}
 				else
 				{
+					HW::PIOC->SET(PC7);
 					i = 0;
+					HW::PIOC->CLR(PC7);
 				};
 			};
 

@@ -321,6 +321,10 @@
 #define PIO_ROT				HW::PIOC
 #define PIO_RST_SW_ARR		HW::PIOA
 
+#define PINT_DSHAFT			HW::PINT1
+#define PINT_SYNC			HW::PINT0
+#define PINT_ROT			HW::PINT2
+
 #define PIN_DSHAFT			7
 #define PIN_SYNC			1
 #define PIN_ROT				3

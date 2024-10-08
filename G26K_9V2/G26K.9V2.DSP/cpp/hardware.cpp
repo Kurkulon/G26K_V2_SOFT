@@ -659,7 +659,9 @@ EX_INTERRUPT_HANDLER(SPORT1_ISR)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-EX_INTERRUPT_HANDLER(SYNC_ISR)
+#pragma optimize_for_speed
+
+SEC_INTERRUPT_HANDLER(SYNC_ISR)
 {
 	StartFire(); // Start Fire Pulse
 	Start_SPORT();
@@ -667,13 +669,16 @@ EX_INTERRUPT_HANDLER(SYNC_ISR)
 #ifdef CPU_BF592
 	PIO_SYNC->ClearTriggerIRQ(BM_SYNC);
 #elif defined(CPU_BF706)
-
+	PINT_SYNC->LATCH	= BM_SYNC;
 #endif	
 
 	Fire();
 
 	fireSyncCount += 1;
 }
+
+#pragma optimize_as_cmd_line
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //EX_INTERRUPT_HANDLER(FIRE_ISR)
@@ -746,6 +751,36 @@ static void InitFire()
 
 	#elif defined(CPU_BF706)
 
+		PIO_FIRE->SetFER(BM_FIRE1|BM_FIRE2);
+		PIO_FIRE->SetMUX(PIN_FIRE1, 0);
+		PIO_FIRE->SetMUX(PIN_FIRE2, 0);
+
+		PIO_RST_SW_ARR->ClrFER(BM_RST_SW_ARR);
+		PIO_RST_SW_ARR->DirSet(BM_RST_SW_ARR);
+		PIO_RST_SW_ARR->CLR(BM_RST_SW_ARR);
+
+		StopFire();
+
+		FIRE1_TIMER.CFG = TMR_MODE_PWMSING|TMR_PULSEHI|TMR_EMURUN;
+		FIRE1_TIMER.DLY = 0;
+		FIRE1_TIMER.WID = NS2SCLK(100);
+
+		FIRE2_TIMER.CFG = TMR_MODE_PWMSING|TMR_PULSEHI|TMR_EMURUN;
+		FIRE2_TIMER.DLY = 0;
+		FIRE2_TIMER.WID = NS2SCLK(100);
+
+		PIO_SYNC->FER_CLR	= BM_SYNC;
+		PIO_SYNC->INEN_SET	= BM_SYNC;
+		PIO_SYNC->DIR_CLR	= BM_SYNC;
+
+		PINT_SYNC->ASSIGN	= 0; //(PINT_SYNC->ASSIGN & ~(0xFF<<(BM_SYNC&8)))|(1<<(BM_SYNC&8));
+		PINT_SYNC->EDGE_SET	= BM_SYNC;
+		PINT_SYNC->INV_CLR	= BM_SYNC;
+		PINT_SYNC->LATCH	= BM_SYNC;
+		PINT_SYNC->MSK_SET	= BM_SYNC;
+
+		InitSEC(PID_PINT0_BLOCK, SYNC_ISR);
+
 	#endif	
 
 	SetPPI(sens1_PPI,	dspVars.sens[0], 0, 1, true);
@@ -757,12 +792,12 @@ static void InitFire()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-EX_INTERRUPT_HANDLER(SHAFT_ISR)
+SEC_INTERRUPT_HANDLER(SHAFT_ISR)
 {
 	#ifdef CPU_BF592
-		//PIO_DSHAFT->ClearTriggerIRQ(BM_DSHAFT);
+		PIO_DSHAFT->ClearTriggerIRQ(BM_DSHAFT);
 	#elif defined(CPU_BF706)
-
+		PINT_DSHAFT->LATCH		= BM_DSHAFT;
 	#endif	
 
 	shaftCount++;
@@ -789,19 +824,33 @@ static void InitShaft()
 
 	#elif defined(CPU_BF706)
 
+		PIO_DSHAFT->FER_CLR		= BM_DSHAFT;
+		PIO_DSHAFT->INEN_SET	= BM_DSHAFT;
+		PIO_DSHAFT->DIR_CLR		= BM_DSHAFT;
+
+		PINT_DSHAFT->ASSIGN		= 0;
+		PINT_DSHAFT->EDGE_SET	= BM_DSHAFT;
+		PINT_DSHAFT->INV_SET	= BM_DSHAFT;
+		PINT_DSHAFT->LATCH		= BM_DSHAFT;
+		PINT_DSHAFT->MSK_SET	= BM_DSHAFT;
+
+		InitSEC(PID_PINT1_BLOCK, SHAFT_ISR);
+
 	#endif	
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-EX_INTERRUPT_HANDLER(ROT_ISR)
+//#pragma optimize_for_speed
+
+SEC_INTERRUPT_HANDLER(ROT_ISR)
 {
 //	*pPORTGIO_SET = 1<<6;
 
 	#ifdef CPU_BF592
-		//PIO_ROT->ClearTriggerIRQ(BM_ROT);
+		PIO_ROT->ClearTriggerIRQ(BM_ROT);
 	#elif defined(CPU_BF706)
-
+		PINT_ROT->LATCH		= BM_ROT;
 	#endif	
 
 	motoCount++;
@@ -816,16 +865,33 @@ EX_INTERRUPT_HANDLER(ROT_ISR)
 
 //	*pPORTGIO_CLEAR = 1<<6;
 }
+
+//#pragma optimize_as_cmd_line
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void InitRot()
 {
 	#ifdef CPU_BF592
+
 		InitIVG(IVG_PORTG_ROT, PID_Port_G_Interrupt_A, ROT_ISR);
 
 		PIO_ROT->EnableIRQA_Rise(BM_ROT);
 		PIO_ROT->ClrMaskA(~BM_ROT);
+
 	#elif defined(CPU_BF706)
+
+		PIO_ROT->FER_CLR	= BM_ROT;
+		PIO_ROT->INEN_SET	= BM_ROT;
+		PIO_ROT->DIR_CLR	= BM_ROT;
+
+		PINT_ROT->ASSIGN	= 0;
+		PINT_ROT->EDGE_SET	= BM_ROT;
+		PINT_ROT->INV_CLR	= BM_ROT;
+		PINT_ROT->LATCH		= BM_ROT;
+		PINT_ROT->MSK_SET	= BM_ROT;
+
+		InitSEC(PID_PINT2_BLOCK, ROT_ISR);
 
 	#endif	
 

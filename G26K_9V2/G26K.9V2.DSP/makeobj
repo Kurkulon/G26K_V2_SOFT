@@ -18,7 +18,7 @@ bindir = $(%ADI_CCES)
 
 !ifeq version Debug
 
-debug_compiler_options = -O0 -D __DEBUG
+debug_compiler_options = -O0 -D __DEBUG -always-inline -Wsuppress 1645,1646
 debug_linker_options = 
 libsuffix=d
 

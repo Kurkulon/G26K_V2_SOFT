@@ -230,7 +230,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define PIO_RTS					HW::PIOF
-#define PIN_RTS					10
+#define PIN_RTS					5
 #define MASK_RTS				(1UL<<PIN_RTS)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -253,11 +253,11 @@
 #define INIT_PORTF_MUX			0x0000		//  0000 0000 0000 0000
 #define INIT_PORTG_MUX			0x0000		//  0000 0000 0000 0000
 
-#define INIT_PORTF_FER 			0x000F		//  0000 0000 0000 1111
-#define INIT_PORTG_FER 			0x000F		//  0000 0000 0000 1111
+#define INIT_PORTF_FER 			0x0007		//  0000 0000 0000 1111
+#define INIT_PORTG_FER 			0x0007		//  0000 0000 0000 1111
 
-#define INIT_PORTFIO_DIR 		0x05F0		//  0000 0101 1111 0000
-#define INIT_PORTGIO_DIR 		0xFFF0		//  1111 1111 1111 0000
+#define INIT_PORTFIO_DIR 		0x0120		//  0000 0101 1111 0000
+#define INIT_PORTGIO_DIR 		0xFFF8		//  1111 1111 1111 0000
 
 #define INIT_PORTFIO_INEN 		0x0000		//  0000 0000 0000 0000
 #define INIT_PORTGIO_INEN 		0x0000		//  0000 0000 0000 0000
@@ -285,15 +285,21 @@
 #define INIT_WDOG_CTL			WDEV_RESET|WDDIS
 #endif
 
-#define PIO_MAINLOOP			HW::PIOF
-#define PIN_MAINLOOP			4
+#define PIO_MAINLOOP			HW::PIOG
+#define PIN_MAINLOOP			14
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define Pin_UpdateMode_Set()	HW::PIOA->BSET(3)
-#define Pin_UpdateMode_Clr()	HW::PIOA->BCLR(3)
+#define Pin_UpdateMode_Set()	HW::PIOC->BSET(10)
+#define Pin_UpdateMode_Clr()	HW::PIOC->BCLR(10)
+
+#define Pin_SPORT0_ISR_Set()	HW::PIOC->BSET(9)
+#define Pin_SPORT0_ISR_Clr()	HW::PIOC->BCLR(9)
+
+#define Pin_SPORT1_ISR_Set()	HW::PIOC->BSET(8)
+#define Pin_SPORT1_ISR_Clr()	HW::PIOC->BCLR(8)
 
 #define Pin_ProcessSPORT_Set()	HW::PIOA->BSET(13)
 #define Pin_ProcessSPORT_Clr()	HW::PIOA->BCLR(13)

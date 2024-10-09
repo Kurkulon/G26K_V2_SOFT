@@ -23,9 +23,17 @@ static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n"
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef CPU_BF592
+	
 	static ComPort com;
+
+	#define RSPWAVEBUF_SECTION /**/
+
 #elif defined(CPU_BF706)
+	
 	static ComPort com(1, PIO_RTS, PIN_RTS);
+
+	#define RSPWAVEBUF_SECTION __attribute__ ((section("L2_sram")))
+
 #endif	
 
 //struct Cmd
@@ -69,7 +77,7 @@ static List<RSPWAVE> readyRspWave;
 static List<RSPWAVE> cmWave;
 
 
-static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM];
+static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM] RSPWAVEBUF_SECTION;
 
 
 //static void SaveParams();
@@ -300,15 +308,15 @@ static void UpdateBlackFin()
 
 					if (rb.len != sizeof(ReqDsp01))
 					{
-						HW::PIOC->SET(PC4);
+						//HW::PIOC->SET(PC4);
 						i = 0;
-						HW::PIOC->CLR(PC4);
+						//HW::PIOC->CLR(PC4);
 					}
 					else if (crc != 0)
 					{
-						HW::PIOC->SET(PC5);
+						//HW::PIOC->SET(PC5);
 						i = 0;
-						HW::PIOC->CLR(PC5);
+						//HW::PIOC->CLR(PC5);
 					}
 					else if (RequestFunc(&wb, &rb))
 					{
@@ -318,16 +326,16 @@ static void UpdateBlackFin()
 					}
 					else
 					{
-						HW::PIOC->SET(PC6);
+						//HW::PIOC->SET(PC6);
 						i = 0;
-						HW::PIOC->CLR(PC6);
+						//HW::PIOC->CLR(PC6);
 					};
 				}
 				else
 				{
-					HW::PIOC->SET(PC7);
+					//HW::PIOC->SET(PC7);
 					i = 0;
-					HW::PIOC->CLR(PC7);
+					//HW::PIOC->CLR(PC7);
 				};
 			};
 
@@ -1121,7 +1129,7 @@ static void UpdateMode()
 	static byte i = 0;
 	static RSPWAVE *dsc = 0;
 
-	//ProcessSPORT();
+	ProcessSPORT();
 
 	switch(i)
 	{

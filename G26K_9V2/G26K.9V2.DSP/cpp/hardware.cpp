@@ -19,9 +19,9 @@
 #pragma diag(push)
 #pragma diag(suppress: 1970)
 
-#define SPORT_BUF_NUM 5
-
 #ifdef CPU_BF592 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define SPORT_BUF_NUM 5
 
 #define Start_SPORT()	{ HW::SPORT0->TCR1 = sp0TCR1; HW::SPORT1->TCR1 = sp1TCR1; }
 #define Start_SPORT0()	{ HW::SPORT0->TCR1 = sp0TCR1; }
@@ -47,20 +47,33 @@
 
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define Start_SPORT()	{/* HW::SPORT0->TCR1 = sp0TCR1; HW::SPORT1->TCR1 = sp1TCR1;*/ }
-#define Start_SPORT0()	{ /*HW::SPORT0->TCR1 = sp0TCR1;*/ }
-#define Start_SPORT1()	{ /*HW::SPORT1->TCR1 = sp1TCR1;*/ }
+#define SPORT_BUF_NUM 6
 
-#define Stop_SPORT0()	{ /*HW::SPORT0->TCR1 = sp0TCR1 = 0;*/ }
-#define Stop_SPORT1()	{ /*HW::SPORT1->TCR1 = sp1TCR1 = 0;*/ }
+// AIN1 SPT1_B_SEC
+// AIN2 SPT1_B_PRI
+// AIN3 SPT1_A_SEC
+// AIN4 SPT1_A_PRI
 
-#define __TCR1			(DITFS|LATFS|LTFS|TFSR|ITFS|ITCLK|TSPEN)
-#define __TCR2			(SLEN(12))
-#define __TCLKDIV		(NS2SCLK(10)-1)
-#define __TFSDIV_MIN	(NS2SCLK(150)/(__TCLKDIV+1)-1)
+#define SPORT0_CTL HW::SPORT1->CTL_B
+#define SPORT1_CTL HW::SPORT1->CTL_A
+#define SPORT0_DIV HW::SPORT1->DIV_B
+#define SPORT1_DIV HW::SPORT1->DIV_A
 
-#define __RCR1			(/*RCKFE|LARFS|*/LRFS|RFSR|RSPEN)
-#define __RCR2			(SLEN(12))
+#define Start_SPORT()	{ SPORT0_CTL = sp0CTL; SPORT1_CTL = sp1CTL; }
+#define Start_SPORT0()	{ SPORT0_CTL = sp0CTL; }
+#define Start_SPORT1()	{ SPORT1_CTL = sp1CTL; }
+
+#define Stop_SPORT0()	{ SPORT0_CTL = sp0CTL = 0; }
+#define Stop_SPORT1()	{ SPORT1_CTL = sp1CTL = 0; }
+
+#define _SPT_CTL		(SPORT_DIFS|SPORT_LAFS|SPORT_LFS|SPORT_FSR|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(12)|SPORT_GCLKEN|SPORT_SPENPRI)
+#define _SPT_CTL2		(0)
+#define _SPT_CLKDIV		(NS2SCLK(20)-1)
+#define __TFSDIV_MIN	(NS2SCLK(150)/(_SPT_CLKDIV+1)-1)
+//#define _SPT_DIV		(SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(_SPT_FSDIV))
+
+//#define __RCR1			(/*RCKFE|LARFS|*/LRFS|RFSR|RSPEN)
+//#define __RCR2			(SLEN(12))
 
 #define StartFire()		{ HW::TIMER->RUN_SET = FIRE1_TIMEN|FIRE2_TIMEN; }
 #define StopFire()		{ HW::TIMER->RUN_CLR = FIRE1_TIMEN|FIRE2_TIMEN; }
@@ -95,17 +108,28 @@ static S_SPIM	spiGain(1, PIO_MUX_SYNC, GAIN_CS_MASK, ArraySize(GAIN_CS_MASK), SC
 
 #ifdef CPU_BF592 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#define SPORTDSC_SECTION /**/
+
 DMA_CH	dmaRxSp0(SPORT0_RX_DMA);
 DMA_CH	dmaRxSp1(SPORT1_RX_DMA);
 
+static u16 sp0TCR1 = 0;
+static u16 sp1TCR1 = 0;
+
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define SPORTDSC_SECTION __attribute__ ((section("L2_sram")))
+
+DMA_CH	dmaRxSp0(SPORT1_B_DMA);
+DMA_CH	dmaRxSp1(SPORT1_A_DMA);
+
+static u32 sp0CTL = 0;
+static u32 sp1CTL = 0;
 
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static u16 sp0TCR1 = 0;
-static u16 sp1TCR1 = 0;
 
 static DSCSPORT *curDscSPORT0 = 0;
 static DSCSPORT *curDscSPORT1 = 0;
@@ -113,7 +137,7 @@ static DSCSPORT *curDscSPORT1 = 0;
 
 //static u16 ppi_buf[PPI_BUF_LEN][PPI_BUF_NUM];
 
-static DSCSPORT sportdsc[SPORT_BUF_NUM];
+static DSCSPORT sportdsc[SPORT_BUF_NUM] SPORTDSC_SECTION;
 //static u16 startIndPPI = 0;
 //static u16 endIndPPI = 0;g118
 
@@ -371,16 +395,16 @@ static void Read_SPORT0(PPI &ppi)
 
 	if (curDscSPORT0 != 0)
 	{
-		#ifdef CPU_BF592
+		curDscSPORT0->busy = false;
+		curDscSPORT0->sportDelay = ppi.delay;
+		curDscSPORT0->sampleDelay = ppi.delay*ppi.st;
+		curDscSPORT0->sampleTime = ppi.st;
+		curDscSPORT0->sensType = ppi.sensType;
+		curDscSPORT0->gain = ppi.gain;
+		curDscSPORT0->len = ppi.len;
+		curDscSPORT0->chMask = ppi.chMask;
 
-			curDscSPORT0->busy = false;
-			curDscSPORT0->sportDelay = ppi.delay;
-			curDscSPORT0->sampleDelay = ppi.delay*ppi.st;
-			curDscSPORT0->sampleTime = ppi.st;
-			curDscSPORT0->sensType = ppi.sensType;
-			curDscSPORT0->gain = ppi.gain;
-			curDscSPORT0->len = ppi.len;
-			curDscSPORT0->chMask = ppi.chMask;
+		#ifdef CPU_BF592
 
 			FIRE1_TIMER->Width = ppi.fireDiv; 
 
@@ -406,6 +430,18 @@ static void Read_SPORT0(PPI &ppi)
 
 		#elif defined(CPU_BF706)
 
+			FIRE1_TIMER.WID = ppi.fireDiv; 
+
+			dmaRxSp0.Disable();
+
+			u16 n = ((ppi.chMask&2)>>1)+1;
+
+			sp0CTL = _SPT_CTL|((ppi.chMask&2)<<23);
+
+			SPORT0_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT0->sport_tfsdiv = ppi.tfsdiv); 
+
+			dmaRxSp0.Read16(curDscSPORT0->data, /*ppi.delay*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+
 		#endif	
 	};
 }
@@ -422,16 +458,16 @@ static void Read_SPORT1(PPI &ppi)
 
 	if (curDscSPORT1 != 0)
 	{
+		curDscSPORT1->busy = false;
+		curDscSPORT1->sportDelay = ppi.delay;
+		curDscSPORT1->sampleDelay = ppi.delay*ppi.st;
+		curDscSPORT1->sampleTime = ppi.st;
+		curDscSPORT1->sensType = ppi.sensType;
+		curDscSPORT1->gain = ppi.gain;
+		curDscSPORT1->len = ppi.len;
+		curDscSPORT1->chMask = ppi.chMask;
+	
 		#ifdef CPU_BF592
-
-			curDscSPORT1->busy = false;
-			curDscSPORT1->sportDelay = ppi.delay;
-			curDscSPORT1->sampleDelay = ppi.delay*ppi.st;
-			curDscSPORT1->sampleTime = ppi.st;
-			curDscSPORT1->sensType = ppi.sensType;
-			curDscSPORT1->gain = ppi.gain;
-			curDscSPORT1->len = ppi.len;
-			curDscSPORT1->chMask = ppi.chMask;
 
 			FIRE2_TIMER->Width = ppi.fireDiv;
 
@@ -456,6 +492,18 @@ static void Read_SPORT1(PPI &ppi)
 			};
 
 		#elif defined(CPU_BF706)
+
+			FIRE2_TIMER.WID = ppi.fireDiv; 
+
+			dmaRxSp1.Disable();
+
+			u16 n = ((ppi.chMask&2)>>1)+1;
+
+			sp1CTL = _SPT_CTL|((ppi.chMask&2)<<23);
+
+			SPORT1_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT1->sport_tfsdiv = ppi.tfsdiv); 
+
+			dmaRxSp1.Read16(curDscSPORT1->data, /*ppi.delay*n,*/ (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -642,6 +690,88 @@ EX_INTERRUPT_HANDLER(SPORT1_ISR)
 
 #elif defined(CPU_BF706)
 
+SEC_INTERRUPT_HANDLER(SPORT0_ISR)
+{
+	Pin_SPORT0_ISR_Set();
+
+	if (dmaRxSp0.CheckComplete())
+	{
+		Stop_SPORT0();
+
+		dmaRxSp0.Disable(); //dmaSp1.Disable();
+
+		FIRE1_TIMER.WID = 1;
+
+		curDscSPORT0->busy = false;
+		readySPORT.Add(curDscSPORT0);
+		curDscSPORT0 = 0;
+
+		if ((dspVars.sensMask & 2) == 0)
+		{
+			u32 t = mmsec;
+
+			if ((t - prevFireRefTime) >= 30011)
+			{
+				prevFireRefTime = t;
+
+				Read_SPORT1(refPPI);
+
+				StartFire2(); // Start Fire Pulse
+				Start_SPORT1();
+				FireRef();
+			};
+		};
+
+		Read_SPORT0(sens1_PPI);
+
+		//ssync();
+	};
+
+	Pin_SPORT0_ISR_Clr();
+}
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+SEC_INTERRUPT_HANDLER(SPORT1_ISR)
+{
+	Pin_SPORT1_ISR_Set();
+
+	if (dmaRxSp1.CheckComplete())
+	{
+		Stop_SPORT1();
+
+		dmaRxSp1.Disable();
+
+		FIRE2_TIMER.WID = 1;
+
+		curDscSPORT1->busy = false;
+		readySPORT.Add(curDscSPORT1);
+		curDscSPORT1 = 0;
+
+		u32 t = mmsec;
+
+		if ((t - prevFireRefTime) >= 30011)
+		{
+			prevFireRefTime = t;
+
+			Read_SPORT1(refPPI);
+
+			StartFire2(); // Start Fire Pulse
+			Start_SPORT1();
+			FireRef();
+		}
+		else
+		{
+			Read_SPORT1(sens2_PPI);
+		};
+
+		//ssync();
+	};
+
+	Pin_SPORT1_ISR_Clr();	
+}
+
 #endif	
 
 #pragma optimize_as_cmd_line
@@ -661,7 +791,11 @@ EX_INTERRUPT_HANDLER(SPORT1_ISR)
 
 #pragma optimize_for_speed
 
+#ifdef CPU_BF592
+EX_INTERRUPT_HANDLER(SYNC_ISR)
+#elif defined(CPU_BF706)
 SEC_INTERRUPT_HANDLER(SYNC_ISR)
+#endif
 {
 	StartFire(); // Start Fire Pulse
 	Start_SPORT();
@@ -781,6 +915,23 @@ static void InitFire()
 
 		InitSEC(PID_PINT0_BLOCK, SYNC_ISR);
 
+		HW::PIOB->SetFER(PB0|PB1|PB2|PB3);
+		HW::PIOA->SetFER(PA8|PA9|PA10|PA11);
+
+		HW::PIOB->MUX = (HW::PIOB->MUX & 0xFF)		| 0x55;
+		HW::PIOA->MUX = (HW::PIOA->MUX & 0xFF0000)	| 0xAA0000;
+
+		dmaRxSp0.Disable();
+		dmaRxSp1.Disable();
+
+		HW::SPORT1->CTL_A = 0;
+		HW::SPORT1->CTL_B = 0;
+		HW::SPORT1->CTL2_A = 0;
+		HW::SPORT1->CTL2_B = 0;
+
+		InitSEC(PID_SPORT1_B_DMA, SPORT0_ISR);
+		InitSEC(PID_SPORT1_A_DMA, SPORT1_ISR);
+
 	#endif	
 
 	SetPPI(sens1_PPI,	dspVars.sens[0], 0, 1, true);
@@ -792,7 +943,11 @@ static void InitFire()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF592
+EX_INTERRUPT_HANDLER(SHAFT_ISR)
+#elif defined(CPU_BF706)
 SEC_INTERRUPT_HANDLER(SHAFT_ISR)
+#endif
 {
 	#ifdef CPU_BF592
 		PIO_DSHAFT->ClearTriggerIRQ(BM_DSHAFT);
@@ -843,7 +998,11 @@ static void InitShaft()
 
 //#pragma optimize_for_speed
 
+#ifdef CPU_BF592
+EX_INTERRUPT_HANDLER(ROT_ISR)
+#elif defined(CPU_BF706)
 SEC_INTERRUPT_HANDLER(ROT_ISR)
+#endif
 {
 //	*pPORTGIO_SET = 1<<6;
 

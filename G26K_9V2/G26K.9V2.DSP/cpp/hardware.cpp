@@ -440,7 +440,7 @@ static void Read_SPORT0(PPI &ppi)
 
 			SPORT0_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT0->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp0.Read16(curDscSPORT0->data, /*ppi.delay*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -503,7 +503,7 @@ static void Read_SPORT1(PPI &ppi)
 
 			SPORT1_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT1->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp1.Read16(curDscSPORT1->data, /*ppi.delay*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -1642,6 +1642,21 @@ static void Update_ADC_DAC()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+static void Init_SPI2_MemoryMappedMode()
+{
+	HW::PIOB->SetFER(PB10|PB11|PB12|PB13|PB14|PB15);
+	HW::PIOB->MUX &= ~(0xFFF<<10); // MUX Func PB10-PB15 <= 0
+
+	HW::SPI2->CLK		= 3;
+	HW::SPI2->DLY		= SPI_STOP(3)|SPI_LEADX|SPI_LAGX;
+	HW::SPI2->CTL		= SPI_MM_EN|SPI_MASTER|SPI_SIZE32|SPI_HW_SSEL|SPI_ASSRT_SSEL|SPI_MSB_FIRST|SPI_FAST_EN|SPI_MIO_QUAD|SPI_CPHA|SPI_CPOL;
+	HW::SPI2->TXCTL		= TXCTL_TTI|TXCTL_TEN;
+	HW::SPI2->RXCTL		= RXCTL_REN;
+	HW::SPI2->MMRDH		= SPI_OPCODE(0xEB)|SPI_ADRSIZE(3)|SPI_ADRPINS|SPI_DMYSIZE(3)|SPI_MODE(0)|SPI_TRIDMY_4BITS|SPI_CMDPINS;
+	HW::SPI2->MMTOP		= 0x40100000;
+	HW::SPI2->SLVSEL	= SPI_SSEL1|SPI_SSE1;
+	HW::SPI2->CTL		|= SPI_EN;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1666,6 +1681,8 @@ void InitHardware()
 	//InitRot();
 
 	InitGain();
+
+	Init_SPI2_MemoryMappedMode();
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

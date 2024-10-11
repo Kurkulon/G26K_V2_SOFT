@@ -32,7 +32,7 @@ static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n"
 	
 	static ComPort com(1, PIO_RTS, PIN_RTS);
 
-	#define RSPWAVEBUF_SECTION __attribute__ ((section("L2_sram")))
+	#define RSPWAVEBUF_SECTION /*__attribute__ ((section("L2_sram")))*/
 
 #endif	
 
@@ -815,11 +815,14 @@ static void ProcessSPORT()
 	static RSPWAVE  *rsp = 0;
 	static u16 angle = 0;
 
+	DSCSPORT *_dsc = dsc;
+	RSPWAVE  *_rsp = rsp;
+
 	switch (state)
 	{
 		case 0:
 
-			dsc = GetDscSPORT();
+			dsc = _dsc = GetDscSPORT();
 
 			if (dsc == 0)
 			{
@@ -833,7 +836,7 @@ static void ProcessSPORT()
 
 		case 1:
 
-			rsp = freeRspWave.Get();
+			rsp = _rsp = freeRspWave.Get();
 
 			if (rsp == 0)
 			{
@@ -934,7 +937,7 @@ static void ProcessSPORT()
 
 		case 3:
 
-			rsp = freeRspWave.Get();
+			rsp = _rsp = freeRspWave.Get();
 
 			if (rsp == 0)
 			{
@@ -1010,11 +1013,13 @@ static void UpdateCM()
 	static byte OVRLAP = 3;
 	static u16 scale = 0;
 
+	RSPWAVE *_dsc = dsc;
+
 	switch (state)
 	{
 		case 0: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
 			
-			dsc = cmWave.Get();
+			dsc = _dsc = cmWave.Get();
 
 			if (dsc != 0)
 			{
@@ -1037,8 +1042,12 @@ static void UpdateCM()
 			{
 				PackDataCM(dsc, sensVars[rsp->hdr.sensType].packType);
 
+				u32 t = cli();
+
 				dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
 				dsc->dataLen += 1;
+
+				sti(t);
 
 				readyRspWave.Add(dsc);
 

@@ -47,7 +47,7 @@
 
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORT_BUF_NUM 6
+#define SPORT_BUF_NUM 5
 
 // AIN1 SPT1_B_SEC
 // AIN2 SPT1_B_PRI
@@ -68,7 +68,7 @@
 
 #define _SPT_CTL		(SPORT_DIFS|SPORT_LAFS|SPORT_LFS|SPORT_FSR|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(12)|SPORT_GCLKEN|SPORT_SPENPRI)
 #define _SPT_CTL2		(0)
-#define _SPT_CLKDIV		(NS2SCLK(20)-1)
+#define _SPT_CLKDIV		(NS2SCLK(40)-1)
 #define __TFSDIV_MIN	(NS2SCLK(150)/(_SPT_CLKDIV+1)-1)
 //#define _SPT_DIV		(SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(_SPT_FSDIV))
 
@@ -118,7 +118,7 @@ static u16 sp1TCR1 = 0;
 
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORTDSC_SECTION __attribute__ ((section("L2_sram")))
+#define SPORTDSC_SECTION /*__attribute__ ((section("L2_sram")))*/
 
 DMA_CH	dmaRxSp0(SPORT1_B_DMA);
 DMA_CH	dmaRxSp1(SPORT1_A_DMA);
@@ -440,7 +440,7 @@ static void Read_SPORT0(PPI &ppi)
 
 			SPORT0_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT0->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp0.Read16(curDscSPORT0->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -503,7 +503,7 @@ static void Read_SPORT1(PPI &ppi)
 
 			SPORT1_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT1->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp1.Read16(curDscSPORT1->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};

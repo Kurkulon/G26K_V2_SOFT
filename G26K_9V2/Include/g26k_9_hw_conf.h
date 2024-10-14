@@ -308,17 +308,17 @@
 
 #define PIO_FIRE			HW::PIOA
 
-#define PIN_FIRE1			5
-#define PIN_FIRE2			6
+#define PIN_FIRE1			6
+#define PIN_FIRE2			5
 
 #define BM_FIRE1			(1UL << PIN_FIRE1)
 #define BM_FIRE2			(1UL << PIN_FIRE2)
 
-#define FIRE1_TIMER			HW::TIMER->TMR[0]
-#define FIRE2_TIMER			HW::TIMER->TMR[1]
+#define FIRE1_TIMER			HW::TIMER->TMR[1]
+#define FIRE2_TIMER			HW::TIMER->TMR[0]
 
-#define FIRE1_TIMEN			TIMER_TMR0
-#define FIRE2_TIMEN			TIMER_TMR1
+#define FIRE1_TIMEN			TIMER_TMR1
+#define FIRE2_TIMEN			TIMER_TMR0
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

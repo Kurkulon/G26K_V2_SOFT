@@ -45,6 +45,11 @@
 
 #define GAIN_SPI_MODE	CPHA	
 
+#define ADG2128_SENSE1 (0x80|(9<<3)|3) // X7 to Y3 on; SIG_1 -> CH2 -> SPORT0 PRI	
+#define ADG2128_SENSE2 (0x80|(5<<3)|1) // X5 to Y1 on; SIG_3 -> CH4 -> SPORT1 PRI	
+#define ADG2128_REFSEN (0x80|(4<<3)|0) // X4 to Y0 on; SIG_4 -> CH3 -> SPORT1 SEC
+
+
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define SPORT_BUF_NUM 5
@@ -66,9 +71,9 @@
 #define Stop_SPORT0()	{ SPORT0_CTL = sp0CTL = 0; }
 #define Stop_SPORT1()	{ SPORT1_CTL = sp1CTL = 0; }
 
-#define _SPT_CTL		(SPORT_DIFS|SPORT_LAFS|SPORT_LFS|SPORT_FSR|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(12)|SPORT_GCLKEN|SPORT_SPENPRI)
+#define _SPT_CTL		(SPORT_CKRE|SPORT_DIFS|SPORT_LAFS|SPORT_LFS|SPORT_FSR|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(13)|SPORT_GCLKEN|SPORT_SPENPRI)
 #define _SPT_CTL2		(0)
-#define _SPT_CLKDIV		(NS2SCLK(40)-1)
+#define _SPT_CLKDIV		(NS2SCLK(20)-1)
 #define __TFSDIV_MIN	(NS2SCLK(150)/(_SPT_CLKDIV+1)-1)
 //#define _SPT_DIV		(SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(_SPT_FSDIV))
 
@@ -83,6 +88,10 @@
 #define GAIN_SPI_MODE	SPI_CPHA	
 
 #define LowLevelInit()	{}
+
+#define ADG2128_SENSE1 (0x80|(9<<3)|2) // X7 to Y2 on; SIG_1 -> CH1 -> SPORT0 PRI	
+#define ADG2128_SENSE2 (0x80|(5<<3)|0) // X5 to Y0 on; SIG_3 -> CH3 -> SPORT1 PRI	
+#define ADG2128_REFSEN (0x80|(4<<3)|1) // X4 to Y1 on; SIG_4 -> CH4 -> SPORT1 SEC
 
 #endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -118,7 +127,7 @@ static u16 sp1TCR1 = 0;
 
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORTDSC_SECTION /*__attribute__ ((section("L2_sram")))*/
+#define SPORTDSC_SECTION __attribute__ ((section("L2_sram_uncached")))
 
 DMA_CH	dmaRxSp0(SPORT1_B_DMA);
 DMA_CH	dmaRxSp1(SPORT1_A_DMA);
@@ -212,8 +221,13 @@ u16	GetFireVoltage()
 
 static void SetGain(byte g1, byte g2, byte g3, byte g4) 
 {
+#ifdef CPU_BF592
 	gainDataBuf[0] = (g3&15) | ((g4&15)<<4);
 	gainDataBuf[1] = (g1&15) | ((g2&15)<<4);
+#elif defined(CPU_BF706)
+	gainDataBuf[0] = (g4&15) | ((g3&15)<<4);
+	gainDataBuf[1] = (g2&15) | ((g1&15)<<4);
+#endif
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -440,7 +454,7 @@ static void Read_SPORT0(PPI &ppi)
 
 			SPORT0_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT0->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp0.Read16(curDscSPORT0->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -503,7 +517,7 @@ static void Read_SPORT1(PPI &ppi)
 
 			SPORT1_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT1->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp1.Read16(curDscSPORT1->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -1550,8 +1564,10 @@ static void Update_ADC_DAC()
 			if (dsc.ready)
 			{
 				// write ADG2128	sens1
-
-				wbuf[0] = 0x80|(9<<3)|3; // X7 to Y3 on; SIG_1 -> CH2 -> SPORT0 PRI	
+				
+					
+					
+				wbuf[0] = ADG2128_SENSE1; //0x80|(9<<3)|3; // X7 to Y3 on; SIG_1 -> CH2 -> SPORT0 PRI	
 				wbuf[1] = 1;	
 
 				dsc.adr = 0x70;
@@ -1575,7 +1591,7 @@ static void Update_ADC_DAC()
 			{
 				// write ADG2128	sens2
 
-				wbuf[0] = 0x80|(5<<3)|1; // X5 to Y1 on; SIG_3 -> CH4 -> SPORT1 PRI	
+				wbuf[0] = ADG2128_SENSE2;	//0x80|(5<<3)|1; // X5 to Y1 on; SIG_3 -> CH4 -> SPORT1 PRI	
 				wbuf[1] = 1;	
 
 				dsc.adr = 0x70;
@@ -1599,7 +1615,7 @@ static void Update_ADC_DAC()
 			{
 				// write ADG2128	refSens
 
-				wbuf[0] = 0x80|(4<<3)|0; // X4 to Y0 on; SIG_4 -> CH3 -> SPORT1 SEC
+				wbuf[0] = ADG2128_REFSEN;	//0x80|(4<<3)|0; // X4 to Y0 on; SIG_4 -> CH3 -> SPORT1 SEC
 				wbuf[1] = 1;	
 
 				dsc.adr = 0x70;

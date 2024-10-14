@@ -32,7 +32,7 @@ static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n"
 	
 	static ComPort com(1, PIO_RTS, PIN_RTS);
 
-	#define RSPWAVEBUF_SECTION /*__attribute__ ((section("L2_sram")))*/
+	#define RSPWAVEBUF_SECTION __attribute__ ((section("L2_sram_uncached")))
 
 #endif	
 
@@ -815,14 +815,14 @@ static void ProcessSPORT()
 	static RSPWAVE  *rsp = 0;
 	static u16 angle = 0;
 
-	DSCSPORT *_dsc = dsc;
-	RSPWAVE  *_rsp = rsp;
+	DSCSPORT **pdsc = &dsc;
+	RSPWAVE  **prsp = &rsp;
 
 	switch (state)
 	{
 		case 0:
 
-			dsc = _dsc = GetDscSPORT();
+			dsc = GetDscSPORT();
 
 			if (dsc == 0)
 			{
@@ -836,7 +836,7 @@ static void ProcessSPORT()
 
 		case 1:
 
-			rsp = _rsp = freeRspWave.Get();
+			rsp = freeRspWave.Get();
 
 			if (rsp == 0)
 			{
@@ -937,7 +937,7 @@ static void ProcessSPORT()
 
 		case 3:
 
-			rsp = _rsp = freeRspWave.Get();
+			rsp = freeRspWave.Get();
 
 			if (rsp == 0)
 			{

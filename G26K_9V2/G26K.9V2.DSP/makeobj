@@ -18,7 +18,7 @@ bindir = $(%ADI_CCES)
 
 !ifeq version Debug
 
-debug_compiler_options = -O0 -D __DEBUG -always-inline -Wsuppress 1645,1646
+debug_compiler_options = -O0 -D __DEBUG -D _DEBUG -always-inline -Wsuppress 1645,1646
 debug_linker_options = 
 libsuffix=d
 
@@ -102,7 +102,7 @@ compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-o
 
 ####################################################################################################################################################################################################
 
-link_options = $(cpu_opt) $(link_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE,-MDUSE_CACHE_A_B -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+link_options = $(cpu_opt) $(link_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE,-MDUSE_CACHE_A_B_,-MDUSE_L1_CODE_DA_DB -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
   
 ####################################################################################################################################################################################################
 

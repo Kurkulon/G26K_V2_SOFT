@@ -1,18 +1,18 @@
 #include "hardware.h"
 #include "ComPort\ComPort.h"
 #include "CRC\CRC16.h"
-//#include "at25df021.h"
+//#include "at25df021.h" 
 #include "list.h"
 #include "spi.h"
 #include "pack.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define RSPWAVE_BUF_NUM 8
+#define RSPWAVE_BUF_NUM 4
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n";
+static byte build_date[128] __attribute__ ((section("L1_data"))) = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n" ;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -26,13 +26,21 @@ static byte build_date[128] = "\n" "G26K_9_DSP" "\n" __DATE__ "\n" __TIME__ "\n"
 	
 	static ComPort com;
 
-	#define RSPWAVEBUF_SECTION /**/
+	static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM];
+
+	#define Alloc_RSPWAVE_Buf() (rspWaveBuf+i)
 
 #elif defined(CPU_BF706)
 	
 	static ComPort com(1, PIO_RTS, PIN_RTS);
 
-	#define RSPWAVEBUF_SECTION __attribute__ ((section("L2_sram_uncached")))
+	#ifdef RSPWAVE_BUF_MEM_L2
+		#define Alloc_RSPWAVE_Buf() (RSPWAVE*)Alloc_L2_CacheWT(sizeof(RSPWAVE))
+	#else
+		static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM+1] __attribute__ ((section("L1_data")));
+		#define Alloc_RSPWAVE_Buf() (rspWaveBuf+i)
+		//#define Alloc_RSPWAVE_Buf() (RSPWAVE*)Alloc_UnCached(sizeof(RSPWAVE))
+#endif
 
 #endif	
 
@@ -77,9 +85,6 @@ static List<RSPWAVE> readyRspWave;
 static List<RSPWAVE> cmWave;
 
 
-static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM] RSPWAVEBUF_SECTION;
-
-
 //static void SaveParams();
 
 static u16 mode = 0; // 0 - CM, 1 - IM
@@ -116,7 +121,7 @@ static i32 avrBuf[2][WAVE_MAXLEN+WAVE_OVRLEN] = {0};
 //const i16 wavelet_Table[16] = { 0,509,1649,2352,0,-6526,-12695,-10869,0,10869,12695,6526,0,-2352,-1649,-509 };
 //const i16 wavelet_Table[32] = {-1683,-3326,-3184,0,5304,9229,7777,0,-10037,-15372,-11402,0,11402,15372,10037,0,-7777,-9229,-5304,0,3184,3326,1683,0,-783,-720,-321,0,116,94,37,0};
 //const i16 wavelet_Table[32] = {0,385,1090,1156,0,-1927,-3270,-2698,0,3468,5450,4239,0,-5010,-7630,-5781,0,6551,9810,7322,0,-8093,-11990,-8864,0,9634,14170,10405,0,-11176,-16350,-11947};
-const i16 wavelet_Table[32] = {0,-498,-1182,-1320,0,2826,5464,5065,0,-7725,-12741,-10126,0,11476,16381,11290,0,-9669,-12020,-7223,0,4713,5120,2690,0,-1344,-1279,-588,0,226,188,76};
+const i16 wavelet_Table[32] __attribute__ ((section("L1_data"))) = {0,-498,-1182,-1320,0,2826,5464,5065,0,-7725,-12741,-10126,0,11476,16381,11290,0,-9669,-12020,-7223,0,4713,5120,2690,0,-1344,-1279,-588,0,226,188,76};
 //const i16 wavelet_Table[32] = {-498,-1182,-1320,0,2826,5464,5065,0,-7725,-12741,-10126,0,11476,16381,11290,0,-9669,-12020,-7223,0,4713,5120,2690,0,-1344,-1279,-588,0,226,188,76,0};
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -230,6 +235,8 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	}
 	else
 	{
+		DEBUG_ASSERT(curDsc->next == 0);
+
 		wb->data = curDsc->data;			 
 		wb->len = curDsc->dataLen*2;	 
 	};
@@ -283,7 +290,7 @@ static void UpdateBlackFin()
 	static byte i = 0;
 	static ComPort::WriteBuffer wb;
 	static ComPort::ReadBuffer rb;
-	static u16 buf[256];
+	//static u16 buf[256];
 
 	HW::ResetWDT();
 
@@ -291,7 +298,7 @@ static void UpdateBlackFin()
 	{
 		case 0:
 
-			rb.data = buf;
+			rb.data = build_date;
 			rb.maxLen = 127;//sizeof(buf);
 			com.Read(&rb, ~0, US2COM(50));
 			i++;
@@ -663,6 +670,8 @@ static void FragDataCM(RSPWAVE *dsc)
 	dsc->dataLen = dsc->dataLen - rsp.hdr.sl + fragLen;
 	
 	rsp.hdr.sl = fragLen;
+
+	DEBUG_ASSERT(dsc->next == 0);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -682,6 +691,8 @@ static void SendReadyDataIM(RSPWAVE *dsc, u16 len)
 	dsc->dataLen += 1;
 
 	//dsc->offset = (sizeof(*rsp) - sizeof(rsp->data)) / 2;
+
+	DEBUG_ASSERT(dsc->next == 0);
 
 	readyRspWave.Add(dsc);
 }
@@ -806,6 +817,115 @@ static void ProcessDataIM(RSPWAVE *dsc)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#if defined(CPU_BF706) && defined(SPORT_BUF_MEM_L2)
+
+	static DSCSPORT tempSportDscA __attribute__ ((section("L1_data_a")));
+	static DSCSPORT tempSportDscB __attribute__ ((section("L1_data_b")));
+	static List<DSCSPORT> freeTempSPORT		__attribute__ ((section("L1_data")));
+	static List<DSCSPORT> readyTempSPORT	__attribute__ ((section("L1_data")));
+
+//#pragma optimize_for_speed
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void InitPreProcessSPORT()
+{
+	freeTempSPORT.Add(&tempSportDscA);
+	freeTempSPORT.Add(&tempSportDscB);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void PreProcessSPORT()
+{
+	static byte state = 0;
+	static DSCSPORT *dsc = 0;
+	static DSCSPORT *tmp = 0;
+
+#ifdef _DEBUG
+	DSCSPORT **pdsc = &dsc;
+#endif
+
+	switch (state)
+	{
+		case 0:
+
+			dsc = GetDscSPORT();
+
+			if (dsc != 0)
+			{
+				state++;
+			}
+			else
+			{
+				break;
+			};
+
+		case 1:
+
+			tmp = freeTempSPORT.Get();
+
+			if (tmp != 0)
+			{
+				Pin_PreProcessSPORT_Set();
+
+				u32 len = dsc->len + WAVE_OVRLEN;
+
+				if (dsc->chMask & 2) len *= 2;
+
+				HW::DMA->SRC0.ADDRSTART = dsc;
+				HW::DMA->SRC0.XCNT = HW::DMA->DST0.XCNT = (len + (sizeof(*dsc)-sizeof(dsc->data))/2 + 1)/2;
+				HW::DMA->SRC0.XMOD = HW::DMA->DST0.XMOD = 4;
+				HW::DMA->SRC0.STAT = ~0;
+
+				HW::DMA->DST0.ADDRSTART = tmp;
+				HW::DMA->DST0.STAT = ~0;
+
+				HW::DMA->SRC0.CFG = DMA_INT_XCNT|DMA_FLOW_STOP|DMA_PSIZE32|DMA_MSIZE32|DMA_WNR|	DMA_SYNC|DMA_EN;
+				HW::DMA->DST0.CFG = DMA_INT_XCNT|DMA_FLOW_STOP|DMA_PSIZE32|DMA_MSIZE32|			DMA_SYNC|DMA_EN;
+
+				state++;
+
+				break;
+			}
+			else
+			{
+				break;
+			};
+
+		case 2:
+
+			if (HW::DMA->DST0.STAT & (DMA_STAT_IRQDONE|DMA_STAT_IRQERR))
+			{
+				HW::DMA->SRC0.CFG = 0;
+				HW::DMA->DST0.CFG = 0;
+				HW::DMA->SRC0.STAT = ~0;
+				HW::DMA->DST0.STAT = ~0;
+
+				//u32 t = cli();
+
+				FreeDscSPORT(dsc);
+
+				readyTempSPORT.Add(tmp);
+
+				//sti(t);
+
+				Pin_PreProcessSPORT_Clr();
+
+				state = 0;
+			};
+
+			break;
+	};
+}
+
+#pragma optimize_as_cmd_line
+
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 //#pragma optimize_for_speed
 
 static void ProcessSPORT()
@@ -815,14 +935,24 @@ static void ProcessSPORT()
 	static RSPWAVE  *rsp = 0;
 	static u16 angle = 0;
 
+#ifdef _DEBUG
 	DSCSPORT **pdsc = &dsc;
 	RSPWAVE  **prsp = &rsp;
+#endif
+
+	#if defined(CPU_BF706) && defined(SPORT_BUF_MEM_L2)
+		PreProcessSPORT();
+	#endif
 
 	switch (state)
 	{
 		case 0:
 
-			dsc = GetDscSPORT();
+			#if defined(CPU_BF592) || !defined(SPORT_BUF_MEM_L2)
+				dsc = GetDscSPORT();
+			#elif defined(CPU_BF706)
+				dsc = readyTempSPORT.Get();
+			#endif
 
 			if (dsc == 0)
 			{
@@ -831,6 +961,7 @@ static void ProcessSPORT()
 			else
 			{
 				Pin_ProcessSPORT_Set();
+
 				state += 1;
 			};
 
@@ -844,6 +975,9 @@ static void ProcessSPORT()
 			}
 			else
 			{
+				DEBUG_ASSERT(rsp->next == 0);
+				DEBUG_ASSERT(rsp->dataLen <= ArraySize(rsp->data));
+
 				rsp->mode = 0;
 				rsp->dataLen = sizeof(RspHdrCM)/2+dsc->len;
 				rsp->fireIndex = dsc->fireIndex;
@@ -882,9 +1016,14 @@ static void ProcessSPORT()
 
 				state += 1;
 			};
+
+			break;
 		
 		case 2:
 		{
+			DEBUG_ASSERT(rsp->next == 0);
+			DEBUG_ASSERT(rsp->dataLen <= ArraySize(rsp->data));
+
 			RspCM &r = *((RspCM*)rsp->data);
 			u16 *d = r.data;
 
@@ -897,11 +1036,11 @@ static void ProcessSPORT()
 					*(d++) = s[0] - 2048; s++;
 				};
 
-				FreeDscSPORT(dsc);
+				//FreeDscSPORT(dsc);
 
-				Pin_ProcessSPORT_Clr();
+				//Pin_ProcessSPORT_Clr();
 
-				state = 0;
+				state = 5;
 			}
 			else if (dsc->chMask & 1)
 			{
@@ -923,14 +1062,17 @@ static void ProcessSPORT()
 					*(d++) = s[0] - 2048; s += 2;
 				};
 
-				FreeDscSPORT(dsc);
+				//FreeDscSPORT(dsc);
 
-				Pin_ProcessSPORT_Clr();
+				//Pin_ProcessSPORT_Clr();
 
-				state = 0;
+				state = 5;
 			};
 
-			processWave.Add(rsp);
+			DEBUG_ASSERT(rsp->next == 0);
+			DEBUG_ASSERT(rsp->dataLen <= ArraySize(rsp->data));
+
+			processWave.Add(rsp); rsp = 0;
 
 			break;
 		};
@@ -945,6 +1087,9 @@ static void ProcessSPORT()
 			}
 			else
 			{
+				DEBUG_ASSERT(rsp->next == 0);
+				DEBUG_ASSERT(rsp->dataLen <= ArraySize(rsp->data));
+
 				rsp->mode = 0;
 				rsp->dataLen = sizeof(RspHdrCM)/2+dsc->len;
 				rsp->fireIndex = dsc->fireIndex;
@@ -975,10 +1120,15 @@ static void ProcessSPORT()
 				r.hdr.packLen	= 0;						//19. Размер упакованных данных
 
 				state += 1;
-			}
+			};
+
+			break;
 
 		case 4:
 		{
+			DEBUG_ASSERT(rsp->next == 0);
+			DEBUG_ASSERT(rsp->dataLen <= ArraySize(rsp->data));
+
 			RspCM &r = *((RspCM*)rsp->data);
 			u16 *d = r.data;
 			u16 *s = dsc->data+3;
@@ -988,8 +1138,22 @@ static void ProcessSPORT()
 				*(d++) = s[0] - 2048; s += 2;
 			};
 
-			FreeDscSPORT(dsc);
-			processWave.Add(rsp);
+			DEBUG_ASSERT(rsp->next == 0);
+
+			processWave.Add(rsp); rsp = 0;
+
+			state = 5;
+
+			//break;
+		};
+
+		case 5:
+		{
+			#if defined(CPU_BF592) || !defined(SPORT_BUF_MEM_L2)
+				FreeDscSPORT(dsc);
+			#elif defined(CPU_BF706)
+				freeTempSPORT.Add(dsc);
+			#endif
 
 			Pin_ProcessSPORT_Clr();
 
@@ -997,6 +1161,7 @@ static void ProcessSPORT()
 
 			break;
 		};
+
 	};
 }
 
@@ -1013,16 +1178,21 @@ static void UpdateCM()
 	static byte OVRLAP = 3;
 	static u16 scale = 0;
 
-	RSPWAVE *_dsc = dsc;
+#ifdef __DEBUG
+	RSPWAVE **pdsc = &dsc;
+#endif
 
 	switch (state)
 	{
 		case 0: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
 			
-			dsc = _dsc = cmWave.Get();
+			dsc = cmWave.Get();
 
 			if (dsc != 0)
 			{
+				DEBUG_ASSERT(dsc->next == 0);
+				DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
+
 				RspCM *rsp = (RspCM*)dsc->data;
 
 				FragDataCM(dsc);
@@ -1034,6 +1204,9 @@ static void UpdateCM()
 
 		case 1: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		{
+			DEBUG_ASSERT(dsc->next == 0);
+			DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
+
 			RspCM *rsp = (RspCM*)dsc->data; 
 	
 			u16 pack = sensVars[rsp->hdr.sensType].packType;
@@ -1042,14 +1215,12 @@ static void UpdateCM()
 			{
 				PackDataCM(dsc, sensVars[rsp->hdr.sensType].packType);
 
-				u32 t = cli();
-
 				dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
 				dsc->dataLen += 1;
 
-				sti(t);
+				DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
 
-				readyRspWave.Add(dsc);
+				readyRspWave.Add(dsc); dsc = 0;
 
 				state = 0;
 			}
@@ -1069,6 +1240,9 @@ static void UpdateCM()
 
 		case 2: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
 		{
+			DEBUG_ASSERT(dsc->next == 0);
+			DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
+
 			RspCM *rsp = (RspCM*)dsc->data; 
 
 			Pack_FDCT_Transform((i16*)(rsp->data + index));
@@ -1080,6 +1254,9 @@ static void UpdateCM()
 
 		case 3: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
 		{
+			DEBUG_ASSERT(dsc->next == 0);
+			DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
+
 			RspCM *rsp = (RspCM*)dsc->data; 
 
 			byte shift = 3 - (sensVars[rsp->hdr.sensType].packType - PACK_DCT0);
@@ -1093,6 +1270,9 @@ static void UpdateCM()
 
 		case 4: //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
 		{
+			DEBUG_ASSERT(dsc->next == 0);
+			DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
+
 			RspCM *rsp = (RspCM*)dsc->data; 
 
 			PackDCT *pdct = (PackDCT*)(rsp->data+rsp->hdr.packLen);
@@ -1116,10 +1296,14 @@ static void UpdateCM()
 
 				rsp->hdr.sl = index + OVRLAP;
 
-				readyRspWave.Add(dsc);
+				DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
+
+				readyRspWave.Add(dsc); 
 
 				dsc->data[dsc->dataLen] = GetCRC16(&rsp->hdr, sizeof(rsp->hdr));
 				dsc->dataLen += 1;
+
+				dsc = 0;
 
 				state = 0;
 			};
@@ -1199,8 +1383,9 @@ static void UpdateMode()
 			{
 				switch (mode)
 				{
-					case 0: ProcessDataCM(dsc); break;
-					case 1: ProcessDataIM(dsc); break;
+					case 0:		ProcessDataCM(dsc);		break;
+					case 1:		ProcessDataIM(dsc);		break;
+					default:	freeRspWave.Add(dsc);	break;
 				};
 			}
 			else
@@ -1210,6 +1395,8 @@ static void UpdateMode()
 				
 				ProcessDataCM(dsc);
 			};
+
+			dsc = 0;
 
 			Pin_UpdateMode_Clr();
 
@@ -1222,6 +1409,16 @@ static void UpdateMode()
 	UpdateCM();
 
 	if ((i&1) == 0) Update();
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void Check_RSPWAVE_BUF()
+{
+	for (byte i = 0; i < RSPWAVE_BUF_NUM; i++)
+	{
+		if (rspWaveBuf[i].dataLen & 0x8000) Pin_PreProcessSPORT_Set(), Pin_PreProcessSPORT_Clr();
+	};
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1249,10 +1446,20 @@ int main( void )
 
 	//spi.Connect(25000000);
 
-	for (u16 i = 0; i < ArraySize(rspWaveBuf); i++)
+	u32 t = cli();
+
+	for (u16 i = 0; i < RSPWAVE_BUF_NUM; i++)
 	{
-		freeRspWave.Add(rspWaveBuf+i);
+		RSPWAVE *rsp = Alloc_RSPWAVE_Buf();
+
+		freeRspWave.Add(rsp);
 	};
+
+	#if defined(CPU_BF706) && defined(SPORT_BUF_MEM_L2)
+		InitPreProcessSPORT();
+	#endif
+
+	sti(t);
 
 	while (1)
 	{
@@ -1260,7 +1467,9 @@ int main( void )
 
 		UpdateMode();
 		
-		UpdateHardware();
+#ifdef _DEBUG
+		//Check_RSPWAVE_BUF();
+#endif
 
 		//MAIN_LOOP_PIN_CLR();
 	};

@@ -93,6 +93,12 @@
 #define ADG2128_SENSE2 (0x80|(5<<3)|0) // X5 to Y0 on; SIG_3 -> CH3 -> SPORT1 PRI	
 #define ADG2128_REFSEN (0x80|(4<<3)|1) // X4 to Y1 on; SIG_4 -> CH4 -> SPORT1 SEC
 
+#ifdef SPORT_BUF_MEM_L2
+#define Alloc_SPORT_Buf(v) Alloc_L2_NoCache(v)
+#else
+#define Alloc_SPORT_Buf(v) Alloc_UnCached(v)
+#endif
+
 #endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define DisableSwArr()	{ PIO_RST_SW_ARR->CLR(BM_RST_SW_ARR); }
@@ -117,17 +123,17 @@ static S_SPIM	spiGain(1, PIO_MUX_SYNC, GAIN_CS_MASK, ArraySize(GAIN_CS_MASK), SC
 
 #ifdef CPU_BF592 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORTDSC_SECTION /**/
-
 DMA_CH	dmaRxSp0(SPORT0_RX_DMA);
 DMA_CH	dmaRxSp1(SPORT1_RX_DMA);
 
 static u16 sp0TCR1 = 0;
 static u16 sp1TCR1 = 0;
 
+static DSCSPORT sportdsc[SPORT_BUF_NUM];
+
 #elif defined(CPU_BF706) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SPORTDSC_SECTION __attribute__ ((section("L2_sram_uncached")))
+//#define SPORTDSC_SECTION __attribute__ ((section("L2_sram_uncached")))
 
 DMA_CH	dmaRxSp0(SPORT1_B_DMA);
 DMA_CH	dmaRxSp1(SPORT1_A_DMA);
@@ -139,14 +145,12 @@ static u32 sp1CTL = 0;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
 static DSCSPORT *curDscSPORT0 = 0;
 static DSCSPORT *curDscSPORT1 = 0;
 //static DSCPPI *lastDscPPI = 0;
 
 //static u16 ppi_buf[PPI_BUF_LEN][PPI_BUF_NUM];
 
-static DSCSPORT sportdsc[SPORT_BUF_NUM] SPORTDSC_SECTION;
 //static u16 startIndPPI = 0;
 //static u16 endIndPPI = 0;g118
 
@@ -305,6 +309,8 @@ static void SetPPI(PPI &ppi, SENS &sens, u16 sensType, u16 chMask, bool forced)
 
 		if (ppi.fireDiv == 0) { ppi.fireDiv = 1; };
 	};
+
+	DEBUG_ASSERT(ppi.len <= (WAVE_MAXLEN+WAVE_OVRLEN));
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -418,6 +424,8 @@ static void Read_SPORT0(PPI &ppi)
 		curDscSPORT0->len = ppi.len;
 		curDscSPORT0->chMask = ppi.chMask;
 
+		DEBUG_ASSERT(curDscSPORT0->len <= (WAVE_MAXLEN+WAVE_OVRLEN));
+
 		#ifdef CPU_BF592
 
 			FIRE1_TIMER->Width = ppi.fireDiv; 
@@ -454,7 +462,7 @@ static void Read_SPORT0(PPI &ppi)
 
 			SPORT0_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT0->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp0.Read16(curDscSPORT0->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -481,6 +489,8 @@ static void Read_SPORT1(PPI &ppi)
 		curDscSPORT1->len = ppi.len;
 		curDscSPORT1->chMask = ppi.chMask;
 	
+		DEBUG_ASSERT(curDscSPORT1->len <= (WAVE_MAXLEN+WAVE_OVRLEN));
+
 		#ifdef CPU_BF592
 
 			FIRE2_TIMER->Width = ppi.fireDiv;
@@ -517,7 +527,7 @@ static void Read_SPORT1(PPI &ppi)
 
 			SPORT1_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT1->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.delay+1)*n, (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp1.Read16(curDscSPORT1->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -843,16 +853,16 @@ SEC_INTERRUPT_HANDLER(SYNC_ISR)
 
 static void InitFire()
 {
-	for (u16 i = 0; i < ArraySize(sportdsc); i++)
-	{
-		DSCSPORT &dsc = sportdsc[i];
-
-		dsc.busy = false;
-
-		freeSPORT.Add(&dsc);
-	};
-
 	#ifdef CPU_BF592
+
+		for (u16 i = 0; i < ArraySize(sportdsc); i++)
+		{
+			DSCSPORT &dsc = sportdsc[i];
+
+			dsc.busy = false;
+
+			freeSPORT.Add(&dsc);
+		};
 
 		PIO_FIRE->SetFER(BM_FIRE1|BM_FIRE2);
 		PIO_FIRE->ClrMUX(BM_FIRE1|BM_FIRE2);
@@ -898,6 +908,13 @@ static void InitFire()
 		PIO_SYNC->EnableIRQA_Rise(BM_SYNC);
 
 	#elif defined(CPU_BF706)
+
+		for (u16 i = 0; i < SPORT_BUF_NUM; i++)
+		{
+			DSCSPORT *dsc = (DSCSPORT*)Alloc_SPORT_Buf(sizeof(DSCSPORT));
+
+			if (dsc != 0) dsc->busy = false, freeSPORT.Add(dsc);
+		};
 
 		PIO_FIRE->SetFER(BM_FIRE1|BM_FIRE2);
 		PIO_FIRE->SetMUX(PIN_FIRE1, 0);
@@ -1658,6 +1675,8 @@ static void Update_ADC_DAC()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF706
+
 static void Init_SPI2_MemoryMappedMode()
 {
 	HW::PIOB->SetFER(PB10|PB11|PB12|PB13|PB14|PB15);
@@ -1673,6 +1692,8 @@ static void Init_SPI2_MemoryMappedMode()
 	HW::SPI2->SLVSEL	= SPI_SSEL1|SPI_SSE1;
 	HW::SPI2->CTL		|= SPI_EN;
 }
+
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1698,7 +1719,10 @@ void InitHardware()
 
 	InitGain();
 
+#ifdef CPU_BF706
 	Init_SPI2_MemoryMappedMode();
+#endif
+
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

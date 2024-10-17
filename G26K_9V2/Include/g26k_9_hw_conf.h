@@ -292,17 +292,20 @@
 
 #elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define Pin_UpdateMode_Set()	HW::PIOC->BSET(10)
-#define Pin_UpdateMode_Clr()	HW::PIOC->BCLR(10)
+#define Pin_UpdateMode_Set()		HW::PIOC->BSET(10)
+#define Pin_UpdateMode_Clr()		HW::PIOC->BCLR(10)
 
-#define Pin_SPORT0_ISR_Set()	HW::PIOC->BSET(9)
-#define Pin_SPORT0_ISR_Clr()	HW::PIOC->BCLR(9)
+#define Pin_SPORT0_ISR_Set()		HW::PIOC->BSET(9)
+#define Pin_SPORT0_ISR_Clr()		HW::PIOC->BCLR(9)
 
-#define Pin_SPORT1_ISR_Set()	HW::PIOC->BSET(8)
-#define Pin_SPORT1_ISR_Clr()	HW::PIOC->BCLR(8)
+#define Pin_SPORT1_ISR_Set()		HW::PIOC->BSET(8)
+#define Pin_SPORT1_ISR_Clr()		HW::PIOC->BCLR(8)
 
-#define Pin_ProcessSPORT_Set()	HW::PIOA->BSET(13)
-#define Pin_ProcessSPORT_Clr()	HW::PIOA->BCLR(13)
+#define Pin_ProcessSPORT_Set()		HW::PIOA->BSET(13)
+#define Pin_ProcessSPORT_Clr()		HW::PIOA->BCLR(13)
+
+#define Pin_PreProcessSPORT_Set()	HW::PIOC->BSET(4)
+#define Pin_PreProcessSPORT_Clr()	HW::PIOC->BCLR(4)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

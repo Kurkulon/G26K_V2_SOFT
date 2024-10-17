@@ -71,7 +71,7 @@
     <NMakeReBuildCommandLine>make -h -a version=Debug targetcpu=BF592</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q .\Debug\*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(OutDir)G26K.9V2.DSP.dxe</NMakeOutput>
-    <NMakePreprocessorDefinitions>__DEBUG;CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>__DEBUG;_DEBUG;CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ProjectDir)..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;</NMakeIncludeSearchPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BF592_Release|Win32'">

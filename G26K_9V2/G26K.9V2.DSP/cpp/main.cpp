@@ -8,7 +8,7 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define RSPWAVE_BUF_NUM 4
+#define RSPWAVE_BUF_NUM 8
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -37,7 +37,7 @@ static byte build_date[128] __attribute__ ((section("L1_data"))) = "\n" "G26K_9_
 	#ifdef RSPWAVE_BUF_MEM_L2
 		#define Alloc_RSPWAVE_Buf() (RSPWAVE*)Alloc_L2_CacheWT(sizeof(RSPWAVE))
 	#else
-		static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM+1] __attribute__ ((section("L1_data")));
+		static RSPWAVE rspWaveBuf[RSPWAVE_BUF_NUM] __attribute__ ((section("L1_data")));
 		#define Alloc_RSPWAVE_Buf() (rspWaveBuf+i)
 		//#define Alloc_RSPWAVE_Buf() (RSPWAVE*)Alloc_UnCached(sizeof(RSPWAVE))
 #endif
@@ -1413,13 +1413,13 @@ static void UpdateMode()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void Check_RSPWAVE_BUF()
-{
-	for (byte i = 0; i < RSPWAVE_BUF_NUM; i++)
-	{
-		if (rspWaveBuf[i].dataLen & 0x8000) Pin_PreProcessSPORT_Set(), Pin_PreProcessSPORT_Clr();
-	};
-}
+//static void Check_RSPWAVE_BUF()
+//{
+//	for (byte i = 0; i < RSPWAVE_BUF_NUM; i++)
+//	{
+//		if (rspWaveBuf[i].dataLen & 0x8000) Pin_PreProcessSPORT_Set(), Pin_PreProcessSPORT_Clr();
+//	};
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

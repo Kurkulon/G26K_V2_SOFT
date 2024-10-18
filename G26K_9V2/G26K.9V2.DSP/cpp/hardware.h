@@ -23,8 +23,8 @@
 #define WAVE_MAXLEN		(1024)
 #define WAVE_OVRLEN		(64)
 
-//#define SPORT_BUF_MEM_L2
-//#define RSPWAVE_BUF_MEM_L2
+#define SPORT_BUF_MEM_L2
+#define RSPWAVE_BUF_MEM_L2
 
 #endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

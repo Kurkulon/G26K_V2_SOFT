@@ -169,11 +169,11 @@ static u32 prevFireRefTime = 0;
 static List<DSCSPORT> freeSPORT;
 static List<DSCSPORT> readySPORT;
 
-static ReqDsp01 dspVars;
+static ReqDsp01 dspVars[2];
 
 u32 shaftCount = 0;
 u32 shaftMMSEC = 0;
-u32 shaftPrevMMSEC = 0;
+//u32 shaftPrevMMSEC = 0;
 
 u16 motoCount = 0;
 u32 rotCount = 0;
@@ -181,9 +181,9 @@ u32 rotMMSEC = 0;
 u32 rotDeltaMMSEC = 0;
 
 u32 fireSyncCount = 0;
-u32 firesPerRound = 16;
+//u32 firesPerRound = 16;
 
-static SENS *curSens = &dspVars.sens[0];
+static SENS *curSens = &dspVars[0].sens[0];
 
 struct PPI 
 {
@@ -199,9 +199,10 @@ struct PPI
 	u16 freq;
 };
 
-static PPI sens1_PPI;
-static PPI sens2_PPI;
-static PPI refPPI;
+static PPI sens1_PPI[2];
+static PPI sens2_PPI[2];
+static PPI refPPI[2];
+static byte index = 0;
 
 u16 dstFireVoltage		= 250;
 u16 dstFireVoltage10	= 2500;
@@ -243,7 +244,7 @@ static void SetMux(byte a)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static void SetPPI(PPI &ppi, SENS &sens, u16 sensType, u16 chMask, bool forced)
+static void SetPPI(PPI &ppi, const SENS &sens, u16 sensType, u16 chMask, bool forced)
 {
 	bool c = false;
 
@@ -317,15 +318,24 @@ static void SetPPI(PPI &ppi, SENS &sens, u16 sensType, u16 chMask, bool forced)
 
 void SetDspVars(const ReqDsp01 *v, bool forced)
 {
-	dspVars = *v;
+	byte i = (index+1)&1;
 
-	SetPPI(sens1_PPI,	dspVars.sens[0], 0, v->sensMask&1,		forced); 
-	SetPPI(sens2_PPI,	dspVars.sens[1], 1, (v->sensMask>>1)&1, forced); 
-	SetPPI(refPPI,		dspVars.sens[2], 2, 2,					forced);
+	ReqDsp01 &vars = dspVars[i];
+	PPI &ppiS1 = sens1_PPI[i];
+	PPI &ppiS2 = sens2_PPI[i];
+	PPI &ppiRF = refPPI[i];
+
+	vars = *v;
+
+	SetPPI(ppiS1,	v->sens[0], 0, v->sensMask&1,		forced); 
+	SetPPI(ppiS2,	v->sens[1], 1, (v->sensMask>>1)&1,	forced); 
+	SetPPI(ppiRF,	v->sens[2], 2, 2,					forced);
 	
-	firesPerRound = (dspVars.mode == 0) ? dspVars.wavesPerRoundCM : dspVars.wavesPerRoundIM;
+	//firesPerRound = (dspVars.mode == 0) ? dspVars.wavesPerRoundCM : dspVars.wavesPerRoundIM;
 
-	SetGain(sens1_PPI.gain,sens1_PPI.gain, refPPI.gain, sens2_PPI.gain);
+	SetGain(ppiS1.gain,ppiS1.gain, ppiRF.gain, ppiS2.gain);
+
+	index = i;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -539,6 +549,8 @@ static void Read_SPORT1(PPI &ppi)
 
 static void Fire()
 {
+	ReqDsp01 &vars = dspVars[index&1];
+
 	if (expected_true(curDscSPORT0 != 0))
 	{
 		if (!curDscSPORT0->busy)
@@ -553,15 +565,15 @@ static void Fire()
 			curDscSPORT0->motoCount		= motoCount; //dspVars.motoCount;
 			curDscSPORT0->shaftCount	= shaftCount;
 
-			curDscSPORT0->ax = dspVars.ax;
-			curDscSPORT0->ay = dspVars.ay;
-			curDscSPORT0->az = dspVars.az;
-			curDscSPORT0->at = dspVars.at;
+			curDscSPORT0->ax = vars.ax;
+			curDscSPORT0->ay = vars.ay;
+			curDscSPORT0->az = vars.az;
+			curDscSPORT0->at = vars.at;
 		};
 	}
 	else
 	{
-		Read_SPORT0(sens1_PPI);
+		Read_SPORT0(sens1_PPI[index&1]);
 	};
 
 	if (expected_true(curDscSPORT1 != 0))
@@ -578,15 +590,15 @@ static void Fire()
 			curDscSPORT1->motoCount		= motoCount; //dspVars.motoCount;
 			curDscSPORT1->shaftCount	= shaftCount;
 
-			curDscSPORT1->ax = dspVars.ax;
-			curDscSPORT1->ay = dspVars.ay;
-			curDscSPORT1->az = dspVars.az;
-			curDscSPORT1->at = dspVars.at;
+			curDscSPORT1->ax = vars.ax;
+			curDscSPORT1->ay = vars.ay;
+			curDscSPORT1->az = vars.az;
+			curDscSPORT1->at = vars.at;
 		};
 	}
 	else
 	{
-		Read_SPORT1(sens2_PPI);
+		Read_SPORT1(sens2_PPI[index&1]);
 	};
 }
 
@@ -612,10 +624,12 @@ static void FireRef()
 			curDscSPORT1->motoCount		= motoCount; //dspVars.motoCount;
 			curDscSPORT1->shaftCount	= shaftCount;
 
-			curDscSPORT1->ax = dspVars.ax;
-			curDscSPORT1->ay = dspVars.ay;
-			curDscSPORT1->az = dspVars.az;
-			curDscSPORT1->at = dspVars.at;
+			ReqDsp01 &vars = dspVars[index&1];
+
+			curDscSPORT1->ax = vars.ax;
+			curDscSPORT1->ay = vars.ay;
+			curDscSPORT1->az = vars.az;
+			curDscSPORT1->at = vars.at;
 		};
 	};
 }
@@ -626,95 +640,108 @@ static void FireRef()
 
 #pragma optimize_for_speed
 
-#ifdef CPU_BF592
-
-EX_INTERRUPT_HANDLER(SPORT0_ISR)
-{
-	Pin_SPORT0_ISR_Set();
-
-	if (dmaRxSp0.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
-	{
-		Stop_SPORT0();
-
-		dmaRxSp0.Disable(); //dmaSp1.Disable();
-
-		HW::SPORT0->RCR1 = 0;
-		FIRE1_TIMER->Width = 1;
-
-		curDscSPORT0->busy = false;
-		readySPORT.Add(curDscSPORT0);
-		curDscSPORT0 = 0;
-
-		if ((dspVars.sensMask & 2) == 0)
-		{
-			u32 t = mmsec;
-
-			if ((t - prevFireRefTime) >= 30011)
-			{
-				prevFireRefTime = t;
-
-				Read_SPORT1(refPPI);
-				
-				StartFire2(); // Start Fire Pulse
-				Start_SPORT1();
-				FireRef();
-			};
-		};
-
-		Read_SPORT0(sens1_PPI);
-
-		//ssync();
-	};
-
-	Pin_SPORT0_ISR_Clr();
-}
-
+//#ifdef CPU_BF592
+//EX_INTERRUPT_HANDLER(SPORT0_ISR)
+//#elif defined(CPU_BF706)
+//SEC_INTERRUPT_HANDLER(SPORT0_ISR)
+//#endif
+//{
+//	Pin_SPORT0_ISR_Set();
+//
+//	if (dmaRxSp0.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
+//	{
+//		Stop_SPORT0();
+//
+//		dmaRxSp0.Disable(); //dmaSp1.Disable();
+//
+//	#ifdef CPU_BF592
+//		HW::SPORT0->RCR1 = 0;
+//		FIRE1_TIMER->Width = 1;
+//	#elif defined(CPU_BF706)
+//		FIRE1_TIMER.WID = 1;
+//	#endif
+//
+//		curDscSPORT0->busy = false;
+//		readySPORT.Add(curDscSPORT0);
+//		curDscSPORT0 = 0;
+//
+//		if ((dspVars.sensMask & 2) == 0)
+//		{
+//			u32 t = mmsec;
+//
+//			if ((t - prevFireRefTime) >= 30011)
+//			{
+//				prevFireRefTime = t;
+//
+//				Read_SPORT1(refPPI);
+//				
+//				StartFire2(); // Start Fire Pulse
+//				Start_SPORT1();
+//				FireRef();
+//			};
+//		};
+//
+//		Read_SPORT0(sens1_PPI);
+//
+//		//ssync();
+//	};
+//
+//	Pin_SPORT0_ISR_Clr();
+//}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-EX_INTERRUPT_HANDLER(SPORT1_ISR)
-{
-	Pin_SPORT1_ISR_Set();
+//#ifdef CPU_BF592
+//EX_INTERRUPT_HANDLER(SPORT1_ISR)
+//#elif defined(CPU_BF706)
+//SEC_INTERRUPT_HANDLER(SPORT1_ISR)
+//#endif
+//{
+//	Pin_SPORT1_ISR_Set();
+//
+//	if (dmaRxSp1.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
+//	{
+//		Stop_SPORT1();
+//
+//		dmaRxSp1.Disable();
+//
+//		HW::SPORT1->RCR1 = 0;
+//		FIRE2_TIMER->Width = 1;
+//
+//		curDscSPORT1->busy = false;
+//		readySPORT.Add(curDscSPORT1);
+//		curDscSPORT1 = 0;
+//
+//		u32 t = mmsec;
+//
+//		if ((t - prevFireRefTime) >= 30011)
+//		{
+//			prevFireRefTime = t;
+//
+//			Read_SPORT1(refPPI);
+//			
+//			StartFire2(); // Start Fire Pulse
+//			Start_SPORT1();
+//			FireRef();
+//		}
+//		else
+//		{
+//			Read_SPORT1(sens2_PPI);
+//		};
+//
+//		//ssync();
+//	};
+//
+//	Pin_SPORT1_ISR_Clr();	
+//}
 
-	if (dmaRxSp1.CheckComplete()/* &&  dmaSp1.CheckComplete()*/)
-	{
-		Stop_SPORT1();
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-		dmaRxSp1.Disable();
-
-		HW::SPORT1->RCR1 = 0;
-		FIRE2_TIMER->Width = 1;
-
-		curDscSPORT1->busy = false;
-		readySPORT.Add(curDscSPORT1);
-		curDscSPORT1 = 0;
-
-		u32 t = mmsec;
-
-		if ((t - prevFireRefTime) >= 30011)
-		{
-			prevFireRefTime = t;
-
-			Read_SPORT1(refPPI);
-			
-			StartFire2(); // Start Fire Pulse
-			Start_SPORT1();
-			FireRef();
-		}
-		else
-		{
-			Read_SPORT1(sens2_PPI);
-		};
-
-		//ssync();
-	};
-
-	Pin_SPORT1_ISR_Clr();	
-}
-
+#ifdef CPU_BF592
+EX_INTERRUPT_HANDLER(SPORT0_ISR)
 #elif defined(CPU_BF706)
-
 SEC_INTERRUPT_HANDLER(SPORT0_ISR)
+#endif
 {
 	Pin_SPORT0_ISR_Set();
 
@@ -724,13 +751,19 @@ SEC_INTERRUPT_HANDLER(SPORT0_ISR)
 
 		dmaRxSp0.Disable(); //dmaSp1.Disable();
 
+#ifdef CPU_BF592
+		HW::SPORT0->RCR1 = 0;
+		FIRE1_TIMER->Width = 1;
+#elif defined(CPU_BF706)
 		FIRE1_TIMER.WID = 1;
-
+#endif
 		curDscSPORT0->busy = false;
 		readySPORT.Add(curDscSPORT0);
 		curDscSPORT0 = 0;
 
-		if ((dspVars.sensMask & 2) == 0)
+		byte i = index&1;
+
+		if ((dspVars[i].sensMask & 2) == 0)
 		{
 			u32 t = mmsec;
 
@@ -738,7 +771,7 @@ SEC_INTERRUPT_HANDLER(SPORT0_ISR)
 			{
 				prevFireRefTime = t;
 
-				Read_SPORT1(refPPI);
+				Read_SPORT1(refPPI[i]);
 
 				StartFire2(); // Start Fire Pulse
 				Start_SPORT1();
@@ -746,7 +779,7 @@ SEC_INTERRUPT_HANDLER(SPORT0_ISR)
 			};
 		};
 
-		Read_SPORT0(sens1_PPI);
+		Read_SPORT0(sens1_PPI[i]);
 
 		//ssync();
 	};
@@ -754,10 +787,13 @@ SEC_INTERRUPT_HANDLER(SPORT0_ISR)
 	Pin_SPORT0_ISR_Clr();
 }
 
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF592
+EX_INTERRUPT_HANDLER(SPORT1_ISR)
+#elif defined(CPU_BF706)
 SEC_INTERRUPT_HANDLER(SPORT1_ISR)
+#endif
 {
 	Pin_SPORT1_ISR_Set();
 
@@ -767,7 +803,12 @@ SEC_INTERRUPT_HANDLER(SPORT1_ISR)
 
 		dmaRxSp1.Disable();
 
+#ifdef CPU_BF592
+		HW::SPORT1->RCR1 = 0;
+		FIRE2_TIMER->Width = 1;
+#elif defined(CPU_BF706)
 		FIRE2_TIMER.WID = 1;
+#endif
 
 		curDscSPORT1->busy = false;
 		readySPORT.Add(curDscSPORT1);
@@ -775,11 +816,13 @@ SEC_INTERRUPT_HANDLER(SPORT1_ISR)
 
 		u32 t = mmsec;
 
+		byte i = index&1;
+
 		if ((t - prevFireRefTime) >= 30011)
 		{
 			prevFireRefTime = t;
 
-			Read_SPORT1(refPPI);
+			Read_SPORT1(refPPI[i]);
 
 			StartFire2(); // Start Fire Pulse
 			Start_SPORT1();
@@ -787,7 +830,7 @@ SEC_INTERRUPT_HANDLER(SPORT1_ISR)
 		}
 		else
 		{
-			Read_SPORT1(sens2_PPI);
+			Read_SPORT1(sens2_PPI[i]);
 		};
 
 		//ssync();
@@ -795,8 +838,6 @@ SEC_INTERRUPT_HANDLER(SPORT1_ISR)
 
 	Pin_SPORT1_ISR_Clr();	
 }
-
-#endif	
 
 #pragma optimize_as_cmd_line
 
@@ -965,9 +1006,11 @@ static void InitFire()
 
 	#endif	
 
-	SetPPI(sens1_PPI,	dspVars.sens[0], 0, 1, true);
-	SetPPI(sens2_PPI,	dspVars.sens[1], 1, 1, true);
-	SetPPI(refPPI,		dspVars.sens[2], 2, 2, true);
+	index = 0;
+
+	SetPPI(sens1_PPI[0],	dspVars[0].sens[0], 0, 1, true);
+	SetPPI(sens2_PPI[0],	dspVars[0].sens[1], 1, 1, true);
+	SetPPI(refPPI[0],		dspVars[0].sens[2], 2, 2, true);
 
 	EnableSwArr();
 }
@@ -988,7 +1031,7 @@ SEC_INTERRUPT_HANDLER(SHAFT_ISR)
 
 	shaftCount++;
 
-	shaftPrevMMSEC = shaftMMSEC;
+	//shaftPrevMMSEC = shaftMMSEC;
 	
 	shaftMMSEC = mmsec;
 

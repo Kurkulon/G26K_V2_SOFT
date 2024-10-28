@@ -46,14 +46,17 @@ target_name = G26K.9V2.BOOT
 
 cpu_opt		= -proc ADSP-BF592-A -si-revision 0.2
 loader_opt	=  
-link_opt	= -T $(libdir)\LDF\BF592A.ldf 
+link_opt	= -T $(libdir)\LDF\BF592A.ldf -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM
 startup_obj = $(objdir)\startup_BF592A.doj
 
 !else ifeq targetcpu BF706
 
+cache_opt	= USE_CACHE_C
+memmap_opt	= USE_L1_CODE_DA_DB
 cpu_opt		= -proc ADSP-BF706 -si-revision 1.1 
+comp_opt	= -D $(cache_opt) -D $(memmap_opt)
 loader_opt	= -bcode 14
-link_opt	= -T $(libdir)\LDF\BF706.ldf 
+link_opt	= -T $(libdir)\LDF\BF706.ldf -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE,-MD$(cache_opt),-MD$(memmap_opt)
 startup_obj = $(objdir)\startup_BF706.doj
 
 !endif
@@ -102,8 +105,8 @@ compiler_options = $(debug_compiler_options) -c -c++11 -g++ -g -structs-do-not-o
 
 ####################################################################################################################################################################################################,-MDUSE_CACHE_C_A_B
 
-link_options = $(cpu_opt) $(link_opt) -no-mem -flags-link -e,-MDADI_CCES,-MD__cplusplus,-MDNO_UTILITY_ROM,-MDUSING_ICACHE_DISABLE_INIT_CODE -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
-  
+link_options = $(cpu_opt) $(link_opt) -no-mem -add-debug-libpaths -flags-link @$(objdir)\link_input.txt
+
 ####################################################################################################################################################################################################
 
 !include $(objdir)\mkoutcpp
@@ -155,11 +158,11 @@ $(target_name).dxe : $(startup_obj) $(modules_obj) $(libname)
 
 !include $(objdir)\mkoutdep
 
-####################################################################################################################################################################################################
+################################################-absolute-path-dependencies #################################################################################################################################################### 
 
 .cpp.doj:
 	@echo Compiling $[. ...
-	@$(libdir)\ccbl.bat $(compiler_options) -save-temps -path-output $^: -i -absolute-path-dependencies -MD -Mo="$^*.d" -o "$^@" $[@
+	@$(libdir)\ccbl.bat $(compiler_options) -i -gnu-style-dependencies -MD -Mo=$(objdir)\$^&.d -o $^. $[@
 
 ####################################################################################################################################################################################################
 

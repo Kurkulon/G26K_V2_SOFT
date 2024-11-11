@@ -29,11 +29,11 @@
 //#define FLASHSPI_WRITESYNC
 //#define FLASHSPI_REQUESTUPDATE
 
-#define	NUM_SMALL_BUF	60      
-#define	NUM_MEDIUM_BUF	1
-#define	NUM_HUGE_BUF	1
+//#define	NUM_SMALL_BUF	60      
+//#define	NUM_MEDIUM_BUF	1
+//#define	NUM_HUGE_BUF	1
 
-#define FLASH_IS25LP080D
+//#define FLASH_IS25LP080D
 #define FLASH_START_ADR 0x00000 	
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -66,45 +66,38 @@ inline u16 GetNetAdr() { return DSP_BOOT_NET_ADR; }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef BOOT_NEW
+//#undef BOOT_TIMEOUT			
+//#undef BOOT_MAIN_TIMEOUT	
+//#define BOOT_TIMEOUT			(2000)
+//#define BOOT_MAIN_TIMEOUT		(100000)
 
-	#include "BOOT\boot_imp.h"
+#define Pin_MainLoop_Tgl()		MAIN_LOOP_PIN_TGL()
 
-#else // #ifndef BOOT_NEW
+#ifdef BOOT_COM
 
-	//#undef BOOT_TIMEOUT			
-	//#undef BOOT_MAIN_TIMEOUT	
-	//#define BOOT_TIMEOUT			(2000)
-	//#define BOOT_MAIN_TIMEOUT		(100000)
+#include "Comport\ComPort_imp.h"
 
-	#define Pin_MainLoop_Tgl()		MAIN_LOOP_PIN_TGL()
+	#ifdef CPU_BF592
 
-	#ifdef BOOT_COM
+		static ComPort com;
 
-	#include "Comport\ComPort_imp.h"
+	#elif defined(CPU_BF706)
 
-		#ifdef CPU_BF592
-
-			static ComPort com;
-
-		#elif defined(CPU_BF706)
-
-			static ComPort com(1, PIO_RTS, PIN_RTS);
-
-		#endif
+		static ComPort com(1, PIO_RTS, PIN_RTS);
 
 	#endif
 
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#endif
 
-	#include "FLASH\FlashSPI_imp_v2.h"
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	FlashSPI bootFlash(spi);
+#include "FLASH\FlashSPI_imp_v2.h"
 
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+FlashSPI bootFlash(spi);
 
-	#include "BOOT\boot_com_emac_imp_v2.h"
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#include "BOOT\boot_com_emac_imp_v2.h"
 
-#endif // #else // #ifndef BOOT_NEW
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+

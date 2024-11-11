@@ -1,11 +1,11 @@
-#include "hw_conf.h" 
+//#include "hw_conf.h" 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef BOOT_NEW
-
-#include "ComPort\ComPort_imp.h"
-
-#endif
+//#ifndef BOOT_NEW
+//
+//#include "ComPort\ComPort_imp.h"
+//
+//#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

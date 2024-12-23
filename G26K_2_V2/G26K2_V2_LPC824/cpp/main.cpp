@@ -51,6 +51,7 @@ __packed struct RspMoto
 	u16		motoCounter;
 	u16		auxVoltage;
 	u16		motoVoltage;
+	u16		motoDuty;
 	u16 	crc;  
 };
 
@@ -87,14 +88,15 @@ static bool RequestMan_10(u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	SetMaxCurrent(req->maxCurrent);
 
 	rsp.rw = manReqWord|1;	// 	1. ответное слово
-	rsp.mororStatus = GetMotorState();
-	rsp.current = GetAvrCurrent();
-	rsp.currentLow = GetAvrCurrentLow();
-	rsp.rpm = GetRPM();
+	rsp.mororStatus	= GetMotorState();
+	rsp.current		= GetAvrCurrent();
+	rsp.currentLow	= GetAvrCurrentLow();
+	rsp.rpm			= GetRPM();
 	rsp.motoCounter = GetmotoCounter();
-	rsp.auxVoltage = GetAvrAuxVoltage();
+	rsp.auxVoltage	= GetAvrAuxVoltage();
 	rsp.motoVoltage = GetAvrMotoVoltage();
-	rsp.crc = GetCRC16(&rsp, sizeof(rsp)-2);
+	rsp.motoDuty	= GetDutyPWM();
+	rsp.crc			= GetCRC16(&rsp, sizeof(rsp)-2);
 
 	wb->data = &rsp;			 
 	wb->len = sizeof(rsp);	 

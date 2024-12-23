@@ -8,15 +8,16 @@
 //#define CLOSE_VALVE_CUR 600
 
 #define GEAR_RATIO			12.25
-#define CUR_LIM				2000
-#define CUR_MAX				3000
+#define CUR_LIM				5000
+#define CUR_MAX				6000
 #define CUR_MIN				100
-#define ABS_CUR_LIM			5000
-#define ABS_CUR_MAX			6000
+#define ABS_CUR_LIM			7000
+#define ABS_CUR_MAX			8000
 #define POWER_LIM			30000
-#define VREG_MIN			100
-#define VREG_MAX			480
-#define RPM_VREG_K			(6 * 256/10)
+#define VREG_MIN			200
+#define VREG_MAX			600
+#define RPM_VREG_K			(1 * 256/10)
+#define RPM_VREG_MIN		480
 #define DT_MOSFET			NS2CLK(200)
 #define VAUX_MIN			500
 #define VAUX_DEF			3000
@@ -24,6 +25,8 @@
 #define FB90_VREG_DELTA		50
 #define DELTA_DUTY_MAX		0x10000
 #define DELTA_DUTY_MIN		0x1000
+#define PWM_PERIOD			US2CLK(50)
+#define MAX_DUTY			US2CLK(48)
 
 const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 
@@ -138,8 +141,8 @@ const byte states[16] =		{ WW, WW, UU, WW, VV, VV, UU, UU,		WW, UU, VV, VV, WW, 
 const byte LG_pin[16] =		{ UL, UL, VL, VL, WL, UL, WL, VL,		VL, WL, UL, WL, VL, VL, UL, WL };
 const byte HG_pin[16] =		{ UH, UH, VH, VH, WH, UH, WH, VH,		VH, WH, UH, WH, VH, VH, UH, WH };
 
-const u16 pwmPeriod = US2CLK(50);
-const u16 maxDuty = US2CLK(48);
+const u16 pwmPeriod = PWM_PERIOD;
+const u16 maxDuty	= MAX_DUTY;
 //const u16 loDuty = maxDuty/4;
 //const u16 hiDuty = maxDuty*3/4;
 
@@ -374,6 +377,13 @@ static void SetDutyPWM90(u16 v)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+u16 GetDutyPWM()
+{
+	return curDuty * (10000 / PWM_PERIOD);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void InitADC()
 {
 	using namespace HW;
@@ -480,6 +490,7 @@ i16 avrFB90ADC = 0;
 u32 fFB90ADC = 0;
 
 u16 targetVREG = 0;
+u16 rpmVREG = 0;
 Fix16 curVREG;
 
 Fix16 curDuty90;
@@ -564,7 +575,9 @@ static void UpdateVREG()
 				};
 			};
 
-			u16 tv = LIM(targetVREG, VREG_MIN, VREG_MAX);
+			u16 tv = MAX(targetVREG, rpmVREG);
+			
+			tv = LIM(tv, VREG_MIN, VREG_MAX);
 
 			if (tv > curVREG)
 			{
@@ -666,6 +679,7 @@ static void UpdateMotor()
 				SetDutyPWM(tachoPLL = maxDuty/8);
 
 				targetVREG = VREG_MIN;
+				rpmVREG = 0;
 				//lockAuxLoop90 = false;
 
 				break;
@@ -736,7 +750,7 @@ static void UpdateMotor()
 
 					tachoStamp = GetMilliseconds();
 
-					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
+					rpmVREG = RPM_VREG_MIN + ((targetRPM * RPM_VREG_K) >> 8);
 
 					motorState++;
 				};
@@ -755,7 +769,7 @@ static void UpdateMotor()
 					tachoCount = tachoLim;
 					tachoStep = 64;
 				
-					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
+					rpmVREG = RPM_VREG_MIN + ((targetRPM * RPM_VREG_K) >> 8);
 					//lockAuxLoop90 = true;
 
 					tm.Reset();
@@ -765,7 +779,7 @@ static void UpdateMotor()
 				}
 				else
 				{
-					targetVREG = (targetRPM * RPM_VREG_K) >> 8;
+					rpmVREG = RPM_VREG_MIN + ((targetRPM * RPM_VREG_K) >> 8);
 					SetDutyPWM(tachoPLL);
 				};
 					
@@ -777,6 +791,17 @@ static void UpdateMotor()
 				{	
 					lastMaxPower = power;
 					motorState++;
+				}
+				else if (tm.Check(1000))
+				{
+					if (tachoPLL >= (maxDuty*3/4))
+					{
+						targetVREG = curVREG * 6 / 4;
+					}
+					else if (tachoPLL <= (maxDuty/4))
+					{
+						targetVREG = curVREG / 2;
+					};
 				};
 
 				break;
@@ -793,6 +818,7 @@ static void UpdateMotor()
 				dir = false;
 
 				targetVREG = VREG_MIN;
+				rpmVREG = 0;
 				//lockAuxLoop90 = false;
 
 				motorState++;

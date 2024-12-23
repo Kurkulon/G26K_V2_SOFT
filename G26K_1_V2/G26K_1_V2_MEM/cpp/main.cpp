@@ -184,6 +184,7 @@ static u16 motoCounter = 0;			// счётчик оборотов двигателя 1/6 оборота
 static u16 auxVoltage = 0;
 static u16 motoVoltage = 90;
 static u16 motoRcvCount = 0;
+static u16 motoDuty = 0;			// 0 ... 10000 (10000 = 100%) 
 
 static u16 curFireVoltage = 500;
 
@@ -766,6 +767,7 @@ static void CallBackMotoReq(Ptr<REQ> &q)
 			motoCounter = rsp.motoCounter;
 			auxVoltage	= rsp.auxVoltage;
 			motoVoltage	= rsp.motoVoltage;
+			motoDuty	= rsp.motoDuty;
 			motoRcvCount++;
 		};
 	};
@@ -1140,6 +1142,7 @@ static u32 InitRspMan_20(__packed u16 *data)
 	*(data++)	= dspRcvCount;					//	28.	Счётчик запросов DSP
 	*(data++)	= motoRcvCount;					//	29.	Счётчик запросов двигателя
 	*(data++)	= GetRcvManQuality();			//	30.	Качество сигнала запроса телеметрии (%)
+	*(data++)	= motoDuty;						//	31. Скважность ШИМ двигателя (0.01%)
 
 	return data - start;
 }
@@ -3600,7 +3603,7 @@ int main()
 
 	//__breakpoint(0);
 
-	//FlashMoto();
+	FlashMoto();
 
 	//FlashDSP();
 

@@ -40,6 +40,7 @@ __packed struct RspMoto
 	u16		motoCounter;
 	u16		auxVoltage;
 	u16		motoVoltage;
+	u16		motoDuty;
 	u16 	crc;  
 };
 

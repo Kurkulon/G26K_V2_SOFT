@@ -19,8 +19,9 @@
 #define RPM_VREG_K			(1 * 256/10)
 #define RPM_VREG_MIN		480
 #define DT_MOSFET			NS2CLK(200)
-#define VAUX_MIN			500
+//#define VAUX_MIN			500
 #define VAUX_DEF			3000
+#define VAUX_DELTA			50
 #define FB90_MAX			700
 #define FB90_VREG_DELTA		50
 #define DELTA_DUTY_MAX		0x10000
@@ -159,7 +160,7 @@ u32 maxPower = CUR_MAX * VREG_MAX;
 u32 tachoPLL = 0;
 
 const u16 periodPWM90	= US2CLK(25);
-const u16 maxDutyPWM90	= US2CLK(15);
+const u16 maxDutyPWM90	= US2CLK(23);
 
 static void SetDutyPWM(u16 v);
 
@@ -503,6 +504,8 @@ u16 corrDuty90 = 0x100;
 
 //bool lockAuxLoop90 = false;
 
+//byte stateVREG = 0;
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void UpdateVREG()
@@ -520,7 +523,7 @@ static void UpdateVREG()
 
 		bool c = (fb90ADC > FB90_MAX);
 
-		i16 v = (auxADC < VAUX_MIN) ? VAUX_DEF : auxADC;
+		i16 v = /*(stateVREG == 0) ? VAUX_DEF :*/ auxADC;
 
 		dstDuty90 = (periodPWM90 * curVREG + v/2) / v + DT_MOSFET;
 
@@ -533,27 +536,42 @@ static void UpdateVREG()
 		{
 			SetForcedTargetRPM(0);
 
+			//switch (stateVREG)
+			//{
+			//	case 0: // Soft start
+
+			//		if (avrAuxADC > (curVREG+VAUX_DELTA)) stateVREG = 1;
+
+			//		break;
+
+			//	case 1: // main
+
+			//		if (avrAuxADC < curVREG && (avrFB90ADC < avrAuxADC || avrFB90ADC < VREG_MIN/2)) curDuty90 = 0, stateVREG = 0;
+
+			//		break;
+			//};
+
 			i32 dv = curVREG - avrFB90ADC;
 			if (dv < 0 ) dv = -dv;
 
 			if (dv < 10)
 			{
-				curDuty90 = dstDuty90;
-			}
-			else
-			{
 				dv /= 8;
 
 				deltaDuty = (dv != 0) ? (((DELTA_DUTY_MAX-DELTA_DUTY_MIN)+dv/2)/dv+DELTA_DUTY_MIN) : DELTA_DUTY_MAX;
+			}
+			else
+			{
+				deltaDuty = DELTA_DUTY_MIN;
+			};
 
-				if (curDuty90 < dstDuty90)
-				{
-					curDuty90 += deltaDuty;
-				}
-				else if (curDuty90 > dstDuty90)
-				{
-					curDuty90 -= deltaDuty;
-				};
+			if (curDuty90 < dstDuty90)
+			{
+				curDuty90 += deltaDuty;
+			}
+			else if (curDuty90 > dstDuty90)
+			{
+				curDuty90 = dstDuty90; //curDuty90 -= deltaDuty;
 			};
 		};
 

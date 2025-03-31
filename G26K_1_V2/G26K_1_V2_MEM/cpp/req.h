@@ -1,13 +1,18 @@
 #ifndef REQ_H__09_10_2014__10_31
 #define REQ_H__09_10_2014__10_31
 
-#include "ComPort\ComPort.h"
 
-#include "list.h"
-#include "FLASH\NandFlash.h"
+#pragma once
+
+#include <RequestQuery.h>
+#include <ComPort\ComPort.h>
+
+#include <list.h>
+#include <BOOT\boot_req.h>
 
 #include "g_moto.h"
 #include "g_dsp.h"
+
 
 //struct Request
 //{
@@ -226,11 +231,13 @@ __packed struct  ReqDsp07	// перезагрузить блэкфин
 union ReqUnion
 {
 	ReqDsp01 	dsp01;	
-	ReqDsp05 	dsp05;	
-	ReqDsp06 	dsp06;	
-	ReqDsp07 	dsp07;	
+	//ReqDsp05 	dsp05;	
+	//ReqDsp06 	dsp06;	
+	//ReqDsp07 	dsp07;	
 	ReqMoto		moto;	
 	ReqBootMoto bootMoto;
+	BootReqV1	bootTrm;
+	BootReqHS	bootHS;
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -333,81 +340,6 @@ union ReqUnion
 //	u16 maxAmp[96]; 
 //	u16 power[96];
 //};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-struct REQ : public PtrItem<REQ>
-{
-	PTR_LIST_FRIENDS(REQ);
-
-	bool	ready;
-	bool	crcOK;
-	bool	checkCRC;
-	bool	updateCRC;
-
-	typedef void tRsp(Ptr<REQ> &q);
-
-	u16		tryCount;
-	
-	//REQ *next;
-
-	tRsp		*CallBack;
-	Ptr<MB>	rsp;
-
-	ComPort::WriteBuffer wb;
-	ComPort::ReadBuffer rb;
-
-	u32		preTimeOut, postTimeOut;
-
-	byte	reqData[(sizeof(ReqUnion)+64) & ~3];
-
-protected:
-
-	virtual void _FreeCallBack() { rsp.Free(); }
-
-public:
-
-	//void	Free() { if (this != 0) rsp.Free(), PtrItem<REQ>::Free(); }
-
-	REQ() : tryCount(0) { }
-};
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-class RequestQuery
-{
-	//REQ*			_first;
-	//REQ*			_last;
-	Ptr<REQ>		_req;
-
-	ListPtr<REQ>	reqList;
-	
-	byte			_state;
-
-	u16				_crc;
-	u16 			_crcLen;
-
-	byte*			_crcPtr;
-
-
-	ComPort			*com;
-
-	//u32			count;
-
-	bool			_run;
-
-public:
-
-				RequestQuery(ComPort *p) : _state(0), com(p), _run(true) {}
-	void		Add(const Ptr<REQ>& req)	{ reqList.Add(req); }
-	Ptr<REQ>	Get()						{ return reqList.Get(); }
-	//bool Empty() { return reqList.Empty(); }
-	//bool Idle() { return (_first == 0) && (_req == 0); }
-	bool Stoped() { return !_req.Valid(); }
-	void Update();
-	void Stop() { _run = false; }
-	void Start() { _run = true; }
-};
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

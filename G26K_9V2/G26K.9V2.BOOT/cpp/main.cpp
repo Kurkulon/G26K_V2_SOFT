@@ -2,8 +2,13 @@
 #include "spi.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#define FLASHSPI_IMP_V2
 
-#define BOOT_SGUID DSP_BOOT_SGUID
+#ifdef CPU_BF592
+#define BOOT_SGUID DSP_BOOT_SGUID_BF592
+#elif defined(CPU_BF706)
+#define BOOT_SGUID DSP_BOOT_SGUID_BF706
+#endif
 
 #define BOOT_COM
 #define BOOT_MAX_NETADR			DSP_BOOT_NET_ADR
@@ -11,8 +16,10 @@
 #define BOOT_MAIN_TIMEOUT		(100000)
 #define BOOT_COM_SPEED			DSP_BOOT_COM_BAUDRATE	
 #define BOOT_COM_PARITY			DSP_BOOT_COM_PARITY	
+#define BOOT_COM_STOPBITS		DSP_BOOT_COM_STOPBITS
 #define BOOT_COM_PRETIMEOUT		(~0)
-#define BOOT_COM_POSTTIMEOUT	(US2COM(500))
+#define BOOT_COM_POSTTIMEOUT	(US2COM(100))
+#define BOOT_COM_WRITEDELAY		(US2CTM(500))
 
 #define BOOT_MAN_REQ_WORD		DSP_BOOT_REQ_WORD
 #define BOOT_MAN_REQ_MASK 		DSP_BOOT_REQ_MASK
@@ -34,7 +41,7 @@
 //#define	NUM_HUGE_BUF	1
 
 //#define FLASH_IS25LP080D
-#define FLASH_START_ADR 0x00000 	
+#define FLASH_START_ADR 0x10000 	
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

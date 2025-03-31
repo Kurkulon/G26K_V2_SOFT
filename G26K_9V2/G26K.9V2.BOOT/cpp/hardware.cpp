@@ -16,7 +16,7 @@
 
 void InitHardware()
 {
-	//LowLevelInit();
+	LowLevelInit();
 
 //#ifdef CPU_BF592
 //	I2C_Init(SCLK_MHz, IVG_TWI, PID_TWI);

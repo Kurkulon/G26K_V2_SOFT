@@ -19,12 +19,15 @@
 
 #define DSP_COM_BAUDRATE		12500000
 #define DSP_COM_PARITY			2
+#define DSP_COM_STOPBITS		2
 
-#define DSP_BOOT_SGUID			0X66C41909FA7C4F91 
+#define DSP_BOOT_SGUID_BF592	0X4AC087A349414b96
+#define DSP_BOOT_SGUID_BF706	0X950F17B4DB95ABD8
 #define DSP_BOOT_REQ_WORD		((~(DSP_MAN_REQ_WORD)) & DSP_MAN_REQ_MASK)
 #define DSP_BOOT_REQ_MASK		DSP_MAN_REQ_MASK
-#define DSP_BOOT_COM_BAUDRATE	12500000
-#define DSP_BOOT_COM_PARITY		2
+#define DSP_BOOT_COM_BAUDRATE	DSP_COM_BAUDRATE
+#define DSP_BOOT_COM_PARITY		DSP_COM_PARITY
+#define DSP_BOOT_COM_STOPBITS	DSP_COM_STOPBITS
 #define DSP_BOOT_NET_ADR		1
 
 #define DSP_MAN_REQ_WORD 		0xAA00
@@ -145,50 +148,50 @@ __packed union RspDsp01	// чтение вектора
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct  ReqDsp05	// запрос контрольной суммы и длины программы во флэш-памяти
-{ 
-	u16		rw; 
-	u16 	crc; 
-};  
+//__packed struct  ReqDsp05	// запрос контрольной суммы и длины программы во флэш-памяти
+//{ 
+//	u16		rw; 
+//	u16 	crc; 
+//};  
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct  RspDsp05	// запрос контрольной суммы и длины программы во флэш-памяти
-{ 
-	u16		rw; 
-	u16		flashLen; 
-	u32		startAdr; 
-	u16		flashCRC; 
-	u16		crc;
-};  
+//__packed struct  RspDsp05	// запрос контрольной суммы и длины программы во флэш-памяти
+//{ 
+//	u16		rw; 
+//	u16		flashLen; 
+//	u32		startAdr; 
+//	u16		flashCRC; 
+//	u16		crc;
+//};  
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct  ReqDsp06	// запись страницы во флэш
-{ 
-	u16		rw; 
-	u16		stAdr; 
-	u16		count; 
-	byte	data[258]; 
-	u16		crc; 
-};  
+//__packed struct  ReqDsp06	// запись страницы во флэш
+//{ 
+//	u16		rw; 
+//	u16		stAdr; 
+//	u16		count; 
+//	byte	data[258]; 
+//	u16		crc; 
+//};  
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct  RspDsp06	// запись страницы во флэш
-{ 
-	u16		rw; 
-	u16		res; 
-	word	crc; 
-};  
+//__packed struct  RspDsp06	// запись страницы во флэш
+//{ 
+//	u16		rw; 
+//	u16		res; 
+//	word	crc; 
+//};  
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-__packed struct  ReqDsp07	// перезагрузить блэкфин
-{ 
-	u16		rw; 
-	word 	crc; 
-};  
+//__packed struct  ReqDsp07	// перезагрузить блэкфин
+//{ 
+//	u16		rw; 
+//	word 	crc; 
+//};  
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

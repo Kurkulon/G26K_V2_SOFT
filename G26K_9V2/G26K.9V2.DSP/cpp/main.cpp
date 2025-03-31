@@ -1440,7 +1440,7 @@ int main( void )
 
 	Pack_Init();
 
-	com.Connect(12500000, 0);
+	com.Connect(ComPort::ASYNC, DSP_COM_BAUDRATE, DSP_COM_PARITY, DSP_COM_STOPBITS);
 
 	//CheckFlash();
 

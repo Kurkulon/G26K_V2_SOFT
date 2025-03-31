@@ -87,7 +87,7 @@
 
 #define GAIN_SPI_MODE	SPI_CPHA	
 
-#define LowLevelInit()	{}
+//#define LowLevelInit()	{}
 
 #define ADG2128_SENSE1 (0x80|(9<<3)|2) // X7 to Y2 on; SIG_1 -> CH1 -> SPORT0 PRI	
 #define ADG2128_SENSE2 (0x80|(5<<3)|0) // X5 to Y0 on; SIG_3 -> CH3 -> SPORT1 PRI	

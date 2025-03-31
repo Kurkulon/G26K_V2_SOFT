@@ -70,7 +70,7 @@
     <NMakeBuildCommandLine>make -h version=Debug targetcpu=BF592</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>make -h -a version=Debug targetcpu=BF592</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q .\Debug\*.*</NMakeCleanCommandLine>
-    <NMakeOutput>$(OutDir)G26K.9V2.DSP.dxe</NMakeOutput>
+    <NMakeOutput>$(OutDir)G26K.9V2.DSP.BF592.dxe</NMakeOutput>
     <NMakePreprocessorDefinitions>__DEBUG;_DEBUG;CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ProjectDir)..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;</NMakeIncludeSearchPath>
   </PropertyGroup>
@@ -80,7 +80,7 @@
     <NMakeBuildCommandLine>make -h version=Release targetcpu=BF592</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>make -h -a version=Release targetcpu=BF592</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q .\Release\*.*</NMakeCleanCommandLine>
-    <NMakeOutput>$(OutDir)G26K.9V2.DSP.dxe</NMakeOutput>
+    <NMakeOutput>$(OutDir)G26K.9V2.DSP.BF592.dxe</NMakeOutput>
     <NMakePreprocessorDefinitions>CPU_BF592;_ADI_COMPILER;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ProjectDir)..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;</NMakeIncludeSearchPath>
   </PropertyGroup>
@@ -90,7 +90,7 @@
     <NMakeBuildCommandLine>make -h version=Debug targetcpu=BF706</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>make -h -a version=Debug targetcpu=BF706</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q .\Debug\*.*</NMakeCleanCommandLine>
-    <NMakeOutput>$(OutDir)G26K.9V2.DSP.dxe</NMakeOutput>
+    <NMakeOutput>$(OutDir)G26K.9V2.DSP.BF706.dxe</NMakeOutput>
     <NMakePreprocessorDefinitions>__DEBUG;CPU_BF706;_ADI_COMPILER;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ProjectDir)..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;</NMakeIncludeSearchPath>
   </PropertyGroup>
@@ -100,7 +100,7 @@
     <NMakeBuildCommandLine>make -h version=Release targetcpu=BF706</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>make -h -a version=Release targetcpu=BF706</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q .\Release\*.*</NMakeCleanCommandLine>
-    <NMakeOutput>$(OutDir)G26K.9V2.DSP.dxe</NMakeOutput>
+    <NMakeOutput>$(OutDir)G26K.9V2.DSP.BF706.dxe</NMakeOutput>
     <NMakePreprocessorDefinitions>CPU_BF706;_ADI_COMPILER;</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>$(ProjectDir)..\..\..\G_LIBS\cpp;$(ADI_CCES)\Blackfin\include;$(ProjectDir)..\..\Include;$(ProjectDir)..\Include;</NMakeIncludeSearchPath>
   </PropertyGroup>

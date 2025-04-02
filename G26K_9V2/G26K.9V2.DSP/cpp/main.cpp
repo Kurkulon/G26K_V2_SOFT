@@ -621,6 +621,7 @@ static void PackDataCM(RSPWAVE *dsc, u16 pack)
 {
 	switch (pack)
 	{
+		default:
 		case PACK_NO:								break;
 		//case PACK_BIT12:	Pack_1_Bit12(dsc);		break;
 		case PACK_ULAW12:	Pack_2_uLaw(dsc);		break;

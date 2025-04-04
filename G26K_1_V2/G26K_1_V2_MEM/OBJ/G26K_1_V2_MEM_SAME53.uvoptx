@@ -152,9 +152,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>2833</LineNumber>
+          <LineNumber>3778</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>56334</Address>
+          <Address>60228</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -163,14 +163,14 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2833</Expression>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\3778</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>2894</LineNumber>
+          <LineNumber>3782</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>56798</Address>
+          <Address>60232</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -179,14 +179,14 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2894</Expression>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\3782</Expression>
         </Bp>
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>2843</LineNumber>
+          <LineNumber>2881</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>56408</Address>
+          <Address>56748</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -195,23 +195,55 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2843</Expression>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2881</Expression>
         </Bp>
         <Bp>
           <Number>3</Number>
           <Type>0</Type>
-          <LineNumber>2877</LineNumber>
+          <LineNumber>1118</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>56734</Address>
+          <Address>43254</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
+          <Filename>d:\Work\G_LIBS\cpp\ComPort\ComPort_imp.h</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/hw_com.cpp\1118</Expression>
+        </Bp>
+        <Bp>
+          <Number>4</Number>
+          <Type>0</Type>
+          <LineNumber>3776</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>0</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>0</BreakIfRCount>
           <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K_1_V2_MEM_SAME53\cpp/main.cpp\2877</Expression>
+          <Expression></Expression>
+        </Bp>
+        <Bp>
+          <Number>5</Number>
+          <Type>0</Type>
+          <LineNumber>3780</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>0</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>0</BreakIfRCount>
+          <Filename>d:\Work\G26K_V2_SOFT\G26K_1_V2\G26K_1_V2_MEM\cpp\main.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression></Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

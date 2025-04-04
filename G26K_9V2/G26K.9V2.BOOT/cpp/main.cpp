@@ -78,7 +78,9 @@ inline u16 GetNetAdr() { return DSP_BOOT_NET_ADR; }
 //#define BOOT_TIMEOUT			(2000)
 //#define BOOT_MAIN_TIMEOUT		(100000)
 
-#define Pin_MainLoop_Tgl()		MAIN_LOOP_PIN_TGL()
+#define Pin_MainLoop_Tgl()			MAIN_LOOP_PIN_TGL()
+//#define Pin_VerifyPageError_Set()	VERIFY_PAGE_ERROR_PIN_SET()
+//#define Pin_VerifyPageError_Clr()	VERIFY_PAGE_ERROR_PIN_CLR()
 
 #ifdef BOOT_COM
 

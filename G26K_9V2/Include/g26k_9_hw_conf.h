@@ -411,15 +411,21 @@
 #define PIO_MAINLOOP			HW::PIOB
 #define PIN_MAINLOOP			5
 
+#define PIO_VERIFY_PAGE_ERROR	HW::PIOC
+#define PIN_VERIFY_PAGE_ERROR	4
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define MAIN_LOOP_PIN_SET()		{	PIO_MAINLOOP->BSET(PIN_MAINLOOP);	}
-#define MAIN_LOOP_PIN_CLR()		{	PIO_MAINLOOP->BCLR(PIN_MAINLOOP);	}
-#define MAIN_LOOP_PIN_TGL()		{	PIO_MAINLOOP->BTGL(PIN_MAINLOOP);	}	
+#define MAIN_LOOP_PIN_SET()			{	PIO_MAINLOOP->BSET(PIN_MAINLOOP);	}
+#define MAIN_LOOP_PIN_CLR()			{	PIO_MAINLOOP->BCLR(PIN_MAINLOOP);	}
+#define MAIN_LOOP_PIN_TGL()			{	PIO_MAINLOOP->BTGL(PIN_MAINLOOP);	}	
+
+#define VERIFY_PAGE_ERROR_PIN_SET()	{	PIO_VERIFY_PAGE_ERROR->BSET(PIN_VERIFY_PAGE_ERROR);	}
+#define VERIFY_PAGE_ERROR_PIN_CLR()	{	PIO_VERIFY_PAGE_ERROR->BCLR(PIN_VERIFY_PAGE_ERROR);	}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

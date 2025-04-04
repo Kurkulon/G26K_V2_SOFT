@@ -1194,6 +1194,8 @@ static void UpdateCM()
 				DEBUG_ASSERT(dsc->next == 0);
 				DEBUG_ASSERT(dsc->dataLen <= ArraySize(dsc->data));
 
+				Pin_UpdateMode_Set();
+
 				RspCM *rsp = (RspCM*)dsc->data;
 
 				FragDataCM(dsc);
@@ -1224,6 +1226,8 @@ static void UpdateCM()
 				readyRspWave.Add(dsc); dsc = 0;
 
 				state = 0;
+
+				Pin_UpdateMode_Clr();
 			}
 			else
 			{
@@ -1307,6 +1311,8 @@ static void UpdateCM()
 				dsc = 0;
 
 				state = 0;
+
+				Pin_UpdateMode_Clr();
 			};
 
 			break;

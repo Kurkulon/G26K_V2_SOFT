@@ -1148,6 +1148,7 @@ static void InitGain()
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#pragma never_inline
 
 static void UpdateGain()
 {
@@ -1299,7 +1300,7 @@ SEC_INTERRUPT_HANDLER(TWI_ISR)
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+#pragma never_inline
 void I2C_Init()
 {
 	u32 sclk_mhz = Get_SCLK0_MHz();
@@ -1363,6 +1364,7 @@ static bool TWI_Write(DSCI2C *d)
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#pragma never_inline
 
 bool I2C_AddRequest(DSCI2C *d)
 {
@@ -1402,6 +1404,7 @@ bool I2C_AddRequest(DSCI2C *d)
 #endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#pragma never_inline
 
 static void Update_ADC_DAC()
 {

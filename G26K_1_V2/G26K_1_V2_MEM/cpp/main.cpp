@@ -703,7 +703,7 @@ static Ptr<REQ> CreateDspBootReq02(u16 adr, u16 stAdr, u16 count, void* data, u1
 
 	q.CallBack = CallBackDspBootReq02;
 	q.preTimeOut = MS2COM(2);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -2872,7 +2872,11 @@ static void FlashDSP()
 					};
 				};
 
+				if (!rq.Valid()) __breakpoint(0);
+
 				qdsp.Add(rq); while(!rq->ready) UpdateBootFlashMisc();
+
+
 
 				count -= len;
 				p += len;

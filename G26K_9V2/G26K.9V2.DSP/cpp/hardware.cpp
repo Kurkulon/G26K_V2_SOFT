@@ -89,9 +89,9 @@
 
 //#define LowLevelInit()	{}
 
-#define ADG2128_SENSE1 (0x80|(9<<3)|2) // X7 to Y2 on; SIG_1 -> CH1 -> SPORT0 PRI	
-#define ADG2128_SENSE2 (0x80|(5<<3)|0) // X5 to Y0 on; SIG_3 -> CH3 -> SPORT1 PRI	
-#define ADG2128_REFSEN (0x80|(4<<3)|1) // X4 to Y1 on; SIG_4 -> CH4 -> SPORT1 SEC
+#define ADG2128_SENSE1 (0x80|(9<<3)|2) // X7 to Y3 on; SIG_1 -> CH2 -> SPORT0 PRI	
+#define ADG2128_SENSE2 (0x80|(5<<3)|0) // X5 to Y1 on; SIG_3 -> CH4 -> SPORT1 PRI	
+#define ADG2128_REFSEN (0x80|(4<<3)|1) // X4 to Y0 on; SIG_4 -> CH3 -> SPORT1 SEC
 
 #ifdef SPORT_BUF_MEM_L2
 #define Alloc_SPORT_Buf(v) Alloc_L2_NoCache(v)
@@ -100,6 +100,8 @@
 #endif
 
 #endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define PPI_DELAY_ADD 2
 
 #define DisableSwArr()	{ PIO_RST_SW_ARR->CLR(BM_RST_SW_ARR); }
 #define EnableSwArr()	{ PIO_RST_SW_ARR->SET(BM_RST_SW_ARR); }
@@ -280,6 +282,8 @@ static void SetPPI(PPI &ppi, const SENS &sens, u16 sensType, u16 chMask, bool fo
 		{
 			ppi.delay = 0;
 		};
+
+		ppi.delay += PPI_DELAY_ADD;
 	};
 
 	ppi.gain = sens.gain;
@@ -451,9 +455,11 @@ static void Read_SPORT0(PPI &ppi)
 			HW::SPORT0->TCLKDIV = __TCLKDIV; 
 			HW::SPORT0->TFSDIV = curDscSPORT0->sport_tfsdiv = ppi.tfsdiv; //14;
 
-			if (ppi.delay != 0)
+			u32 delay = ppi.delay - PPI_DELAY_ADD;
+
+			if (delay != 0)
 			{
-				dmaRxSp0.Read16(curDscSPORT0->data, ppi.delay*n, (ppi.len + WAVE_OVRLEN)*n);
+				dmaRxSp0.Read16(curDscSPORT0->data, delay*n, (ppi.len + WAVE_OVRLEN)*n);
 			}
 			else
 			{
@@ -472,7 +478,7 @@ static void Read_SPORT0(PPI &ppi)
 
 			SPORT0_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT0->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp0.Read16(curDscSPORT0->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp0.Read16(curDscSPORT0->data, (ppi.delay-PPI_DELAY_ADD)*n, (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};
@@ -537,7 +543,7 @@ static void Read_SPORT1(PPI &ppi)
 
 			SPORT1_DIV = SPORT_CLKDIV(_SPT_CLKDIV)|SPORT_FSDIV(curDscSPORT1->sport_tfsdiv = ppi.tfsdiv); 
 
-			dmaRxSp1.Read16(curDscSPORT1->data, /*(ppi.delay+1)*n,*/ (ppi.len + WAVE_OVRLEN)*n);
+			dmaRxSp1.Read16(curDscSPORT1->data, (ppi.delay-PPI_DELAY_ADD)*n, (ppi.len + WAVE_OVRLEN)*n);
 
 		#endif	
 	};

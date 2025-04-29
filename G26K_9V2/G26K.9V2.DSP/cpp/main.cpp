@@ -138,11 +138,11 @@ static void PreProcessDspVars(ReqDsp01 *v, bool forced = false)
 
 		if (sens.st == 0) sens.st = 1;
 
-		if (sens.packType >= PACK_DCT0)
-		{
-			u16 n = (sens.sl + FDCT_N - 1) / FDCT_N;
-			sens.sl = (sens.sl + FDCT_N*3/4 + (n-1)*7) & ~(FDCT_N-1);
-		};
+		//if (sens.packType >= PACK_DCT0)
+		//{
+		//	u16 n = (sens.sl + FDCT_N - 1) / FDCT_N;
+		//	sens.sl = (sens.sl + FDCT_N*3/4 + (n-1)*7) & ~(FDCT_N-1);
+		//};
 
 		if (sv.freq != sens.freq || forced)
 		{

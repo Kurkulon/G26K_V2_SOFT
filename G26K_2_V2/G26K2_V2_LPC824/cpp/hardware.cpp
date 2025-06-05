@@ -643,8 +643,8 @@ static void UpdateMotor()
 	
 		fcurADC += curADC - avrCurADC; avrCurADC = fcurADC >> 8;
 
-		lowCurADC = ((HW::ADC->DAT1&0xFFF0) * 4950) >> 16; 
-		if (lowCurADC > 40) lowCurADC -= 40; else lowCurADC = 0;
+		lowCurADC = 40000-(((HW::ADC->DAT1&0xFFF0) * 40000)>>16); 
+		//if (lowCurADC > 40) lowCurADC -= 40; else lowCurADC = 0;
 
 		fLowCurADC += lowCurADC - avrLowCurADC; avrLowCurADC = fLowCurADC >> 8;
 	

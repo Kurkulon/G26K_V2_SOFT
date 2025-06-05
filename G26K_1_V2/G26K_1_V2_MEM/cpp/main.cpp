@@ -1226,6 +1226,7 @@ static u32 InitRspMan_20(__packed u16 *data)
 	*(data++)	= motoRcvCount;					//	29.	Счётчик запросов двигателя
 	*(data++)	= GetRcvManQuality();			//	30.	Качество сигнала запроса телеметрии (%)
 	*(data++)	= motoDuty;						//	31. Скважность ШИМ двигателя (0.01%)
+	*(data++)	= motoCurLow;					//	32. Ток двигателя, датчик 2 (мА)
 
 	return data - start;
 }

@@ -120,7 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>d</Name>
+          <Name></Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -294,6 +294,11 @@
           <count>28</count>
           <WinNumber>1</WinNumber>
           <ItemText>tachoStamp</ItemText>
+        </Ww>
+        <Ww>
+          <count>29</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>destRPM,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

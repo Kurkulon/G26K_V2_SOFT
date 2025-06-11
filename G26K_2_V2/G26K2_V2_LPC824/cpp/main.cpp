@@ -90,7 +90,7 @@ static bool RequestMan_10(u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	rsp.rw = manReqWord|1;	// 	1. ответное слово
 	rsp.mororStatus	= GetMotorState();
 	rsp.current		= GetAvrCurrent();
-	rsp.currentLow	= GetAvrCurrentLow();
+	rsp.currentLow	= GetAvrCurrentLow()-25000;
 	rsp.rpm			= GetRPM();
 	rsp.motoCounter = GetmotoCounter();
 	rsp.auxVoltage	= GetAvrAuxVoltage();

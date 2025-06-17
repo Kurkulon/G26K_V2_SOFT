@@ -603,7 +603,7 @@ static void UpdateVREG()
 			}
 			else if (tv < curVREG)
 			{
-				curVREG = tv;
+				curVREG -= 0x8000; //curVREG = tv;
 			};
 
 			//if (corrDuty90 > 0x130) curVREG = 0, corrDuty90 = 0;

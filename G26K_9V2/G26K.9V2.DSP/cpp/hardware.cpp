@@ -1767,7 +1767,7 @@ void InitHardware()
 
 	InitShaft();
 
-	//InitRot();
+	InitRot();
 
 	InitGain();
 

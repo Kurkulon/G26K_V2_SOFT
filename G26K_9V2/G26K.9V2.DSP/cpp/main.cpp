@@ -5,6 +5,8 @@
 #include "list.h"
 #include "spi.h"
 #include "pack.h"
+//#include "FLASH\nand_ecc.h"
+#include "MANCH\manch.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -414,6 +416,52 @@ static void UpdateBlackFin()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//byte eccBuf[8192] __attribute__ ((section("L2_SRAM_WT"))); 
+//
+//byte ecc[96];
+//
+//#pragma optimize_off
+//
+//void UpdateECC()
+//{
+//	static CTM32 tm;
+//
+//	if (tm.Check(MS2CTM(1000)))
+//	{
+//		u32 t = cli();
+//
+//		HW::PIOB->BSET(4);
+//
+//		Nand_ECC_Calc_V2(eccBuf, sizeof(eccBuf), ecc);
+//
+//		HW::PIOB->BCLR(4);
+//
+//		sti(t);
+//	};
+//}
+//
+//#pragma optimize_as_cmd_line
+//
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 manBuf[10];
+
+void UpdateMan()
+{
+	static CTM32 tm;
+	static MTB mtb;
+
+	if (tm.Check(MS2CTM(1000)))
+	{
+		mtb.data1 = manBuf;
+		mtb.len1 = 2;
+		mtb.baud = 0;
+		SendManData(&mtb);
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 static void Update()
 {
 	static byte i = 0;
@@ -425,7 +473,7 @@ static void Update()
 	{
 		CALL( UpdateBlackFin()	);
 		CALL( UpdateHardware()	);	
-//		CALL( UpdateSPI()		);
+		CALL( UpdateMan()		);
 	};
 
 	i = (i > (__LINE__-S-3)) ? 0 : i;
@@ -1430,18 +1478,14 @@ static void UpdateMode()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//i16 index_max = 0;
-
-//byte buf[100];
-
 int main( void )
 {
-	static byte s = 0;
-	static byte i = 0;
+	//static byte s = 0;
+	//static byte i = 0;
 
-	static u32 pt = 0;
+	//static u32 pt = 0;
 
-	static CTM32 tm;
+	//static CTM32 tm;
 
 	InitHardware();
 

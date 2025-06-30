@@ -292,6 +292,17 @@
 
 #elif defined(__ADSPBF70x__) //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//  1 - PC10 - UpdateMode 
+//  2 - PC09 - SPORT0_ISR
+//  3 - PC08 - SPORT1_ISR
+//  5 - PC07 - SPORT1_ISR
+//  6 - PC06 - ProcessSPORT
+//  7 - PC05 - 
+//  8 - PC04 - PreProcessSPORT
+// 44 - PB05 - Main Loop
+// 45 - PB04 - 
+// 58 - PA13 - ProcessSPORT
+
 #define Pin_UpdateMode_Set()		HW::PIOC->BSET(10)
 #define Pin_UpdateMode_Clr()		HW::PIOC->BCLR(10)
 

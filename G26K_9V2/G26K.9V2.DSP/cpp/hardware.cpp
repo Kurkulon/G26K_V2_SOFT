@@ -9,6 +9,7 @@
 #include "DMA\DMA.h"
 #include "spi.h"
 #include "i2c.h"
+#include "MANCH\manch.h"
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1200,7 +1201,7 @@ SEC_INTERRUPT_HANDLER(TWI_ISR)
 {
 	u16 stat = HW::TWI->ISTAT;
 	
-	HW::PIOB->DATA_SET = PB4;
+	//HW::PIOB->DATA_SET = PB4;
 	
 	if (stat & TWI_RXSERV)
 	{
@@ -1302,7 +1303,7 @@ SEC_INTERRUPT_HANDLER(TWI_ISR)
 
 	HW::TWI->ISTAT = stat;
 
-	HW::PIOB->DATA_CLR = PB4;
+	//HW::PIOB->DATA_CLR = PB4;
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1749,6 +1750,218 @@ static void Init_SPI2_MemoryMappedMode()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CPU_BF706
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define BAUD2CLK(x) ((u32)(SCLK/2/(x)+0.5))
+
+static const u16 manbaud[5] = { BAUD2CLK(20833), BAUD2CLK(41666), BAUD2CLK(62500), BAUD2CLK(83333), BAUD2CLK(104166) };//0:20833Hz, 1:41666Hz,2:62500Hz,3:83333Hz
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static u16 GetTrmBaudRate(byte i)
+{
+	if (i >= ArraySize(manbaud)) { i = ArraySize(manbaud) - 1; };
+
+	return (manbaud[i]+1)/2;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define _MAN_SPT_CTL	(/*SPORT_TFIEN|*/SPORT_SPTRAN|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(19))
+#define _MAN_SPT_CTL2	(0)
+
+#define ManDisableTransmit()		{ HW::SPORT0->CTL_A = 0; HW::SPORT0->CTL2_A = 0;}
+
+inline void ManDisable()	{ } 
+inline void ManZero()		{ } 
+inline void ManOne()		{ } 
+inline void ManDischarge()	{ } 
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static byte stateManTrans = 0;
+static MTB *manTB = 0;
+static bool trmBusy = false;
+static bool trmTurbo = false;
+static bool rcvBusy = false;
+static const u16 *mantPtr = 0;
+static u16 mantLen = 0;
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+union ManBits
+{
+	struct
+	{
+		u64 pr : 2;
+		u64 b1 : 8;
+		u64 b2 : 8;
+		u64 b3 : 8;
+		u64 b4 : 8;
+		u64 st : 6;
+	};
+
+	struct
+	{
+		u64 dw1 : 20;
+		u64 dw2 : 20;
+	};
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static u16 word2man[16] = {
+	0x00AA, // 1010	1010    	
+	0x80A9, // 1010	1001
+	0x80A6, // 1010	0110
+	0x00A5, // 1010	0101
+	0x809A, // 1001	1010
+	0x0099, // 1001	1001
+	0x0096, // 1001	0110
+	0x8095, // 1001	0101
+	0x806A, // 0110	1010
+	0x0069, // 0110	1001
+	0x8066, // 0110	0110
+	0x8065, // 0110	0101
+	0x005A, // 0101	1010
+	0x8859, // 0101	1001
+	0x8856, // 0101	0110
+	0x0055, // 0101	0101
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+SEC_INTERRUPT_HANDLER(ManTrm_ISR)
+{
+	HW::PIOC->BSET(5);
+
+	HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+
+	if ((HW::SPORT0->CTL_A & SPORT_DXSPRI) != SPORT_DXSPRI)
+	{
+		if (mantLen > 0)
+		{
+			switch (stateManTrans)
+			{
+				case 0:
+					//u16 t = *(mantPtr++);
+
+					//u16 r1 = word2man[t&15];
+					//u16 r2 = word2man[(t>>4)&15];
+					//u16 r3 = word2man[(t>>8)&15];
+					//u16 r4 = word2man[(t>>12)&15];
+
+					//u16 parity = 2 - ((r1^r2^r3^r4)>>15);
+
+					//ManBits man;
+
+					//man.pr = parity;
+					//man.b1 = r1;
+					//man.b2 = r2;
+					//man.b3 = r3;
+					//man.b4 = r4;
+					//man.st = 0x38;
+
+					HW::SPORT0->TXPRI_A = 0x1EAAA; //;man.dw2;
+
+					stateManTrans++;
+
+					break;
+
+				case 1:
+
+					HW::SPORT0->TXPRI_A = 0xAAAAA; //man.dw1;
+
+					mantLen -= 1;
+
+					if (mantLen == 0) HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = 0;
+
+					stateManTrans = 0;
+			};
+		}
+		else
+		{
+			//HW::SPORT0->CTL_A = _MAN_SPT_CTL;
+			
+			HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = 0;
+		};
+	};
+
+	HW::PIOC->BCLR(5);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+SEC_INTERRUPT_HANDLER(ManTrmStatus_ISR)
+{
+	if (HW::SPORT0->CTL_A & SPORT_DERRPRI)
+	{
+		HW::SPORT0->ERR_A |= SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+
+		if (mantLen == 0)
+		{
+			HW::SPORT0->CTL_A = _MAN_SPT_CTL;
+			manTB->ready = true;
+			trmBusy = false;
+		};
+	};
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bool SendManData(MTB *mtb)
+{
+	if (trmBusy || rcvBusy || mtb == 0 || mtb->data1 == 0 || mtb->len1 == 0)
+	{
+		return false;
+	};
+
+	mtb->ready = false;
+
+	manTB = mtb;
+
+	mantPtr = mtb->data1;
+	mantLen = 1;//mtb->len1;
+
+	stateManTrans = 1;
+
+	u32 t = cli();
+
+	HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = SEC_IEN|SEC_SEN|SEC_PRIO(0);
+
+	HW::SPORT0->ERR_A = SPORT_DERRPMSK|SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+	HW::SPORT0->DIV_A = SPORT_CLKDIV(GetTrmBaudRate(mtb->baud) - 1)|SPORT_FSDIV(19); 
+	HW::SPORT0->CTL_A = _MAN_SPT_CTL|SPORT_SPENPRI;
+
+	HW::SPORT0->TXPRI_A = 0xE2AAA; //;man.dw2;
+	//HW::SPORT0->TXPRI_A = 0xAAAAA; //man.dw1;
+
+	sti(t);
+
+	return trmBusy = true;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+static void InitManTransmit()
+{
+	HW::PIOC->SetFER(PC8|PC9);
+	HW::PIOC->SetMUX(8, 0);
+	HW::PIOC->SetMUX(9, 0);
+
+	HW::SPORT0->CTL_A = 0;
+	HW::SPORT0->CTL2_A = 0;
+
+	InitSEC(PID_SPORT0_A_STAT, ManTrmStatus_ISR);
+	InitSEC(PID_SPORT0_A_DMA, ManTrm_ISR);
+}
+
+#endif
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 void InitHardware()
 {
 	LowLevelInit();
@@ -1773,6 +1986,9 @@ void InitHardware()
 
 #ifdef CPU_BF706
 	Init_SPI2_MemoryMappedMode();
+
+	InitManTransmit();
+
 #endif
 
 }

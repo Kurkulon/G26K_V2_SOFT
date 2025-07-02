@@ -26,6 +26,8 @@
 //#define SPORT_BUF_MEM_L2
 #define RSPWAVE_BUF_MEM_L2
 
+//#define MAN_TRANSMIT
+
 #endif //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define SPORT_BUF_LEN	(WAVE_MAXLEN*2+WAVE_OVRLEN*2)

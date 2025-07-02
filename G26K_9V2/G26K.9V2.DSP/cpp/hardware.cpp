@@ -1750,11 +1750,13 @@ static void Init_SPI2_MemoryMappedMode()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifdef CPU_BF706
+#if defined(CPU_BF706) && defined(MAN_TRANSMIT)
+
+#pragma optimize_for_speed
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define BAUD2CLK(x) ((u32)(SCLK/2/(x)+0.5))
+#define BAUD2CLK(x) ((u32)(SCLK/(x)+0.5))
 
 static const u16 manbaud[5] = { BAUD2CLK(20833), BAUD2CLK(41666), BAUD2CLK(62500), BAUD2CLK(83333), BAUD2CLK(104166) };//0:20833Hz, 1:41666Hz,2:62500Hz,3:83333Hz
 
@@ -1769,7 +1771,7 @@ static u16 GetTrmBaudRate(byte i)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define _MAN_SPT_CTL	(/*SPORT_TFIEN|*/SPORT_SPTRAN|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(19))
+#define _MAN_SPT_CTL	(SPORT_SPTRAN|SPORT_DIFS|SPORT_GCLKEN|SPORT_IFS|SPORT_ICLK|SPORT_SLEN(19))
 #define _MAN_SPT_CTL2	(0)
 
 #define ManDisableTransmit()		{ HW::SPORT0->CTL_A = 0; HW::SPORT0->CTL2_A = 0;}
@@ -1788,6 +1790,37 @@ static bool trmTurbo = false;
 static bool rcvBusy = false;
 static const u16 *mantPtr = 0;
 static u16 mantLen = 0;
+static u32 manBuf[8];
+static byte manBufStart = 0;
+static byte manBufEnd = 0;
+static byte manBufLen = 0;
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline void ManBufAdd(u32 v)
+{
+	manBuf[manBufEnd] = v;
+	manBufEnd = (manBufEnd+1) & (ArraySize(manBuf)-1);
+	manBufLen += 1;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline u32 ManBufGet()
+{
+	u32	v = manBuf[manBufStart];
+
+	manBufStart = (manBufStart+1) & (ArraySize(manBuf)-1);
+	manBufLen -= 1;
+
+	return v;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+inline bool ManBufEmpty()		{ return manBufLen == 0; }
+inline bool ManBufFull()		{ return manBufLen == ArraySize(manBuf); }
+inline byte ManBufFreeLen()		{ return ArraySize(manBuf)-manBufLen; }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1833,59 +1866,78 @@ static u16 word2man[16] = {
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+inline void GetManBits(ManBits &man, u16 t)
+{
+	u16 r1 = word2man[t&15];
+	man.b1 = r1;
+
+	u16 parity = r1;
+
+	r1 = word2man[(t>>4)&15];
+	man.b2 = r1;
+	parity ^= r1;
+
+	r1 = word2man[(t>>8)&15];
+	man.b3 = r1;
+	parity ^= r1;
+
+	r1 = word2man[(t>>12)&15];
+	man.b4 = r1;
+	parity ^= r1;
+
+	man.pr = 2 - (parity>>15);
+	man.st = 0x38;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 SEC_INTERRUPT_HANDLER(ManTrm_ISR)
 {
 	HW::PIOC->BSET(5);
 
-	HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+	//HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
 
-	if ((HW::SPORT0->CTL_A & SPORT_DXSPRI) != SPORT_DXSPRI)
+	u32 stat = HW::SPORT0->CTL_A;
+
+	if ((stat & SPORT_DXSPRI) != SPORT_DXSPRI)
 	{
 		if (mantLen > 0)
 		{
-			switch (stateManTrans)
+			if (ManBufFreeLen() >= 2)
 			{
-				case 0:
-					//u16 t = *(mantPtr++);
+				ManBits man;
 
-					//u16 r1 = word2man[t&15];
-					//u16 r2 = word2man[(t>>4)&15];
-					//u16 r3 = word2man[(t>>8)&15];
-					//u16 r4 = word2man[(t>>12)&15];
+				GetManBits(man, *(mantPtr++));
 
-					//u16 parity = 2 - ((r1^r2^r3^r4)>>15);
+				ManBufAdd(man.dw2); //;man.dw2;
+				ManBufAdd(man.dw1); //man.dw1;
 
-					//ManBits man;
+				mantLen -= 1;
 
-					//man.pr = parity;
-					//man.b1 = r1;
-					//man.b2 = r2;
-					//man.b3 = r3;
-					//man.b4 = r4;
-					//man.st = 0x38;
-
-					HW::SPORT0->TXPRI_A = 0x1EAAA; //;man.dw2;
-
-					stateManTrans++;
-
-					break;
-
-				case 1:
-
-					HW::SPORT0->TXPRI_A = 0xAAAAA; //man.dw1;
-
-					mantLen -= 1;
-
-					if (mantLen == 0) HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = 0;
-
-					stateManTrans = 0;
+				if (mantLen == 0 && manTB->data2 != 0 && manTB->len2 != 0)
+				{
+					mantPtr = manTB->data2;
+					mantLen = manTB->len2;
+					manTB->len2 = 0;
+				};
 			};
+		};
+
+		if (!ManBufEmpty())
+		{
+			HW::SPORT0->TXPRI_A = ManBufGet(); //man.dw1;
 		}
 		else
 		{
+			HW::SPORT0->TXPRI_A = 0;
+			HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = SEC_IEN|SEC_PRIO(0);
+			HW::SPORT0->ERR_A = SPORT_DERRPMSK|SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+
 			//HW::SPORT0->CTL_A = _MAN_SPT_CTL;
-			
-			HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = 0;
+			//manTB->ready = true;
+			//trmBusy = false;
+
+			//HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = 0;
 		};
 	};
 
@@ -1896,17 +1948,25 @@ SEC_INTERRUPT_HANDLER(ManTrm_ISR)
 
 SEC_INTERRUPT_HANDLER(ManTrmStatus_ISR)
 {
-	if (HW::SPORT0->CTL_A & SPORT_DERRPRI)
-	{
-		HW::SPORT0->ERR_A |= SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
 
-		if (mantLen == 0)
+	HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+	HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+
+//	if (HW::SPORT0->CTL_A & SPORT_DERRPRI)
+	{
+//		HW::SPORT0->ERR_A |= SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+
+//		if (mantLen == 0)
 		{
+			//HW::SPORT0->TXPRI_A = 0x00000; //man.dw1;
 			HW::SPORT0->CTL_A = _MAN_SPT_CTL;
+
 			manTB->ready = true;
 			trmBusy = false;
 		};
 	};
+
+	HW::PIOB->BCLR(4);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1923,20 +1983,28 @@ bool SendManData(MTB *mtb)
 	manTB = mtb;
 
 	mantPtr = mtb->data1;
-	mantLen = 1;//mtb->len1;
+	mantLen = mtb->len1;
 
-	stateManTrans = 1;
+	stateManTrans = 0;
+
+	ManBits man;
+
+	GetManBits(man, *(mantPtr++)); mantLen--;
 
 	u32 t = cli();
 
-	HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = SEC_IEN|SEC_SEN|SEC_PRIO(0);
+	HW::PIOB->BSET(4);
 
-	HW::SPORT0->ERR_A = SPORT_DERRPMSK|SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+	HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
 	HW::SPORT0->DIV_A = SPORT_CLKDIV(GetTrmBaudRate(mtb->baud) - 1)|SPORT_FSDIV(19); 
 	HW::SPORT0->CTL_A = _MAN_SPT_CTL|SPORT_SPENPRI;
 
-	HW::SPORT0->TXPRI_A = 0xE2AAA; //;man.dw2;
-	//HW::SPORT0->TXPRI_A = 0xAAAAA; //man.dw1;
+	HW::SPORT0->TXPRI_A = 0;
+	HW::SPORT0->TXPRI_A = man.dw2;
+	HW::SPORT0->TXPRI_A = man.dw1;
+
+	HW::SPORT0->ERR_A = SPORT_FSERRSTAT|SPORT_DERRSSTAT|SPORT_DERRPSTAT;
+	HW::SEC->SSI[PID_SPORT0_A_DMA].SCTL = SEC_IEN|SEC_SEN|SEC_PRIO(0);
 
 	sti(t);
 
@@ -1947,7 +2015,8 @@ bool SendManData(MTB *mtb)
 
 static void InitManTransmit()
 {
-	HW::PIOC->SetFER(PC8|PC9);
+	HW::PIOC->SetFER(/*PC5|*/PC8|PC9);
+	//HW::PIOC->SetMUX(5, 0);
 	HW::PIOC->SetMUX(8, 0);
 	HW::PIOC->SetMUX(9, 0);
 
@@ -1958,7 +2027,9 @@ static void InitManTransmit()
 	InitSEC(PID_SPORT0_A_DMA, ManTrm_ISR);
 }
 
-#endif
+#pragma optimize_as_cmd_line
+
+#endif // #if defined(CPU_BF706) && defined(MAN_TRANSMIT)
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1985,9 +2056,12 @@ void InitHardware()
 	InitGain();
 
 #ifdef CPU_BF706
+
 	Init_SPI2_MemoryMappedMode();
 
-	InitManTransmit();
+	#ifdef MAN_TRANSMIT
+		InitManTransmit();
+	#endif
 
 #endif
 

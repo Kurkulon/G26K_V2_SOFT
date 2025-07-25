@@ -3003,7 +3003,7 @@ static void FlashMoto()
 		rb.maxLen = sizeof(rspHS);
 		commoto.Read(&rb, MS2COM(5), US2COM(100));
 
-		while (commoto.Update()) HW::WDT->Update();;
+		while (commoto.Update()) HW::WDT->Update();
 
 		if (rb.recieved && rb.len == sizeof(rspHS) && GetCRC16(&rspHS, sizeof(rspHS)) == 0 && rspHS.guid == slaveGUID)
 		{

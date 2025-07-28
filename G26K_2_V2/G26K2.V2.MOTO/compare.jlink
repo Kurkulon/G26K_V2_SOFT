@@ -2,5 +2,5 @@ speed 4000
 r
 h
 exec device = LPC824M201
-loadbin obj\G26K.2.V2.BOOT.bin,0x00000000
+verifybin obj\G26K.2.V2.MOTO.bin,0x00002000
 exit

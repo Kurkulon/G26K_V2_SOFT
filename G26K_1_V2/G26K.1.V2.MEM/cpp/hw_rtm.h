@@ -8,7 +8,7 @@
 #endif
 
 #include "types.h"
-#include "hw_conf.h"
+#include "G_HW_CONF.h"
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

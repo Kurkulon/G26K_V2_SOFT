@@ -556,8 +556,6 @@ static Ptr<REQ> CreateDspBootReq00(u16 adr, BootRspV1::SF0 *rspdata, u16 tryCoun
 {
 	Ptr<REQ> rq(AllocREQ());
 	
-	//rq.Alloc();//= REQ::Alloc();
-
 	if (!rq.Valid()) return rq;
 
 	if (rspdata == 0 && adr != 0)
@@ -574,7 +572,7 @@ static Ptr<REQ> CreateDspBootReq00(u16 adr, BootRspV1::SF0 *rspdata, u16 tryCoun
 
 	q.CallBack = CallBackDspBootReq00;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.tryCount = tryCount;
 	q.checkCRC = true;
 	q.updateCRC = false;
@@ -633,7 +631,7 @@ static Ptr<REQ> CreateDspBootReq01(u16 adr, u32 len, u16 tryCount)
 
 	q.CallBack = CallBackDspBootReq01;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.tryCount = tryCount;
 	q.checkCRC = true;
 	q.updateCRC = false;
@@ -799,7 +797,7 @@ static Ptr<REQ> CreateDspBootReq03(u16 adr, u16 tryCount)
 
 	q.CallBack = CallBackDspBootReq03;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -909,6 +907,8 @@ static bool CallBackBootMotoReq(Ptr<REQ> &q)
 		{
 			q->tryCount--;
 			qmoto.Add(q);
+
+			return false;
 		};
 	};
 
@@ -937,7 +937,7 @@ static Ptr<REQ> CreateBootMotoReq00(u16 adr, BootRspV1::SF0 *rspdata, u16 tryCou
 
 	q.CallBack = CallBackBootMotoReq;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -977,7 +977,7 @@ static Ptr<REQ> CreateBootMotoReq01(u16 adr, u32 len, u16 tryCount)
 
 	q.CallBack = CallBackBootMotoReq;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -1015,8 +1015,8 @@ static Ptr<REQ> CreateBootMotoReq02(u16 adr, u16 stAdr, u16 count, void* data, u
 	REQ &q = *rq;
 
 	q.CallBack = CallBackBootMotoReq;
-	q.preTimeOut = MS2COM(50);
-	q.postTimeOut = US2COM(100);
+	q.preTimeOut = MS2COM(300);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -1084,7 +1084,7 @@ static Ptr<REQ> CreateBootMotoReq03(u16 adr, u16 tryCount)
 
 	q.CallBack = CallBackBootMotoReq;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -1124,7 +1124,7 @@ static Ptr<REQ> CreateBootMotoReq04(u16 adr, u32 timeOut, u16 tryCount)
 
 	q.CallBack = CallBackBootMotoReq;
 	q.preTimeOut = MS2COM(10);
-	q.postTimeOut = US2COM(100);
+	q.postTimeOut = US2COM(500);
 	q.ready = false;
 	q.tryCount = tryCount;
 	q.checkCRC = true;
@@ -2961,62 +2961,68 @@ static const u32 motoFlashPages[] = {
 #include "G26K.2.V2.MOTO.BIN.H"
 };
 
-u16 motoFlashLen = 0;
-u16 motoFlashCRC = 0;
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static void FlashMoto()
 {
-	static BootReqHS		reqHS;
-	static BootReqHS		rspHS;
-	static ComPort::WriteBuffer wb;
-	static ComPort::ReadBuffer	rb;
-
-	const unsigned __int64 masterGUID = MOTO_BOOT_MGUID;
-	const unsigned __int64 slaveGUID = MOTO_BOOT_SGUID;
-
-	CTM32 tm;
-
 	Ptr<REQ> rq;
 
-	motoFlashLen = sizeof(motoFlashPages);
-	motoFlashCRC = GetCRC16(motoFlashPages, motoFlashLen);
+	BootRspV1::SF0	rspF0;
 
-	tm.Reset();
+	u16 tryCount = 4;
 
 	bool hs = false;
 
-	while (!tm.Check(MS2CTM(200)))
+	CTM32 tm;
+
+	while (tryCount > 0)
 	{
-		reqHS.guid = masterGUID;
-		reqHS.crc = GetCRC16(&reqHS, sizeof(reqHS) - sizeof(reqHS.crc));
-		wb.data = &reqHS;
-		wb.len = sizeof(reqHS);
+		rq = CreateBootMotoReq00(MOTO_BOOT_NET_ADR, &rspF0, 2);
 
-		commoto.Write(&wb);
-
-		while (commoto.Update()) HW::WDT->Update(); 
-
-		rb.data = &rspHS;
-		rb.maxLen = sizeof(rspHS);
-		commoto.Read(&rb, MS2COM(5), US2COM(100));
-
-		while (commoto.Update()) HW::WDT->Update();
-
-		if (rb.recieved && rb.len == sizeof(rspHS) && GetCRC16(&rspHS, sizeof(rspHS)) == 0 && rspHS.guid == slaveGUID)
+		if (rq.Valid())
 		{
-			hs = true;
-			break;
+			qmoto.Add(rq); while(!rq->ready) { qmoto.Update(); HW::WDT->Update(); };
+
+			if (rq->crcOK)
+			{
+				BootReqV1::SF0 &req = *((BootReqV1::SF0*)rq->wb.data);
+				BootRspV1::SF0 &rsp = rspF0;
+
+				if (rsp.adr == MOTO_BOOT_NET_ADR && rsp.rw == req.rw)
+				{
+					hs = true;
+					break;
+				};
+
+				if (tryCount > 2) tryCount = 2;
+			};
+
+			rq.Free();
 		};
+
+		tryCount--;
 	};
+
+	const u32* flashPages = 0;
+	u32 flashLen = 0;
+	u16 flashCRC = 0;
 
 	if (hs)
 	{
-		BootRspV1::SF0	rspF0;
+		if (rspF0.guid == MOTO_BOOT_SGUID)
+		{
+			flashPages = motoFlashPages;
+			flashLen = sizeof(motoFlashPages);
+		};
+	};
 
-		rq = CreateBootMotoReq01(MOTO_BOOT_NET_ADR, motoFlashLen, 2);
+	if (flashPages != 0 && flashLen != 0)
+	{
+		flashCRC = GetCRC16(flashPages, flashLen);
+
+		rq = CreateBootMotoReq01(MOTO_BOOT_NET_ADR, flashLen, 2);
 
 		qmoto.Add(rq); while(!rq->ready) { qmoto.Update(); HW::WDT->Update(); };
 
@@ -3024,11 +3030,11 @@ static void FlashMoto()
 		{
 			BootRspV1::SF1 &rsp = *((BootRspV1::SF1*)rq->rb.data);
 
-			if (rsp.flashCRC != motoFlashCRC || rsp.flashLen != motoFlashLen)
+			if (rsp.flashCRC != flashCRC || rsp.flashLen != flashLen)
 			{
-				u16 count = motoFlashLen;
+				u16 count = flashLen;
 				u16 adr = 0;
-				byte *p = (byte*)motoFlashPages;
+				byte *p = (byte*)flashPages;
 
 				u16 max = rspF0.pageLen;
 
@@ -3048,12 +3054,12 @@ static void FlashMoto()
 				};
 			};
 
-			tm.Reset();	while (!tm.Check(MS2CTM(1)));
+			tm.Reset();	while (!tm.Check(MS2CTM(100)));
 		};
 
-		tm.Reset(); while (!tm.Check(MS2CTM(1)));
+		tm.Reset(); while (!tm.Check(MS2CTM(100)));
 
-		rq = CreateBootMotoReq03(0, 2);
+		rq = CreateBootMotoReq03(MOTO_BOOT_NET_ADR, 2);
 
 		qmoto.Add(rq); while(!rq->ready) { qmoto.Update(); HW::WDT->Update();	};
 
@@ -3808,7 +3814,7 @@ int main()
 
 #ifndef WIN32
 
-	commoto.Connect(ComPort::ASYNC, 1562500, 0, 1);
+	commoto.Connect(ComPort::ASYNC, MOTO_COM_BAUDRATE, MOTO_COM_PARITY, MOTO_COM_STOPBITS);
 	comdsp.Connect(ComPort::ASYNC, DSP_COM_BAUDRATE, DSP_COM_PARITY, DSP_COM_STOPBITS);
 
 	#ifdef DSPSPI

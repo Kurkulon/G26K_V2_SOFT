@@ -109,7 +109,6 @@
     <ClInclude Include="..\Include\G_HW_CONF.H" />
     <ClInclude Include="cpp\hardware.h" />
     <ClInclude Include="cpp\hw_com.h" />
-    <ClInclude Include="cpp\hw_conf.h" />
     <ClInclude Include="cpp\hw_nand.h" />
     <ClInclude Include="cpp\hw_rtm.h" />
     <ClInclude Include="cpp\main.h" />

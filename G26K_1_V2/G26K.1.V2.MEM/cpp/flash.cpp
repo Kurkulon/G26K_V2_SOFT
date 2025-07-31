@@ -1,4 +1,4 @@
-#include <types.h>
+#include "types.h"
 #include <core.h>
 #include <SEGGER_RTT\SEGGER_RTT.h>
 #include <list.h>
@@ -15,6 +15,8 @@
 
 #define NAND_READ_CRC_PIO
 #define NAND_WRITE_CRC_HW
+#define NAND_ECC_SPARE
+//#define NAND_ECC_PAGE
 
 #define NAND_CHIP_BITS			2
 #define NAND_MAX_CHIP			(1<<NAND_CHIP_BITS)
@@ -28,8 +30,8 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-static const bool verifyWritePage = false; // Проверка записаной страницы, путём чтения страницы и сравнения с буфером
-static const bool verifySpare = true;	// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
+static const bool verifyWritePage = false;		// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
+static const bool verifySpare = true;				// Проверка записаной страницы, путём чтения страницы и сравнения с буфером
 static const bool readPageCheckSpareCRC = false;	// Проверка CRC при чтении страницы. Если CRC неправильная, то страница отбрасывается 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -76,10 +78,10 @@ static const bool forceEraseWrite = true;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#include <FLASH\hw_nand_imp.h>
+#include "FLASH\hw_nand_imp.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#include <FLASH\NandFlash_imp.h>
+#include "FLASH\NandFlash_imp_temp.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

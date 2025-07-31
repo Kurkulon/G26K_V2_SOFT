@@ -41,7 +41,7 @@
 //#include "list.h"
 
 
-static u16 crc_ccit_result = 0;
+//static u16 crc_ccit_result = 0;
 
 #else
 
@@ -347,7 +347,6 @@ void Set_Sync_Rot(u16 RPS, u16 samplePerRound)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef WIN32
 
-
 static void Init_Sync_Rot()
 {
 	using namespace HW;
@@ -467,11 +466,14 @@ static __irq void ShaftIRQ()
 
 	Pin_ShaftIRQ_Clr();
 }
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void UpdateShaft()
 {
+#ifndef WIN32
+
 	if (shaftCount != 0)
 	{
 		shaftRPS = shaftCount * 100000 / shaftTime;
@@ -482,9 +484,9 @@ void UpdateShaft()
 	{
 		shaftRPS = 0;
 	};
-}
 
 #endif
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

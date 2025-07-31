@@ -3891,15 +3891,15 @@ int main()
 
 			if (key == 'w')
 			{
-				FLASH_WriteEnable();
+				NandFlash_WriteEnable();
 			}
 			else if (key == 'e')
 			{
-				FLASH_WriteDisable();
+				NandFlash_WriteDisable();
 			}
 			else if (key == 'p')
 			{
-				NAND_FullErase();
+				NandFlash_FullErase();
 			};
 		};
 

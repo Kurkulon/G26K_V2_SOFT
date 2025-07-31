@@ -86,8 +86,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win32_Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <NMakeBuildCommandLine>wmake -h version=Win32_Debug targetcpu=WIN32</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>wmake -h -a version=Win32_Debug targetcpu=WIN32</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>make -h version=Win32_Debug targetcpu=WIN32</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>make -h -a version=Win32_Debug targetcpu=WIN32</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>%40del /Q $(OutDir)*.*</NMakeCleanCommandLine>
     <NMakeOutput>$(OutDir)G26K.1.V2.MEM.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>_DEBUG;__softfp=;WIN32;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>

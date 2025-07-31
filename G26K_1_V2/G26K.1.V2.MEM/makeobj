@@ -84,12 +84,11 @@ libname = $(libdir)\$(targetcpu)_$(libsuffix).a
 	@call echo Building $(version) version ...
 	@call buildnum.bat
 
-
 ##################################################################################################--diag_suppress=68,368,1165,1299,3017
 
 compiler_options = $(debug_compiler_options) $(cpu_compiler_options) --gnu --asm --interleave -g -c --diag_style=ide &
 	  --feedback "$(objdir)\$(target_name).fed"  &
-	 -D__MICROLIB -DCPU_$(targetcpu) --no_depend_system_headers --reduce_paths -J$(libdir)\cpp,"$(%ARMCC50INC)" -I$(ghdir)
+	 -D__MICROLIB -DCPU_$(targetcpu) --no_depend_system_headers --reduce_paths -J"$(%ARMCC50INC)" -I$(libdir)\cpp,$(ghdir)
 
 ##################################################################################################
 

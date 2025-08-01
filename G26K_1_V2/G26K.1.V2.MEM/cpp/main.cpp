@@ -205,7 +205,7 @@ static u16 memReqMask = 0xFF00;
 static u16 verDevice = VERSION;
 
 //static u16 numMemDevice = 0;
-static u16 verMemDevice = 0x100;
+static u16 verMemDevice = 0x300;
 
 //static u32 manCounter = 0;
 //static u32 fireCounter = 0;

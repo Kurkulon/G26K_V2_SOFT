@@ -152,18 +152,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>1117</LineNumber>
+          <LineNumber>206</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>536882438</Address>
+          <Address>186</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>d:\Work\G_LIBS_ARM\cpp\boot_com_emac_imp.h</Filename>
+          <Filename>d:\Work\G_LIBS\cpp\ARM\startup_CM4.s</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\G26K.1.V2.BOOT\cpp/main.cpp\1117</Expression>
+          <Expression>\\G26K_1_V2_BOOT\d:/Work/G26K_V2_SOFT/G26K_1_V2/G26K.1.V2.BOOT/../../../G_LIBS/cpp/ARM/startup_CM4.s\206</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -460,12 +460,8 @@
       <pMultCmdsp></pMultCmdsp>
       <SystemViewers>
         <Entry>
-          <Name>System Viewer\GMAC</Name>
-          <WinId>35905</WinId>
-        </Entry>
-        <Entry>
           <Name>System Viewer\PORT</Name>
-          <WinId>35904</WinId>
+          <WinId>35905</WinId>
         </Entry>
       </SystemViewers>
     </TargetOption>

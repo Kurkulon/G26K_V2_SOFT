@@ -96,7 +96,7 @@
 	// ++++++++++++++	DMA	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define	NAND_DMA			DMA_CH0
-	#define	DSP_SPI_DMA_RX		DMA_CH1
+	//#define	DSP_SPI_DMA_RX		DMA_CH1
 	#define	UART1_DMA			DMA_CH2
 	#define	UART2_DMA			DMA_CH3
 	#define	SPI_DMA_TX			DMA_CH4
@@ -105,7 +105,7 @@
 	#define	I2C_DMA				DMA_CH7
 	//#define	DSP_SPI_DMA_RX		DMA_CH8
 
-	#define	DSP_SPI_DMA_TX		DMA_CH30
+	//#define	DSP_SPI_DMA_TX		DMA_CH30
 	#define	CRC_DMA				DMA_CH31
 
 	// ++++++++++++++	EVENT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -247,7 +247,7 @@
 
 	// ++++++++++++++	DSP SPI	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define DSPSPI				
+	//#define DSPSPI				
 	#define PIO_DSP_SCK			HW::PIOB
 	#define PIO_DSP_MOSI		HW::PIOB
 	#define PIO_DSP_SS			HW::PIOB
@@ -365,17 +365,18 @@
 	#define PIN_ALE_CFG		PINGFG_DRVSTR 
 	#define PIN_CLE_CFG		PINGFG_DRVSTR 
 
-	#define NAND_DELAY_WP()		{ delay(4);		}
-	#define NAND_DELAY_WH()		{ delay(4);		}
-	#define NAND_DELAY_RP()		{ delay(2);		}
-	#define NAND_DELAY_REH()	{ delay(2);		}
-	#define NAND_DELAY_WHR()	{ delay(10);	}
-	#define NAND_DELAY_ADL()	{ delay(20);	}
-	#define NAND_DELAY_PR()		{ delay(4);		}
+	#define NAND_DELAY_WP()		{ delay(4);				}
+	#define NAND_DELAY_WH()		{ delay(4);				}
+	#define NAND_DELAY_RP()		{ delay(4);				}
+	#define NAND_DELAY_REH()	{ delay(4);				}
+	#define NAND_DELAY_WHR()	{ delay(10);			}
+	#define NAND_DELAY_ADL()	{ delay(20);			}
+	#define NAND_DELAY_PR()		{ delay(4);				}
+	#define NAND_DELAY_FEAT()	{ delay(NS2CLK(1000));	}
 
-	#define NAND_WE_PER		NS2CLK(60)-1	
-	#define NAND_WE_CC0		NS2CLK(40) 
-	#define NAND_WE_CC1		NS2CLK(40)
+	#define NAND_WE_PER		NS2CLK(100)-1	
+	#define NAND_WE_CC0		NS2CLK(60) 
+	#define NAND_WE_CC1		NS2CLK(60)
 
 	#define nandTCC			HW::NAND_TCC
 	//#define nandTC			HW::NAND_TC
@@ -419,7 +420,7 @@
 	// ++++++++++++++	VCORE	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 	#define PIO_ENVCORE		HW::PIOC
-	#define PIN_ENVCORE		14 
+	#define PIN_ENVCORE		24 
 	#define ENVCORE			(1<<PIN_ENVCORE) 
 	
 	// ++++++++++++++	RESET	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

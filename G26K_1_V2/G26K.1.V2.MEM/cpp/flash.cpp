@@ -12,11 +12,13 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //#define NAND_SAMSUNG
 #define NAND_MICRON
+#define NANDFLASH_IMP_TEMP
 
 #define NAND_READ_CRC_PIO
 #define NAND_WRITE_CRC_HW
-//#define NAND_ECC_SPARE
+#define NAND_ECC_SPARE
 //#define NAND_ECC_PAGE
+//#define NAND_ECC_PAGEBUF
 
 #define NAND_CHIP_BITS			2
 #define NAND_MAX_CHIP			(1<<NAND_CHIP_BITS)
@@ -81,7 +83,10 @@ static const bool forceEraseWrite = true;
 #include "FLASH\hw_nand_imp.h"
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+#ifdef NANDFLASH_IMP_TEMP
+#include "FLASH\NandFlash_imp_temp.h"
+#else
 #include "FLASH\NandFlash_imp.h"
+#endif
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

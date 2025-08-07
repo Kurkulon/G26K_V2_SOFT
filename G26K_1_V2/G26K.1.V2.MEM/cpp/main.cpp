@@ -492,6 +492,8 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 
 Ptr<MB> CreateTestDspReq01()
 {
+	static u16 crc = 0;
+
 	Ptr<MB> rq;
 	
 	rq = NandFlash_AllocWB(sizeof(RspDsp01));
@@ -500,33 +502,37 @@ Ptr<MB> CreateTestDspReq01()
 
 	RspDsp01 &rsp = *((RspDsp01*)(rq->GetDataPtr()));
 
-	rsp.CM.hdr.rw = manReqWord|0x40;
-	rsp.CM.hdr.time = 1;
-	rsp.CM.hdr.hallTime = 2;
-	rsp.CM.hdr.motoCount = 3;
-	rsp.CM.hdr.headCount = 4;
-	rsp.CM.hdr.ax = 5;
-	rsp.CM.hdr.ay = 6;
-	rsp.CM.hdr.az = 7;
-	rsp.CM.hdr.at = 8;
-	rsp.CM.hdr.sensType = 0;
-	rsp.CM.hdr.angle = 9;
-	rsp.CM.hdr.maxAmp = 10;
-	rsp.CM.hdr.fi_amp = 11;
-	rsp.CM.hdr.fi_time = 12;
-	rsp.CM.hdr.gain = 13;
-	rsp.CM.hdr.st = 14;
-	rsp.CM.hdr.sl = ArraySize(rsp.CM.data);
-	rsp.CM.hdr.sd = 0;
-	rsp.CM.hdr.packType = 0;
-	rsp.CM.hdr.packLen = 0;
+	rsp.CM.hdr.rw			= manReqWord|0x40;
+	rsp.CM.hdr.time			= 1;
+	rsp.CM.hdr.hallTime		= 2;
+	rsp.CM.hdr.motoCount	= 3;
+	rsp.CM.hdr.headCount	= 4;
+	rsp.CM.hdr.ax			= 5;
+	rsp.CM.hdr.ay			= 6;
+	rsp.CM.hdr.az			= 7;
+	rsp.CM.hdr.at			= 8;
+	rsp.CM.hdr.sensType		= 0;
+	rsp.CM.hdr.angle		= 9;
+	rsp.CM.hdr.maxAmp		= 10;
+	rsp.CM.hdr.fi_amp		= 11;
+	rsp.CM.hdr.fi_time		= 12;
+	rsp.CM.hdr.gain			= 13;
+	rsp.CM.hdr.st			= 14;
+	rsp.CM.hdr.sl			= ArraySize(rsp.CM.data);
+	rsp.CM.hdr.sd			= 0;
+	rsp.CM.hdr.packType		= 0;
+	rsp.CM.hdr.packLen		= 0;
 
 	for (u32 i = 0; i < rsp.CM.hdr.sl; i++)
 	{
 		rsp.CM.data[i] = 0;
 	};
 
-	rq->len = sizeof(rsp.CM);
+	if (crc == 0) crc = GetCRC16_CCIT_refl(&rsp, sizeof(rsp.CM));
+
+	rsp.CM.data[rsp.CM.hdr.sl] = crc;
+
+	rq->len = sizeof(rsp.CM)+2;
 	
 	return rq;
 }
@@ -2607,7 +2613,7 @@ static void UpdateTestFlashWrite()
 			count--;
 
 			RspDsp01 *rsp = (RspDsp01*)(ptr->GetDataPtr());
-			NandFlash_RequestWrite(ptr, rsp->CM.hdr.rw, true);
+			NandFlash_RequestWrite(ptr, rsp->CM.hdr.rw, false);
 
 		};
 	};

@@ -1185,7 +1185,7 @@ static void UpdateGain()
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifdef __ADSPBF70x__
+#ifdef __ADSPBF70x__ertertet
 
 static volatile u16 twiWriteCount = 0;
 static volatile u16 twiReadCount = 0;

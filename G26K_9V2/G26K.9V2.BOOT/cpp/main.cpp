@@ -84,6 +84,7 @@ inline u16 GetNetAdr() { return DSP_BOOT_NET_ADR; }
 
 #ifdef BOOT_COM
 
+#include "usic_imp.h"
 #include "Comport\ComPort_imp.h"
 
 	#ifdef CPU_BF592

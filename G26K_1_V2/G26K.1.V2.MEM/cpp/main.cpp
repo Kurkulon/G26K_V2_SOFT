@@ -1,7 +1,7 @@
 #include "hardware.h"
 //#include "options.h"
 //#include "hw_emac.h"
-#include "EMAC\xtrap.h"
+#include "EMAC\trap.h"
 #include "FLASH\NandFlash.h"
 #include "CRC\CRC16.h"
 #include "CRC\CRC16_CCIT.h"

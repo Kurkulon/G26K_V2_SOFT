@@ -217,6 +217,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	wavesPerRoundIM = req->wavesPerRoundIM;
 
 	SetFireVoltage(req->fireVoltage);
+	SetGearIndex(req->gearIndex);
 
 	if (wb == 0) return false;
 
@@ -1035,8 +1036,12 @@ static void ProcessSPORT()
 				rsp->fireIndex = dsc->fireIndex;
 				rsp->shaftCount = dsc->shaftCount;
 
+				const GEAR *gear = GetGear();
+
 				//u32 t = (72000 * dsc->rotCount + 74) / 147;
-				u32 t = (501551 * dsc->rotCount + 512) >> 10;
+				//u32 t = (501551 * dsc->rotCount + 512) >> 10;
+
+				u32 t = (gear->gearMul * dsc->rotCount + 512) >> 10;
 
 				if (t >= 36000) t -= 36000;
 

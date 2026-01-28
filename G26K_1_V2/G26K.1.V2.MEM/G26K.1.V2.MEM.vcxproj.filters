@@ -23,13 +23,7 @@
     <ClInclude Include="cpp\hw_nand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpp\hw_rtm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cpp\main.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cpp\options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cpp\req.h">
@@ -67,9 +61,6 @@
     <ClCompile Include="cpp\hw_i2c.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cpp\hw_rtm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cpp\hw_spi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -77,9 +68,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cpp\manch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cpp\options.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cpp\req.cpp">

@@ -19,6 +19,10 @@
 #define FRAM_I2C_SESSIONS_ADR 0x200
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define TRAP_PACKET_VERSION		0x7
+#define REAL_TIME_CLOCK_ENABLE
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #ifdef CPU_XMC48
@@ -95,18 +99,18 @@
 
 	// ++++++++++++++	DMA	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	#define	NAND_DMA			DMA_CH0
-	//#define	DSP_SPI_DMA_RX		DMA_CH1
-	#define	UART1_DMA			DMA_CH2
-	#define	UART2_DMA			DMA_CH3
-	#define	SPI_DMA_TX			DMA_CH4
-	#define	SPI_DMA_RX			DMA_CH5
-	#define	NAND_MEMCOPY_DMA	DMA_CH6
-	#define	I2C_DMA				DMA_CH7
-	//#define	DSP_SPI_DMA_RX		DMA_CH8
+	#define	NAND_DMA_CH			0
+	//#define	DSP_SPI_DMA_RX	1
+	#define	UART1_DMA_CH		2
+	#define	UART2_DMA_CH		3
+	#define	SPI_DMA_TX_CH		4
+	#define	SPI_DMA_RX_CH		5
+	#define	NAND_MEMCOPY_DMA_CH	6
+	#define	I2C_DMA_CH			7
+	//#define	DSP_SPI_DMA_RX	8
 
-	//#define	DSP_SPI_DMA_TX		DMA_CH30
-	#define	CRC_DMA				DMA_CH31
+	//#define	DSP_SPI_DMA_TX	30
+	#define	CRC_DMA_CH			31
 
 	// ++++++++++++++	EVENT	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -374,18 +378,22 @@
 	#define NAND_DELAY_PR()		{ delay(4);				}
 	#define NAND_DELAY_FEAT()	{ delay(NS2CLK(1000));	}
 
-	#define NAND_WE_PER		NS2CLK(100)-1	
-	#define NAND_WE_CC0		NS2CLK(60) 
-	#define NAND_WE_CC1		NS2CLK(60)
+	#define NAND_WE_PER		NS2CLK(200)-1	
+	#define NAND_WE_CC0		NS2CLK(100) 
+	#define NAND_WE_CC1		NS2CLK(100)
 
 	#define nandTCC			HW::NAND_TCC
 	//#define nandTC			HW::NAND_TC
 
 	#ifdef nandTCC
 	
-		#define NAND_RE_PER		(NS2CLK(100)-1)
-		#define NAND_RE_CC0		NS2CLK(55) 
-		#define NAND_RE_CC1		NS2CLK(50)
+		#define NAND_RE_PER_SLOW	(NS2CLK(200)-1)
+		#define NAND_RE_CC0_SLOW	NS2CLK(110) 
+		#define NAND_RE_CC1_SLOW	NS2CLK(100)
+
+		#define NAND_RE_PER_FAST	(NS2CLK(100)-1)
+		#define NAND_RE_CC0_FAST	NS2CLK(55) 
+		#define NAND_RE_CC1_FAST	NS2CLK(50)
 
 		#define WE_PORT_PMUX	(PORT_PMUX_F) 
 		#define RE_PORT_PMUX	(PORT_PMUX_F) 

@@ -64,20 +64,11 @@ struct DSCSPORT
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-//struct SENS
-//{
-//	u16 	gain; 
-//	u16 	st;	 
-//	u16 	sl; 
-//	u16 	sd; 
-//	u16		descr;
-//	u16		thr;
-//	u16		freq;
-//	u16 	filtr;
-//	u16 	pack;
-//	u16 	fi_Type;
-//	u16 	fragLen;
-//};
+struct GEAR
+{
+	u32 	rotCountMax; 
+	u32 	gearMul;	 
+};
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -280,6 +271,9 @@ extern DSCSPORT* AllocDscSPORT();
 
 extern void SetFireVoltage(u16 v);
 extern u16	GetFireVoltage();
+
+extern void SetGearIndex(u16 v);
+extern const GEAR* GetGear();
 
 
 #endif // HARDWARE_H__15_05_2009__14_35

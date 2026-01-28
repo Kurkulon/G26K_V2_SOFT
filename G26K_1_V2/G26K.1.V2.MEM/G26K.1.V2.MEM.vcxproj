@@ -110,9 +110,7 @@
     <ClInclude Include="cpp\hardware.h" />
     <ClInclude Include="cpp\hw_com.h" />
     <ClInclude Include="cpp\hw_nand.h" />
-    <ClInclude Include="cpp\hw_rtm.h" />
     <ClInclude Include="cpp\main.h" />
-    <ClInclude Include="cpp\options.h" />
     <ClInclude Include="cpp\req.h" />
     <ClInclude Include="cpp\rtc.h" />
   </ItemGroup>
@@ -125,11 +123,9 @@
     <ClCompile Include="cpp\hardware.cpp" />
     <ClCompile Include="cpp\hw_com.cpp" />
     <ClCompile Include="cpp\hw_i2c.cpp" />
-    <ClCompile Include="cpp\hw_rtm.cpp" />
     <ClCompile Include="cpp\hw_spi.cpp" />
     <ClCompile Include="cpp\main.cpp" />
     <ClCompile Include="cpp\manch.cpp" />
-    <ClCompile Include="cpp\options.cpp" />
     <ClCompile Include="cpp\req.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

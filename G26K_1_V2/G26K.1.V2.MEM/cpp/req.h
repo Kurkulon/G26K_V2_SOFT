@@ -1,8 +1,9 @@
 #ifndef REQ_H__09_10_2014__10_31
 #define REQ_H__09_10_2014__10_31
 
-
 #pragma once
+
+#include "G_HW_CONF.h"
 
 #include <RequestQuery.h>
 #include <ComPort\ComPort.h>

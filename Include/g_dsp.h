@@ -89,6 +89,7 @@ __packed struct ReqDsp01	// чтение вектора
 	u16		wavesPerRoundIM;
 	u16		fireVoltage;		// Напряжение излучателя (0.1В)
 	u16		sensMask;
+	u16		gearIndex;			// 0 - maxon 12.25, 1 - assun 13/3 4-pole			
 
 	u16 	crc;  
 };

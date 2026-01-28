@@ -1,3 +1,4 @@
+#include "G_HW_CONF.h"
 #include "types.h"
 #include "core.h"
 #include "time.h"
@@ -6,8 +7,6 @@
 #include "hardware.h"
 
 #include "SEGGER_RTT\SEGGER_RTT.h"
-#include "G_HW_CONF.h"
-#include "hw_rtm.h"
 #include "MANCH\manch.h"
 #include "DMA\DMA.h"
 
@@ -98,6 +97,10 @@ __forceinline 	void DisableVCORE()	{ PIO_ENVCORE->SET(ENVCORE); 	}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#include "time_imp.h"
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -110,12 +113,12 @@ static void WDT_Init()
 
 	#ifdef CPU_SAME53	
 
-		//HW::MCLK->APBAMASK |= APBA_WDT;
+		HW::MCLK->APBAMASK |= APBA_WDT;
+		HW::WDT->CONFIG = WDT_WINDOW_CYC512|WDT_PER_CYC1024;
+		//while(HW::WDT->SYNCBUSY);
 
-		//HW::WDT->CONFIG = WDT_WINDOW_CYC512|WDT_PER_CYC1024;
-	
 		#ifndef _DEBUG
-		HW::WDT->CTRLA = WDT_ENABLE|WDT_WEN|WDT_ALWAYSON;
+		HW::WDT->CTRLA = WDT_ENABLE;
 		#else
 		HW::WDT->CTRLA = 0;
 		#endif
@@ -1003,8 +1006,7 @@ void InitHardware()
 
 	SEGGER_RTT_WriteString(0, RTT_CTRL_TEXT_BRIGHT_GREEN "OK\n");
 
-	Init_time(MCK);
-	RTT_Init();
+	Init_time();
 	I2C_Init();
 	SPI_Init();
 

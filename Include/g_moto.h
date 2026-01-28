@@ -30,9 +30,10 @@ __packed struct ReqMoto
 {
 	u16 	rw;
 	u16 	enableMotor; 
-	u32		tRPM;		// время 1/6 оборота двигателя в мкс
-	u16		limCurrent; // Ограничение тока двигателя (мА)
-	u16		maxCurrent; // Аварийный ток двигателя (мА)
+	u32		tRPM;			// Частота вращения двигателя (0.01 об/сек)
+	u16		limCurrent;		// Ограничение тока двигателя (мА)
+	u16		maxCurrent;		// Аварийный ток двигателя (мА)
+	u16		gearIndex;		// 0 - maxon 12.25, 1 - assun 13/3 4-pole			
 	u16 	crc;  
 };
 
@@ -42,13 +43,13 @@ __packed struct RspMoto
 {
 	u16 	rw;
 	u16 	mororStatus; 
-	u16		current;
-	u16		currentLow;
-	u16		rpm;
-	u16		motoCounter;
-	u16		auxVoltage;
-	u16		motoVoltage;
-	u16		motoDuty;
+	u16		current;		// Ток двигателя (мА)
+	u16		currentLow;		// Ток двигателя, датчик 2 (мА)
+	u16		rpm;			// Частота вращения двигателя (0.01 об/сек)
+	u16		motoCounter;	// счётчик оборотов двигателя 1/6 оборота
+	u16		auxVoltage;		// Напряжение 3-ей жилы (В)
+	u16		motoVoltage;	// Напряжение двигателя (В)
+	u16		motoDuty;		// Скважность ШИМ двигателя (0.01%)
 	u16 	crc;  
 };
 

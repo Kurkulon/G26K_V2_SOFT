@@ -209,7 +209,25 @@ static byte index = 0;
 
 u16 dstFireVoltage		= 250;
 u16 dstFireVoltage10	= 2500;
-u16 curFireVoltage = 0;
+u16 curFireVoltage		= 0;
+
+u16 gearIndex = 0;
+
+const GEAR gearArray[2] = { { 147, 501551 }, { 52, 708923 } };
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void SetGearIndex(u16 v)
+{
+	if (v < ArraySize(gearArray)) gearIndex = v;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+const GEAR* GetGear()
+{
+	return gearArray+gearIndex;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1097,7 +1115,9 @@ SEC_INTERRUPT_HANDLER(ROT_ISR)
 
 	rotCount++;
 
-	if (rotCount >= 147) rotCount = 0;
+	//if (rotCount >= 147) rotCount = 0;
+
+	if (rotCount >= gearArray[gearIndex].rotCountMax) rotCount = 0;
 
 	rotDeltaMMSEC = mmsec - rotMMSEC;
 	

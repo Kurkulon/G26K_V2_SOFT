@@ -482,6 +482,7 @@ Ptr<REQ> CreateDspReq01(u16 tryCount)
 	req.wavesPerRoundIM = mv.imSPR;
 	req.fireVoltage		= mv.fireVoltage;
 	req.sensMask		= mv.sensMask;
+	req.gearIndex		= 0;
 
 	req.crc	= GetCRC16(&req, sizeof(ReqDsp01)-2);
 

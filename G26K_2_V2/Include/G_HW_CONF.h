@@ -1,27 +1,33 @@
 #ifndef G_HW_CONF_H__23_07_2025__14_25
 #define G_HW_CONF_H__23_07_2025__14_25
 
+#define REAL_TIME_CLOCK_DISABLE
+#define SYSTEM_TICK_TIMER_ENABLE
+
 #include <types.h>
 #include <core.h>
 
 #define CLKIN_MHz	25
 #define PLL_MSEL	2		// 1...32
 #define PLL_PSEL	1		// 0...3
-#define PLL_MHz		(CLKIN_MHz*PLL_MSEL)		
-#define FCCO_MHz	(PLL_MHz*(2UL<<PLL_PSEL))		// 156...320
-
-#if defined(FCCO_MHz) && ((FCCO_MHz < 156) || (FCCO_MHz > 320))
-#error  FCCO_MHz must be 156...320
-#endif
-
+//#define PLL_MHz		(CLKIN_MHz*PLL_MSEL)		
 #define MCK_DIV			1
 #define UARTCLK_DIV		1
 
 #ifdef PLL_MHz
-#define MCK_MHz ((float)PLL_MHz/MCK_DIV)
+
+	#define FCCO_MHz	(PLL_MHz*(2UL<<PLL_PSEL))		// 156...320
+
+	#if defined(FCCO_MHz) && ((FCCO_MHz < 156) || (FCCO_MHz > 320))
+		#error  FCCO_MHz must be 156...320
+	#endif
+	
+	#define MCK_MHz ((float)PLL_MHz/MCK_DIV)
 #else
-#define MCK_MHz ((float)CLKIN_MHz/MCK_DIV)
-#endif
+
+	#define MCK_MHz ((float)CLKIN_MHz/MCK_DIV)
+
+#endif // #ifdef PLL_MHz
 
 #define MCK			((u32)(MCK_MHz*1000000UL))
 #define NS2CLK(x) 	((u32)(((x)*MCK_MHz+500)/1000))

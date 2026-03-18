@@ -13,10 +13,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #define SMALL_BUF_LEN	512
-#define MEDIUM_BUF_LEN	1536
+#define MEDIUM_BUF_LEN	0x900 //1536
 
 #ifndef WIN32
-#define HUGE_BUF_LEN	0x900 //2034
+#define HUGE_BUF_LEN	(8192+256+32) //0x900 //2034
 #else
 #define HUGE_BUF_LEN	0x4100    
 #endif

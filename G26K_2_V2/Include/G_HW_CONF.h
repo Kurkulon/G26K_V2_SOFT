@@ -10,7 +10,7 @@
 #define CLKIN_MHz	25
 #define PLL_MSEL	2		// 1...32
 #define PLL_PSEL	1		// 0...3
-//#define PLL_MHz		(CLKIN_MHz*PLL_MSEL)		
+#define PLL_MHz		(CLKIN_MHz*PLL_MSEL)		
 #define MCK_DIV			1
 #define UARTCLK_DIV		1
 

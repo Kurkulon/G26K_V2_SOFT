@@ -12,18 +12,6 @@
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#define SMALL_BUF_LEN	512
-#define MEDIUM_BUF_LEN	0x900 //1536
-
-#ifndef WIN32
-#define HUGE_BUF_LEN	(8192+256+32) //0x900 //2034
-#else
-#define HUGE_BUF_LEN	0x4100    
-#endif
-#define	NUM_SMALL_BUF	16       
-#define	NUM_MEDIUM_BUF	8
-#define	NUM_HUGE_BUF	8
-
 #include <MEM\mem_imp.h>
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

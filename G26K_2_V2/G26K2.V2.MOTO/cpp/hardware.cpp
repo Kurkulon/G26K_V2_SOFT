@@ -7,7 +7,7 @@
 //#define OPEN_VALVE_CUR 600
 //#define CLOSE_VALVE_CUR 600
 
-#define GEAR_RATIO			12.25
+//#define GEAR_RATIO			12.25
 #define CUR_LIM				5000
 #define CUR_MAX				6000
 #define CUR_MIN				100
@@ -29,7 +29,7 @@
 #define PWM_PERIOD			US2CLK(50)
 #define MAX_DUTY			US2CLK(48)
 
-const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
+//const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 
 u16 curADC = 0;
 u16 avrCurADC = 0;
@@ -711,12 +711,12 @@ static void UpdateMotor()
 
 					tachoStep = 1;
 
-					tachoLim = v*2 + 100;
+					tachoLim = v/8 + 100; //v*2 + 100;
 
 					tachoCount = 0;
 
-					v *= pulsesPerHeadRoundFix4;
-					v >>= 5;
+					v *= 3; //pulsesPerHeadRoundFix4;
+					//v >>= 5;
 
 					if (v > 0)
 					{

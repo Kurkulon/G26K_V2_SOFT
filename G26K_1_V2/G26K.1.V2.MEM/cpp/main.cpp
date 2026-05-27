@@ -30,7 +30,7 @@ static const bool __WIN32__ = false;
 
 #define __TEST__
 
-enum { VERSION = 0x201 };
+enum { VERSION = 0x202 };
 
 //#pragma O3
 //#pragma Otime
@@ -173,7 +173,7 @@ static u16 mode = 0;
 static TM32 imModeTimeout;
 
 //static u16 motoEnable = 0;		// двигатель включить или выключить
-static u16 motoTargetRPS = 0;		// заданные обороты двигател€
+static u16 motoTrgtRPS = 0;			// заданные обороты двигател€ [0,1,2,3...15]
 static u16 motoRPS = 0;				// обороты двигател€, об/сек
 static u16 motoCur = 0;				// ток двигател€, 0...9400 мј
 static u16 motoCurLow = 0;			// ток двигател€, 0...4500 мј
@@ -283,7 +283,7 @@ u16 GetVersionDevice()
 
 static void Update_RPS_SPR()
 {
-	Set_Sync_Rot(motoTargetRPS, (mode == 0) ? mv.cmSPR : mv.imSPR);
+	Set_Sync_Rot(motoTrgtRPS, (mode == 0) ? mv.cmSPR : mv.imSPR, motoRPS);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -896,9 +896,10 @@ static Ptr<REQ> CreateMotoReq()
 	
 	req.rw = 0x101;
 	req.enableMotor	= 1;
-	req.tRPM = motoTargetRPS;
+	req.tRPM = GetGearMotoRPS(); //motoTargetRPS;
 	req.limCurrent = mv.motoLimCur;
 	req.maxCurrent = mv.motoMaxCur;
+	req.gearIndex = GetGearIndex();
 	req.crc	= GetCRC16(&req, sizeof(req)-2);
 
 	return &q;
@@ -1458,7 +1459,7 @@ static bool RequestMan_30(u16 *data, u16 len, MTB* mtb)
 
 	manTrmData[0] = data[0];	
  
-	motoTargetRPS = (data[0]&15) * 100;
+	motoTrgtRPS = data[0]&15;
 		
 	//Set_Sync_Rot(motoTargetRPS, *curSPR);
 
@@ -2633,7 +2634,7 @@ static void UpdateDSP_Com()
 	{
 		case 0:
 
-			if ((mv.fireVoltage == 0 && motoTargetRPS == 1500) || __WIN32__)
+			if ((mv.fireVoltage == 0 && motoTrgtRPS == 15) || __WIN32__)
 			{
 				if (NandFlash_Status() != 0) UpdateTestFlashWrite();
 			}
@@ -3372,7 +3373,8 @@ static void InitTaskList()
 		Task(UpdateAccel,			MS2CTM(1)	),
 		Task(UpdateEMAC,			MS2CTM(1)	),
 		Task(SaveVars,				MS2CTM(1)	),
-		Task(UpdateShaft,			MS2CTM(1)	)
+		Task(UpdateShaft,			MS2CTM(1)	),
+		Task(Update_RPS_SPR,		MS2CTM(100)	)
 	};
 
 	for (u16 i = 0; i < ArraySize(tsk); i++) taskList.Add(tsk+i);

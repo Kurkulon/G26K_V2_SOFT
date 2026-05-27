@@ -140,7 +140,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGTARM</Key>
-          <Name>(1010=2328,205,2778,758,0)(1007=2025,133,2202,394,0)(1008=-1,-1,-1,-1,0)(1009=2818,283,3076,867,0)(1012=2055,165,2522,466,0)</Name>
+          <Name>(1010=2328,205,2778,758,0)(1007=2025,133,2202,394,0)(1008=-1,-1,-1,-1,0)(1009=4058,603,4316,1187,0)(1012=2055,165,2522,466,0)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -194,6 +194,26 @@
           <count>8</count>
           <WinNumber>1</WinNumber>
           <ItemText>_pageBuf</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>gearMotoRPS,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>10</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motoTrgtRPS</ItemText>
+        </Ww>
+        <Ww>
+          <count>11</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>gearIndex</ItemText>
+        </Ww>
+        <Ww>
+          <count>12</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>gear,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

@@ -37,7 +37,17 @@
 
 #endif 
 
-#define GEAR_RATIO 12.25
+//#define GEAR_RATIO 12.25
+
+//								ASSUN		MAXON		
+const u32 gearMulArray[2]	= { 56797866,	80281600	};
+const u32 gearArray[1]		= { 1045					};
+
+static u16 gearIndex = 0;
+static u16 gearMotoRPS = 0;
+static u16 rpm = 0;
+
+u32 gear = 0;
 
 //const u16 pulsesPerHeadRoundFix4 = GEAR_RATIO * 6 * 16;
 
@@ -55,8 +65,20 @@ volatile u16 curShaftCounter = 0;
 //static void I2C_Init();
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+u16 GetGearIndex()
+{
+	return gearIndex;
+}
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+u16 GetGearMotoRPS()
+{
+	return gearMotoRPS;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 //static void InitVectorTable();
 
@@ -260,11 +282,15 @@ static void WDT_Init()
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void Set_Sync_Rot(u16 RPS, u16 samplePerRound)
+void Set_Sync_Rot(u16 RPS, u16 samplePerRound, u16 mesMotoRPS)
 {
 #ifndef WIN32
+	
+	rpm = mesMotoRPS;
+	
+	gearMotoRPS = (RPS * gearMulArray[gearIndex] + 32768) >> 16;
 
-	u32 t = RPS;
+	u32 t = RPS * 100;
 
 	if (t == 0) t = 100;
 
@@ -289,19 +315,22 @@ void Set_Sync_Rot(u16 RPS, u16 samplePerRound)
 
 	//if (r > 0xFFFF) r = 0xFFFF;
 
-	#ifdef CPU_SAME53	
+	#ifdef CPU_SAME53
 
-		SyncTmr->PER = t;
-		SyncTmr->CC[0] = US2SYNC(10); 
+		if (t != SyncTmr->PER)
+		{
+			SyncTmr->PER = t;
+			SyncTmr->CC[0] = US2SYNC(10); 
 
-		SyncTmr->CTRLA = (t != 0) ? TCC_ENABLE|SYNC_PRESC_DIV : SYNC_PRESC_DIV;
+			SyncTmr->CTRLA = (t != 0) ? TCC_ENABLE|SYNC_PRESC_DIV : SYNC_PRESC_DIV;
 
-		//RotTmr->CC[0] = r;
+			//RotTmr->CC[0] = r;
 
-		//RotTmr->CTRLA = (r != 0) ? TCC_ENABLE|ROT_PRESC_DIV : ROT_PRESC_DIV;
+			//RotTmr->CTRLA = (r != 0) ? TCC_ENABLE|ROT_PRESC_DIV : ROT_PRESC_DIV;
 
-		SyncTmr->CTRLBSET = TCC_CMD_RETRIGGER;
-		//RotTmr->CTRLBSET = TCC_CMD_RETRIGGER;
+			SyncTmr->CTRLBSET = TCC_CMD_RETRIGGER;
+			//RotTmr->CTRLBSET = TCC_CMD_RETRIGGER;
+		};
 
 	#elif defined(CPU_XMC48)
 
@@ -445,7 +474,7 @@ static __irq void ShaftIRQ()
 	u32 tm = GetMilliseconds();
 	u32 dt = tm - shaftPrevTime;
 
-	if (dt >= 1000)
+	if (dt >= 1500)
 	{
 		shaftPrevTime = tm;
 		shaftCount = shaftCounter;
@@ -470,8 +499,15 @@ void UpdateShaft()
 		shaftRPS = shaftCount * 100000 / shaftTime;
 		
 		shaftCount = 0;
+
+		if (shaftRPS != 0)
+		{
+			gear = (rpm * 100 + shaftRPS/2) / shaftRPS;
+
+			gearIndex = (gear < gearArray[0]) ? 0 : 1;
+		};
 	}
-	else if ((GetMilliseconds() - shaftPrevTime) > 1500)
+	else if ((GetMilliseconds() - shaftPrevTime) > 2000)
 	{
 		shaftRPS = 0;
 	};

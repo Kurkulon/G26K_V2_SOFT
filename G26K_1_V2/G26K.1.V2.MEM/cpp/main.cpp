@@ -30,7 +30,7 @@ static const bool __WIN32__ = false;
 
 #define __TEST__
 
-enum { VERSION = 0x202 };
+enum { VERSION = 0x203 };
 
 //#pragma O3
 //#pragma Otime
@@ -359,7 +359,7 @@ static bool CallBackDspReq01(Ptr<REQ> &q)
 				q->crcOK = (q->rb.len == (rsp.CM.hdr.packLen*2 + sizeof(rsp.CM.hdr) + 2)) && (GetCRC16(&rsp.CM.hdr, sizeof(rsp.CM.hdr)) == rsp.CM.data[rsp.CM.hdr.packLen]);
 			};
 
-			q->rsp->len = q->rb.len;
+			q->rsp->len = q->rb.len - 2;
 
 			dspStatus |= 1;
 			dspRcv40++;
@@ -371,7 +371,7 @@ static bool CallBackDspReq01(Ptr<REQ> &q)
 		else if (rsp.IM.hdr.rw == (dspReqWord|0x50))
 		{
 			q->crcOK = (q->rb.len == (rsp.IM.hdr.dataLen*4 + sizeof(rsp.IM.hdr) + 2)) && (GetCRC16(&rsp.IM.hdr, sizeof(rsp.IM.hdr)) == rsp.IM.data[rsp.IM.hdr.dataLen*2]);
-			q->rsp->len = q->rb.len;
+			q->rsp->len = q->rb.len - 2;
 
 			dspStatus |= 1;
 			dspRcv50++;

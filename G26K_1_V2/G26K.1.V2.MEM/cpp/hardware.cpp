@@ -298,7 +298,7 @@ void Set_Sync_Rot(u16 RPS, u16 samplePerRound, u16 mesMotoRPS)
 
 	t *= samplePerRound;
 	
-	t = (100000000 + t/2) / t;
+	t = (50000000 + t/2) / t;
 	
 	t = US2SYNC(t);
 
@@ -320,7 +320,7 @@ void Set_Sync_Rot(u16 RPS, u16 samplePerRound, u16 mesMotoRPS)
 		if (t != SyncTmr->PER)
 		{
 			SyncTmr->PER = t;
-			SyncTmr->CC[0] = US2SYNC(10); 
+			SyncTmr->CC[0] = t - US2SYNC(5); 
 
 			SyncTmr->CTRLA = (t != 0) ? TCC_ENABLE|SYNC_PRESC_DIV : SYNC_PRESC_DIV;
 
@@ -387,10 +387,10 @@ static void Init_Sync_Rot()
 	while(SyncTmr->SYNCBUSY);
 
 	SyncTmr->CTRLA = SYNC_PRESC_DIV;
-	SyncTmr->WAVE = TCC_WAVEGEN_NPWM;//|TCC_POL0;
+	SyncTmr->WAVE = TCC_WAVEGEN_DSTOP;//TCC_WAVEGEN_NPWM;//|TCC_POL0;
 	SyncTmr->DRVCTRL = 0;//TCC_NRE0|TCC_NRE1|TCC_NRV0|TCC_NRV1;
 	SyncTmr->PER = 250;
-	SyncTmr->CC[0] = 2; 
+	SyncTmr->CC[0] = 248; 
 	//SyncTmr->CC[1] = 2; 
 
 	SyncTmr->EVCTRL = 0;

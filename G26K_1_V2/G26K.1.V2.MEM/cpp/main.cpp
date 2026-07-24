@@ -30,7 +30,7 @@ static const bool __WIN32__ = false;
 
 #define __TEST__
 
-enum { VERSION = 0x203 };
+enum { VERSION = 0x204 };
 
 //#pragma O3
 //#pragma Otime
@@ -3413,21 +3413,19 @@ static void UpdateMisc()
 {
 	static byte i = 0;
 
-	#define CALL(p) case (__LINE__-S): p; break;
+#define CALL(p) case (__LINE__-S): p; break;
 
 	enum C { S = (__LINE__+3) };
 	switch(i++)
 	{
-		CALL( UpdateEMAC();		);
-		CALL( UpdateDSP_Com();	);
-		CALL( SPI_Update();		);
-		CALL( UpdateParams();	);
-		CALL( I2C_Update();		); 
+		CALL( I2C_Update();			); 
+		CALL( SPI_Update();			);
+		CALL( NandFlash_Update();	);
 	};
 
 	i = (i > (__LINE__-S-3)) ? 0 : i;
 
-	#undef CALL
+#undef CALL
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3457,7 +3455,7 @@ static void Update()
 	}
 	else
 	{
-		I2C_Update();
+		UpdateMisc();
 	};
 }
 

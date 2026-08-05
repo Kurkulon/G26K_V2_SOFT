@@ -30,7 +30,7 @@ static const bool __WIN32__ = false;
 
 #define __TEST__
 
-enum { VERSION = 0x204 };
+enum { VERSION = 0x205 };
 
 //#pragma O3
 //#pragma Otime
@@ -195,17 +195,17 @@ static u16 curFireVoltage = 500;
 const u16 dspReqWord = 0xAD00;
 //const u16 dspReqMask = 0xFF00;
 
-static u16 manReqWord = 0xAD00;
-static u16 manReqMask = 0xFF00;
+const u16 manReqWord = 0xAD00;
+const u16 manReqMask = 0xFF00;
 
-static u16 memReqWord = 0x3D00;
-static u16 memReqMask = 0xFF00;
+const u16 memReqWord = 0x3D00;
+const u16 memReqMask = 0xFF00;
 
 //static u16 numDevice = 0;
-static u16 verDevice = VERSION;
+const u16 verDevice = VERSION;
 
 //static u16 numMemDevice = 0;
-static u16 verMemDevice = 0x300;
+const u16 verMemDevice = 0x300;
 
 //static u32 manCounter = 0;
 //static u32 fireCounter = 0;
@@ -1591,7 +1591,7 @@ static bool RequestMan_80(u16 *data, u16 len, MTB* mtb)
 	{
 		case 1:
 
-			mv.numDevice = data[2];
+			mv.numDevice = mv.numMemDevice = data[2];
 
 			break;
 
@@ -1737,7 +1737,7 @@ static bool RequestMem_00(u16 *data, u16 len, MTB* mtb)
 	if (data == 0 || len == 0 || len > 2 || mtb == 0) return false;
 
 	manTrmData[0] = (memReqWord & memReqMask) | 0;
-	manTrmData[1] = mv.numMemDevice;
+	manTrmData[1] = mv.numDevice; //mv.numMemDevice;
 	manTrmData[2] = verMemDevice;
 
 	mtb->data1 = manTrmData;
@@ -1882,7 +1882,7 @@ static bool RequestMem_80(u16 *data, u16 len, MTB* mtb)
 	{
 		case 1:
 
-			mv.numMemDevice = data[2];
+			mv.numDevice = mv.numMemDevice = data[2];
 
 			break;
 
@@ -1925,7 +1925,7 @@ static bool RequestMem_F0(u16 *data, u16 len, MTB* mtb)
 {
 	if (data == 0 || len == 0 || len > 2 || mtb == 0) return false;
 
-	//SaveParams();
+	SaveMainParams();
 
 	manTrmData[0] = (memReqWord & memReqMask) | 0xF0;
 

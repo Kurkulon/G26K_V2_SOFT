@@ -179,7 +179,7 @@ static bool RequestFunc_01(const u16 *data, u16 len, ComPort::WriteBuffer *wb)
 	ReqDsp01 *req = (ReqDsp01*)data;
 
 	if (req->wavesPerRoundCM > 72) { req->wavesPerRoundCM = 72; }
-	if (req->wavesPerRoundIM > 250) { req->wavesPerRoundIM = 250; }
+	if (req->wavesPerRoundIM > IM_MAXWAVE) { req->wavesPerRoundIM = IM_MAXWAVE; }
 	
 	if (req->sensMask == 0) req->sensMask = 1;
 
@@ -794,7 +794,7 @@ static void ProcessDataIM(RSPWAVE *dsc)
 	if (sim.imdsc == 0)
 	{
 		sim.wpr = wavesPerRoundIM;
-		sim.count = sim.wpr*9/8; if (sim.count > 512) sim.count = 512;
+		sim.count = sim.wpr*9/8; if (sim.count > IM_MAXWAVE) sim.count = IM_MAXWAVE;
 		sim.cmCount = (sim.wpr+8) / 16;
 		sim.i = 0;
 

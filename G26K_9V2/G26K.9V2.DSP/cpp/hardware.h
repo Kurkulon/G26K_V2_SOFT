@@ -22,6 +22,7 @@
 
 #define WAVE_MAXLEN		(1024)
 #define WAVE_OVRLEN		(64)
+#define IM_MAXWAVE		((WAVE_MAXLEN+WAVE_OVRLEN)/2)
 
 //#define SPORT_BUF_MEM_L2
 #define RSPWAVE_BUF_MEM_L2

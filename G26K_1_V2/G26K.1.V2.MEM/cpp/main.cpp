@@ -30,7 +30,7 @@ static const bool __WIN32__ = false;
 
 #define __TEST__
 
-enum { VERSION = 0x206 };
+enum { VERSION = 0x207 };
 
 //#pragma O3
 //#pragma Otime
